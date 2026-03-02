@@ -1206,14 +1206,36 @@ class Transformer(InputModule):
         self, messages: list[DictInputs], modality_kwargs: dict[str, dict[str, Any]], common_kwargs: dict[str, Any]
     ) -> dict[str, torch.Tensor | Any]:
         """Process chat messages using the processor's chat template."""
-        processor_output = self.processor.apply_chat_template(
-            messages,
-            tokenize=True,
-            return_dict=True,
-            **modality_kwargs["text"],
-            **common_kwargs,
-            # add_generation_prompt=True,  # Needed for Qwen3-VL-Embedding, but I can't hardcode this
-        )
+        # Ideally we'd use the same code path for both ProcessorMixin and Tokenizers, but the latter expects
+        # the text kwargs to be passed at the top level instead of in a nested "text_kwargs" dict.
+        if isinstance(self.processor, ProcessorMixin):
+            processor_output = self.processor.apply_chat_template(
+                messages,
+                tokenize=True,
+                return_dict=True,
+                text_kwargs=modality_kwargs["text"],
+                images_kwargs=modality_kwargs["image"],
+                audio_kwargs=modality_kwargs["audio"],
+                videos_kwargs=modality_kwargs["video"],
+                common_kwargs=common_kwargs,
+                # add_generation_prompt=True,  # Needed for Qwen3-VL-Embedding, but I can't hardcode this
+            )
+        else:
+            top_level_kwarg_names = {"padding", "truncation", "max_length", "return_tensors"}
+            top_level_kwargs = {key: common_kwargs.pop(key) for key in top_level_kwarg_names & common_kwargs.keys()}
+            top_level_kwargs |= {
+                key: modality_kwargs["text"].pop(key) for key in top_level_kwarg_names & modality_kwargs["text"].keys()
+            }
+
+            processor_output = self.processor.apply_chat_template(
+                messages,
+                tokenize=True,
+                return_dict=True,
+                tokenizer_kwargs=modality_kwargs["text"],
+                common_kwargs=common_kwargs,
+                **top_level_kwargs,
+                # add_generation_prompt=True,  # Needed for Qwen3-VL-Embedding, but I can't hardcode this
+            )
 
         if "message" not in self.modality_config:
             # TODO: This should be sooner right?
