@@ -216,6 +216,12 @@ class SparseEncoder(BaseModel):
             Retrieval, and that if the model was not trained with predefined prompts and/or task types, then all three
             methods will return identical embeddings.
 
+        .. tip::
+
+            Adjusting ``batch_size`` can significantly improve processing speed. The optimal value depends on your
+            hardware, model size, precision, and input length. Benchmark a few batch sizes on a small subset of your
+            data to find the best value.
+
         Args:
             sentences (Union[str, List[str]]): The sentences to embed.
             batch_size (int, optional): The batch size used for the computation. Defaults to 32.
@@ -314,6 +320,12 @@ class SparseEncoder(BaseModel):
             Retrieval, and that if the model was not trained with predefined prompts and/or task types, then all three
             methods will return identical embeddings.
 
+        .. tip::
+
+            Adjusting ``batch_size`` can significantly improve processing speed. The optimal value depends on your
+            hardware, model size, precision, and input length. Benchmark a few batch sizes on a small subset of your
+            data to find the best value.
+
         Args:
             sentences (Union[str, List[str]]): The sentences to embed.
             batch_size (int, optional): The batch size used for the computation. Defaults to 32.
@@ -406,6 +418,12 @@ class SparseEncoder(BaseModel):
             Note that :meth:`encode` is the most general method and can be used for any task, including Information
             Retrieval, and that if the model was not trained with predefined prompts and/or task types, then all three
             methods will return identical embeddings.
+
+        .. tip::
+
+            Adjusting ``batch_size`` can significantly improve processing speed. The optimal value depends on your
+            hardware, model size, precision, and input length. Benchmark a few batch sizes on a small subset of your
+            data to find the best value.
 
         Args:
             sentences (Union[str, List[str]]): The sentences to embed.

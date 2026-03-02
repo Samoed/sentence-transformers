@@ -216,6 +216,12 @@ class SentenceTransformer(BaseModel, FitMixin):
            if available in the model's ``prompts`` dictionary.
         2. It sets the ``task`` to "query". If the model has a :class:`~sentence_transformers.base.models.Router`
            module, it will use the "query" task type to route the input through the appropriate submodules.
+
+        .. tip::
+
+            Adjusting ``batch_size`` can significantly improve processing speed. The optimal value depends on your
+            hardware, model size, precision, and input length. Benchmark a few batch sizes on a small subset of your
+            data to find the best value.
         """
         if prompt_name is None and "query" in self.prompts and prompt is None:
             prompt_name = "query"
@@ -270,6 +276,12 @@ class SentenceTransformer(BaseModel, FitMixin):
            if available in the model's ``prompts`` dictionary.
         2. It sets the ``task`` to "document". If the model has a :class:`~sentence_transformers.base.models.Router`
            module, it will use the "document" task type to route the input through the appropriate submodules.
+
+        .. tip::
+
+            Adjusting ``batch_size`` can significantly improve processing speed. The optimal value depends on your
+            hardware, model size, precision, and input length. Benchmark a few batch sizes on a small subset of your
+            data to find the best value.
         """
         if prompt_name is None and prompt is None:
             for candidate_prompt_name in ["document", "passage", "corpus"]:
@@ -480,6 +492,12 @@ class SentenceTransformer(BaseModel, FitMixin):
             Note that :meth:`encode` is the most general method and can be used for any task, including Information
             Retrieval, and that if the model was not trained with predefined prompts and/or task types, then all three
             methods will return identical embeddings.
+
+        .. tip::
+
+            Adjusting ``batch_size`` can significantly improve processing speed. The optimal value depends on your
+            hardware, model size, precision, and input length. Benchmark a few batch sizes on a small subset of your
+            data to find the best value.
 
         Args:
             sentences (Union[str, List[str]]): The sentences to embed.
