@@ -1210,11 +1210,7 @@ class Transformer(InputModule):
             messages,
             tokenize=True,
             return_dict=True,
-            text_kwargs=modality_kwargs["text"],
-            images_kwargs=modality_kwargs["image"],
-            audio_kwargs=modality_kwargs["audio"],
-            videos_kwargs=modality_kwargs["video"],
-            common_kwargs=common_kwargs,  # TODO: Ideally we would pass common_kwargs, but for BC we'll stick with unpacking
+            **modality_kwargs["text"],
             **common_kwargs,
             # add_generation_prompt=True,  # Needed for Qwen3-VL-Embedding, but I can't hardcode this
         )
