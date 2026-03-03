@@ -70,4 +70,9 @@ def test_transformer_load_save_roundtrip(tmp_path: Path, model_name: str, expect
         out2 = reloaded(features)
 
     for key in out1.keys():
-        assert torch.allclose(out1[key], out2[key]), f"Outputs for key {key} differ after save/load"
+        value1 = out1[key]
+        value2 = out2[key]
+        if isinstance(value1, torch.Tensor):
+            assert torch.allclose(value1, value2), f"Outputs for key {key} differ after save/load"
+        else:
+            assert value1 == value2, f"Outputs for key {key} differ after save/load"
