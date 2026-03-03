@@ -2,14 +2,17 @@ from __future__ import annotations
 
 import copy
 import re
+from pathlib import Path
 from unittest.mock import patch
 
+import numpy as np
 import pytest
 import torch
 
 from sentence_transformers.sentence_transformer.models import Pooling, Router, Transformer
 from sentence_transformers.sparse_encoder.model import SparseEncoder
 from sentence_transformers.sparse_encoder.models import SparseAutoEncoder, SpladePooling
+from sentence_transformers.util.similarity import SimilarityFunction
 
 
 @pytest.mark.parametrize(
@@ -530,3 +533,53 @@ def test_get_model_kwargs(splade_bert_tiny_model: SparseEncoder) -> None:
         # This would run fine, except the model can't actually accept these arguments (we monkeypatched the modules'
         # forward_kwargs for this test, after all). The model does send the args down to the underlying modules, though!
         model.encode("Test sentence", task="document", foo=True, document_arg_1=12)
+
+
+@pytest.mark.parametrize("similarity_fn_name", SimilarityFunction.possible_values())
+def test_similarity_score(splade_bert_tiny_model: SparseEncoder, similarity_fn_name: str) -> None:
+    model = splade_bert_tiny_model
+    model.similarity_fn_name = similarity_fn_name
+    sentences = [
+        "The weather is so nice!",
+        "It's so sunny outside.",
+        "He's driving to the movie theater.",
+        "She's going to the cinema.",
+    ]
+    embeddings = model.encode(sentences, convert_to_sparse_tensor=False)
+    scores = model.similarity(embeddings, embeddings)
+    assert scores.shape == (len(sentences), len(sentences))
+    diag = np.diag(scores.cpu().numpy())
+    if similarity_fn_name == "cosine":
+        np.testing.assert_almost_equal(diag, np.ones(len(sentences), dtype=float), decimal=4)
+    elif similarity_fn_name in ("euclidean", "manhattan"):
+        np.testing.assert_almost_equal(diag, np.zeros(len(sentences), dtype=float), decimal=4)
+    else:  # dot product - self-similarity of non-zero sparse vectors is positive
+        assert (diag > 0).all()
+
+    pairwise_scores = model.similarity_pairwise(embeddings[::2], embeddings[1::2])
+    assert pairwise_scores.shape == (len(sentences) // 2,)
+
+
+def test_similarity_score_save(splade_bert_tiny_model: SparseEncoder, tmp_path: Path) -> None:
+    model = splade_bert_tiny_model
+    assert model.similarity_fn_name == "dot"
+
+    model.similarity_fn_name = "cosine"
+    model.save(str(tmp_path))
+    loaded_model = SparseEncoder(str(tmp_path))
+    assert loaded_model.similarity_fn_name == "cosine"
+
+
+def test_similarity_fn_name_set_via_enum(splade_bert_tiny_model: SparseEncoder) -> None:
+    model = splade_bert_tiny_model
+    model.similarity_fn_name = SimilarityFunction.COSINE
+    assert model.similarity_fn_name == "cosine"
+    model.similarity_fn_name = SimilarityFunction.DOT
+    assert model.similarity_fn_name == "dot"
+
+
+def test_similarity_fn_name_constructor_overrides_saved(splade_bert_tiny_model: SparseEncoder, tmp_path: Path) -> None:
+    splade_bert_tiny_model.similarity_fn_name = "cosine"
+    splade_bert_tiny_model.save(str(tmp_path))
+    model = SparseEncoder(str(tmp_path), similarity_fn_name="dot")
+    assert model.similarity_fn_name == "dot"

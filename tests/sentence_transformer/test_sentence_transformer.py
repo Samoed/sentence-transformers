@@ -743,6 +743,23 @@ def test_similarity_score_save(stsb_bert_tiny_model: SentenceTransformer) -> Non
     assert np.not_equal(cosine_scores, dot_scores).all()
 
 
+def test_similarity_fn_name_set_via_enum(stsb_bert_tiny_model: SentenceTransformer) -> None:
+    model = stsb_bert_tiny_model
+    model.similarity_fn_name = SimilarityFunction.EUCLIDEAN
+    assert model.similarity_fn_name == "euclidean"
+    model.similarity_fn_name = SimilarityFunction.DOT
+    assert model.similarity_fn_name == "dot"
+
+
+def test_similarity_fn_name_constructor_overrides_saved(
+    stsb_bert_tiny_model: SentenceTransformer, tmp_path: Path
+) -> None:
+    stsb_bert_tiny_model.similarity_fn_name = "euclidean"
+    stsb_bert_tiny_model.save(str(tmp_path))
+    model = SentenceTransformer(str(tmp_path), similarity_fn_name="manhattan")
+    assert model.similarity_fn_name == "manhattan"
+
+
 def test_model_card_save_update_model_id(stsb_bert_tiny_model: SentenceTransformer) -> None:
     model = stsb_bert_tiny_model
     # Removing the saved model card will cause a fresh one to be generated when we save

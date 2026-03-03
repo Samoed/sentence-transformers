@@ -6,7 +6,7 @@ import queue
 from collections import OrderedDict
 from collections.abc import Callable
 from multiprocessing import Queue
-from typing import Any, Literal
+from typing import Any, Literal, overload
 
 import numpy as np
 import numpy.typing as npt
@@ -155,6 +155,8 @@ class SparseEncoder(BaseModel):
         similarity_fn_name: str | SimilarityFunction | None = None,
         max_active_dims: int | None = None,
     ) -> None:
+        self.similarity_fn_name = similarity_fn_name
+
         super().__init__(
             model_name_or_path=model_name_or_path,
             modules=modules,
@@ -181,8 +183,6 @@ class SparseEncoder(BaseModel):
                     break
             else:
                 self.max_active_dims = max_active_dims
-
-        self.similarity_fn_name = similarity_fn_name
 
     def encode_query(
         self,
@@ -580,6 +580,15 @@ class SparseEncoder(BaseModel):
 
         return all_embeddings
 
+    def _get_model_config(self) -> dict[str, Any]:
+        return super()._get_model_config() | {
+            "similarity_fn_name": self._similarity_fn_name,
+        }
+
+    def _parse_model_config(self, model_config: dict[str, Any]) -> None:
+        if self._similarity_fn_name is None:
+            self.similarity_fn_name = model_config.get("similarity_fn_name", None)
+
     @property
     def similarity_fn_name(self) -> Literal["cosine", "dot", "euclidean", "manhattan"]:
         """Return the name of the similarity function used by :meth:`SparseEncoder.similarity` and :meth:`SparseEncoder.similarity_pairwise`.
@@ -609,6 +618,12 @@ class SparseEncoder(BaseModel):
         if value is not None:
             self._similarity = SimilarityFunction.to_similarity_fn(value)
             self._similarity_pairwise = SimilarityFunction.to_similarity_pairwise_fn(value)
+
+    @overload
+    def similarity(self, embeddings1: Tensor, embeddings2: Tensor) -> Tensor: ...
+
+    @overload
+    def similarity(self, embeddings1: npt.NDArray[np.float32], embeddings2: npt.NDArray[np.float32]) -> Tensor: ...
 
     @property
     def similarity(self) -> Callable[[Tensor | npt.NDArray[np.float32], Tensor | npt.NDArray[np.float32]], Tensor]:
@@ -653,6 +668,14 @@ class SparseEncoder(BaseModel):
         if self.similarity_fn_name is None:
             self.similarity_fn_name = SimilarityFunction.DOT
         return self._similarity
+
+    @overload
+    def similarity_pairwise(self, embeddings1: Tensor, embeddings2: Tensor) -> Tensor: ...
+
+    @overload
+    def similarity_pairwise(
+        self, embeddings1: npt.NDArray[np.float32], embeddings2: npt.NDArray[np.float32]
+    ) -> Tensor: ...
 
     @property
     def similarity_pairwise(
