@@ -19,7 +19,10 @@ from typing import Any
 import numpy as np
 import pytest
 import torch
+from packaging.version import Version
 from PIL import Image
+from transformers import __version__ as transformers_version
+from transformers.models.auto.modeling_auto import MODEL_MAPPING_NAMES
 
 from sentence_transformers.modules import Transformer
 from sentence_transformers.util.tensor import batch_to_device
@@ -92,6 +95,18 @@ XFAIL_ARCHITECTURES = [
     "udop",  # Requires pytesseract
     "dinat",  # Requires natten
     "roformer",  # Requires rjieba
+]
+TRANSFORMERS_V4_XFAIL_ARCHITECTURES = [
+    "blip-2",  # get_text_features is updated in v5
+    "chinese_clip",  # get_text_features fails in v4 if there's no pooler
+    "flava",  # FlavaModel.forward was incorrectly typed in v4
+    "imagegpt",  # ImageGPTProcessor in Transformers v4 doesn't support image URLs or paths. v5 works fine
+    "lilt",  # Lilt requires bounding boxes for text only in v4
+    "visual_bert",  # Loads a tokenizer, even for text+image
+    # Unrecognized processing class
+    "splinter",
+    "mistral",
+    "blenderbot-small",
 ]
 # Model checkpoints that are faulty and cannot be loaded by transformers currently
 FAULTY_CHECKPOINTS = [
@@ -538,7 +553,11 @@ def create_modality_samples(
     params=[
         key
         for key, value in TINY_MODEL_MAPPING.items()
-        if value is not None and key not in XFAIL_ARCHITECTURES and key not in FAULTY_CHECKPOINTS
+        if value is not None
+        and key not in XFAIL_ARCHITECTURES
+        and (key not in TRANSFORMERS_V4_XFAIL_ARCHITECTURES or Version(transformers_version) >= Version("5.0.0"))
+        and key not in FAULTY_CHECKPOINTS
+        and key in MODEL_MAPPING_NAMES  # Ignore unsupported architectures if we're testing with an older transformers
     ],
     scope="session",
 )
@@ -679,7 +698,25 @@ class TestTransformerArchitectures:
 
                 with context:
                     # Preprocess the data & forward
-                    features = model.preprocess(inputs)
+                    try:
+                        features = model.preprocess(inputs)
+                    except ValueError as exc:
+                        if (
+                            "Could not make a flat list of images from" in str(exc)
+                            and "image" in modality_desc
+                            and ("url" in modality_desc or "path" in modality_desc)
+                        ):
+                            pytest.skip(
+                                f"The {arch!r} architecture with an older transformers version doesn't support image URLs, skipping this modality format."
+                            )
+                        raise
+                    except KeyError as exc:
+                        if "'height'" in str(exc) and "image" in modality_desc:
+                            pytest.skip(
+                                f"The {arch!r} architecture with an older transformers version doesn't yet nicely extract the size of image inputs, skipping this modality format."
+                            )
+                        raise
+
                     if arch in REQUIRES_CUDA:
                         features = batch_to_device(features, torch.device("cuda"))
                     with torch.no_grad():

@@ -871,7 +871,7 @@ class Transformer(InputModule):
                 if hasattr(model, method_name):
                     method = getattr(model, method_name)
                     output_fields = self._get_method_output_fields(method)
-                    if "pooler_output" in output_fields:
+                    if output_fields and "pooler_output" in output_fields:
                         modality_config[modality] = {"method": method_name, "method_output_name": "pooler_output"}
                     else:
                         modality_config[modality] = {"method": method_name, "method_output_name": None}
@@ -1269,30 +1269,24 @@ class Transformer(InputModule):
         if modality == "message":
             return self._process_chat_messages(processor_inputs["message"], modality_kwargs, common_kwargs)
 
+        # Multi-modal processor: pass modality-specific kwargs
         if isinstance(self.processor, ProcessorMixin):
-            # Multi-modal processor: pass modality-specific kwargs
-            # NOTE: "common_kwargs" is usually sometimes supported via **kwargs, but then we can't check with type inspect easily
-            # so we might be forced to use try-except
-            try:
-                # This is the much cleaner transformers v5 approach
-                return self.processor(
-                    **processor_inputs,
-                    text_kwargs=modality_kwargs["text"],
-                    images_kwargs=modality_kwargs["image"],
-                    audio_kwargs=modality_kwargs["audio"],
-                    videos_kwargs=modality_kwargs["video"],
-                    common_kwargs=common_kwargs,  # TODO: Ideally we would pass common_kwargs, but for BC we'll stick with unpacking
-                    **common_kwargs,
-                )
-            except Exception:
-                # TODO: Ensure that modality is right, especially if we're allowing non-message multi-modal
-                kwargs = {}
-                if isinstance(modality, str):
-                    kwargs.update(modality_kwargs[modality])
-                else:
-                    for mod in modality:
-                        kwargs.update(modality_kwargs[mod])
-                return self.processor(**processor_inputs, **kwargs, **common_kwargs)
+            # Some transformers processors are still outdated, and don't accept common_kwargs, etc.
+            if self.config.model_type in {"clipseg", "whisper", "sam3"}:
+                return self.processor(**processor_inputs, **modality_kwargs[modality], **common_kwargs)
+
+            # NOTE: Older transformers versions mutate these kwargs, so we copy
+            modality_kwargs = modality_kwargs.copy()
+            common_kwargs = common_kwargs.copy()
+            # This is the much cleaner transformers v5 approach
+            return self.processor(
+                **processor_inputs,
+                text_kwargs=modality_kwargs["text"],
+                images_kwargs=modality_kwargs["image"],
+                audio_kwargs=modality_kwargs["audio"],
+                videos_kwargs=modality_kwargs["video"],
+                common_kwargs=common_kwargs,
+            )
 
         # Single-modality processor: determine type and call appropriately
         # Check in order: text, audio, video, image (video before image due to inheritance)
