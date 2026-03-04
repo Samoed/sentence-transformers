@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import torch
 
-from sentence_transformers.modules import Module
+from sentence_transformers.base.modules import Module
 
 
 class CausalScoreHead(Module):

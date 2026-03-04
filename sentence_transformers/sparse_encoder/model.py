@@ -17,9 +17,11 @@ from transformers import AutoConfig, PretrainedConfig
 from transformers.modeling_utils import PreTrainedModel
 
 from sentence_transformers.base import BaseModel
+from sentence_transformers.base.modules import Transformer
 from sentence_transformers.base.modules.modality_utils import StrInputs
-from sentence_transformers.modules import Pooling, SparseAutoEncoder, SpladePooling, Transformer
+from sentence_transformers.sentence_transformer.modules import Pooling
 from sentence_transformers.sparse_encoder.model_card import SparseEncoderModelCardData
+from sentence_transformers.sparse_encoder.modules import SparseAutoEncoder, SpladePooling
 from sentence_transformers.util import batch_to_device, select_max_active_dims
 from sentence_transformers.util.similarity import SimilarityFunction
 

@@ -92,9 +92,8 @@ class Router(InputModule):
 
             ::
 
-                from sentence_transformers.modules import Router, Transformer
+                from sentence_transformers.modules import Router, SparseStaticEmbedding, SpladePooling, Transformer
                 from sentence_transformers.sparse_encoder import SparseEncoder
-                from sentence_transformers.modules import SparseStaticEmbedding, SpladePooling
 
                 # Load an asymmetric model with different encoders for queries and documents
                 doc_encoder = Transformer("opensearch-project/opensearch-neural-sparse-encoding-doc-v3-distill", transformer_task="fill-mask")

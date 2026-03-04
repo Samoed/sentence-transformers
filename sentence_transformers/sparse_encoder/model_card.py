@@ -6,7 +6,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from sentence_transformers.base.model_card import BaseModelCardCallback, BaseModelCardData
-from sentence_transformers.modules import Module, Router, SparseAutoEncoder, SparseStaticEmbedding, SpladePooling
+from sentence_transformers.base.modules import Module, Router
+from sentence_transformers.sparse_encoder.modules import SparseAutoEncoder, SparseStaticEmbedding, SpladePooling
 
 if TYPE_CHECKING:
     from sentence_transformers.sparse_encoder.model import SparseEncoder

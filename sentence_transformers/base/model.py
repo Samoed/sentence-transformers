@@ -28,6 +28,7 @@ from transformers.dynamic_module_utils import get_class_from_dynamic_module, get
 from sentence_transformers import __version__
 from sentence_transformers.base.evaluation import SentenceEvaluator
 from sentence_transformers.base.model_card import BaseModelCardData, generate_model_card
+from sentence_transformers.base.modules import Module, Router, Transformer
 from sentence_transformers.base.modules.modality_utils import (
     ArrayInputs,
     DictInputs,
@@ -38,7 +39,6 @@ from sentence_transformers.base.modules.modality_utils import (
     # infer_modality  # TODO: Remove this fully
 )
 from sentence_transformers.base.peft_mixin import PeftAdapterMixin
-from sentence_transformers.modules import Module, Router, Transformer
 from sentence_transformers.util import (
     get_device_name,
     import_from_string,

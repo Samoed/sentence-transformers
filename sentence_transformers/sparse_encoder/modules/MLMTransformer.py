@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from sentence_transformers.modules import Transformer
+from sentence_transformers.base.modules import Transformer
 
 logger = logging.getLogger(__name__)
 
