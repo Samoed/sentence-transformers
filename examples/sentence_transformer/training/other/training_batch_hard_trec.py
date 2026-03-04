@@ -36,9 +36,7 @@ logging.basicConfig(
 )
 
 
-def trec_dataset(
-    validation_dataset_nb=500,
-):
+def trec_dataset(validation_dataset_nb=500):
     dataset = load_dataset("omkar334/trec")
 
     train_set = dataset["train"].remove_columns(["coarse_label"]).rename_column("fine_label", "label")

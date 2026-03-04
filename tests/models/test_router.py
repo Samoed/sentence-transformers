@@ -11,11 +11,7 @@ import pytest
 import torch
 from torch import nn
 
-from sentence_transformers import (
-    SentenceTransformer,
-    SentenceTransformerTrainer,
-    SentenceTransformerTrainingArguments,
-)
+from sentence_transformers import SentenceTransformer, SentenceTransformerTrainer, SentenceTransformerTrainingArguments
 from sentence_transformers.base.modules.InputModule import InputModule
 from sentence_transformers.modules import Asym, Dense, Normalize, Router, StaticEmbedding
 from sentence_transformers.sentence_transformer.losses import MultipleNegativesRankingLoss

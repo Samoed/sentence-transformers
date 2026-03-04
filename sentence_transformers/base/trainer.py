@@ -35,11 +35,7 @@ from sentence_transformers.base.sampler import (
     ProportionalBatchSampler,
     RoundRobinBatchSampler,
 )
-from sentence_transformers.base.training_args import (
-    BaseTrainingArguments,
-    BatchSamplers,
-    MultiDatasetBatchSamplers,
-)
+from sentence_transformers.base.training_args import BaseTrainingArguments, BatchSamplers, MultiDatasetBatchSamplers
 from sentence_transformers.util import disable_logging, fullname, is_datasets_available, is_training_available
 
 if is_datasets_available():

@@ -144,10 +144,7 @@ def test_decode_empty_tensor(splade_bert_tiny_model: SparseEncoder) -> None:
     assert len(decoded) == 0 or (isinstance(decoded, list) and all(not item for item in decoded))
 
 
-@pytest.mark.parametrize(
-    "top_k",
-    [None, 5, 1000],
-)
+@pytest.mark.parametrize("top_k", [None, 5, 1000])
 @pytest.mark.parametrize(
     "texts",
     [

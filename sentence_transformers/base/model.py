@@ -35,7 +35,7 @@ from sentence_transformers.base.modules.modality_utils import (
     Modality,
     PairStrInputs,
     StrInputs,
-    # infer_modality,
+    # infer_modality  # TODO: Remove this fully
 )
 from sentence_transformers.base.peft_mixin import PeftAdapterMixin
 from sentence_transformers.modules import Module, Router, Transformer

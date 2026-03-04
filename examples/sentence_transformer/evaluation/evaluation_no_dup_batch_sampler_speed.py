@@ -386,9 +386,7 @@ def _dup_stats(dataset: Dataset, show_progress: bool, desc: str) -> tuple[int, i
 
 
 async def compute_uniqueness(
-    datasets_map: dict[str, Dataset],
-    workers: int,
-    show_progress: bool,
+    datasets_map: dict[str, Dataset], workers: int, show_progress: bool
 ) -> dict[str, tuple[int, int, int] | None]:
     """Run uniqueness checks concurrently with a bounded thread pool."""
     semaphore = asyncio.Semaphore(workers)

@@ -72,10 +72,7 @@ quantized_onnx_model = SentenceTransformer(
 
 # To make sure that `onnx_model` itself didn't get quantized, we reload it
 onnx_model = SentenceTransformer(
-    model_name,
-    backend="onnx",
-    device="cpu",
-    model_kwargs={"provider": "CPUExecutionProvider"},
+    model_name, backend="onnx", device="cpu", model_kwargs={"provider": "CPUExecutionProvider"}
 )
 
 # 4. Load an OpenVINO model to quantize
@@ -85,9 +82,7 @@ openvino_model = SentenceTransformer(model_name, backend="openvino", device="cpu
 quantized_ov_model_path = f"{model_name.replace('/', '-')}-ov-quantized"
 openvino_model.save_pretrained(quantized_ov_model_path)
 export_static_quantized_openvino_model(
-    openvino_model,
-    quantization_config=None,
-    model_name_or_path=quantized_ov_model_path,
+    openvino_model, quantization_config=None, model_name_or_path=quantized_ov_model_path
 )
 quantized_ov_model = SentenceTransformer(
     quantized_ov_model_path,

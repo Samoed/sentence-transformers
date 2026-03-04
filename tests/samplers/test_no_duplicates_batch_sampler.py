@@ -58,11 +58,7 @@ def is_xxhash_available() -> bool:
 
 
 def _reference_no_duplicates_batches(
-    dataset: Dataset,
-    batch_size: int,
-    drop_last: bool,
-    seed: int,
-    valid_label_columns: list[str] | None = None,
+    dataset: Dataset, batch_size: int, drop_last: bool, seed: int, valid_label_columns: list[str] | None = None
 ) -> list[list[int]]:
     """Reference implementation of the historical dict-based iteration logic."""
     if label_columns := set(dataset.column_names) & set(valid_label_columns or []):

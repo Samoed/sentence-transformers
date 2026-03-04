@@ -54,8 +54,7 @@ def evaluate_stsb_test(model: SentenceTransformer, expected_score: float, test_d
 
 @pytest.mark.slow
 @pytest.mark.skipif(
-    not is_training_available(),
-    reason='Sentence Transformers was not installed with the `["train"]` extra.',
+    not is_training_available(), reason='Sentence Transformers was not installed with the `["train"]` extra.'
 )
 def test_train_stsb_slow(
     distilbert_base_uncased_model: SentenceTransformer, sts_resource: tuple[Dataset, Dataset]
@@ -82,8 +81,7 @@ def test_train_stsb_slow(
 
 @pytest.mark.skipif("CI" in os.environ, reason="This test is too slow for the CI (~8 minutes)")
 @pytest.mark.skipif(
-    not is_training_available(),
-    reason='Sentence Transformers was not installed with the `["train"]` extra.',
+    not is_training_available(), reason='Sentence Transformers was not installed with the `["train"]` extra.'
 )
 def test_train_stsb(distilbert_base_uncased_model: SentenceTransformer, sts_resource: tuple[Dataset, Dataset]) -> None:
     model = distilbert_base_uncased_model
@@ -109,13 +107,10 @@ def test_train_stsb(distilbert_base_uncased_model: SentenceTransformer, sts_reso
 
 @pytest.mark.slow
 @pytest.mark.skipif(
-    not is_training_available(),
-    reason='Sentence Transformers was not installed with the `["train"]` extra.',
+    not is_training_available(), reason='Sentence Transformers was not installed with the `["train"]` extra.'
 )
 def test_train_nli_slow(
-    distilbert_base_uncased_model: SentenceTransformer,
-    nli_resource: Dataset,
-    sts_resource: tuple[Dataset, Dataset],
+    distilbert_base_uncased_model: SentenceTransformer, nli_resource: Dataset, sts_resource: tuple[Dataset, Dataset]
 ) -> None:
     model = distilbert_base_uncased_model
     _, test_dataset = sts_resource
@@ -143,13 +138,10 @@ def test_train_nli_slow(
 
 @pytest.mark.skipif("CI" in os.environ, reason="This test is too slow for the CI (~25 minutes)")
 @pytest.mark.skipif(
-    not is_training_available(),
-    reason='Sentence Transformers was not installed with the `["train"]` extra.',
+    not is_training_available(), reason='Sentence Transformers was not installed with the `["train"]` extra.'
 )
 def test_train_nli(
-    distilbert_base_uncased_model: SentenceTransformer,
-    nli_resource: Dataset,
-    sts_resource: tuple[Dataset, Dataset],
+    distilbert_base_uncased_model: SentenceTransformer, nli_resource: Dataset, sts_resource: tuple[Dataset, Dataset]
 ) -> None:
     model = distilbert_base_uncased_model
     _, test_dataset = sts_resource

@@ -146,10 +146,7 @@ def test_model_card_base(
     assert "\n\n\n" not in model_card
 
 
-def test_model_card_set_transform(
-    stsb_bert_tiny_model: SentenceTransformer,
-    dummy_dataset: Dataset,
-) -> None:
+def test_model_card_set_transform(stsb_bert_tiny_model: SentenceTransformer, dummy_dataset: Dataset) -> None:
     model = stsb_bert_tiny_model
 
     # Let's avoid requesting the Hub for e.g. checking if a base model exists there

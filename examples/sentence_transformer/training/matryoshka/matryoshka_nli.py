@@ -18,11 +18,7 @@ from datetime import datetime
 
 from datasets import load_dataset
 
-from sentence_transformers import (
-    SentenceTransformer,
-    SentenceTransformerTrainer,
-    SentenceTransformerTrainingArguments,
-)
+from sentence_transformers import SentenceTransformer, SentenceTransformerTrainer, SentenceTransformerTrainingArguments
 from sentence_transformers.base.sampler import BatchSamplers
 from sentence_transformers.sentence_transformer.evaluation import (
     EmbeddingSimilarityEvaluator,

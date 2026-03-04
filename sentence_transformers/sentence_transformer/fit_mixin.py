@@ -20,10 +20,7 @@ from tqdm.autonotebook import trange
 from transformers import TrainerCallback, TrainerControl, TrainerState
 
 from sentence_transformers.base.evaluation import SentenceEvaluator
-from sentence_transformers.base.training_args import (
-    BatchSamplers,
-    MultiDatasetBatchSamplers,
-)
+from sentence_transformers.base.training_args import BatchSamplers, MultiDatasetBatchSamplers
 from sentence_transformers.sentence_transformer.datasets.NoDuplicatesDataLoader import NoDuplicatesDataLoader
 from sentence_transformers.sentence_transformer.datasets.SentenceLabelDataset import SentenceLabelDataset
 from sentence_transformers.sentence_transformer.deprecated_model_card_templates import ModelCardTemplate

@@ -36,11 +36,7 @@ class RandContext:
         self._fork = None
 
 
-def _backward_hook(
-    grad_output: Tensor,
-    pairs: list[list[str]],
-    loss_obj: CachedMultipleNegativesRankingLoss,
-) -> None:
+def _backward_hook(grad_output: Tensor, pairs: list[list[str]], loss_obj: CachedMultipleNegativesRankingLoss) -> None:
     """A backward hook to backpropagate the cached gradients mini-batch by mini-batch."""
     assert loss_obj.cache is not None
     assert loss_obj.random_states is not None

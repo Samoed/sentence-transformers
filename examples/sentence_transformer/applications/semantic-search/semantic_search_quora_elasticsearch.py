@@ -33,10 +33,7 @@ from elasticsearch import Elasticsearch, helpers
 from sentence_transformers import SentenceTransformer
 from sentence_transformers.util import http_get
 
-es = Elasticsearch(
-    "http://localhost:9200",
-    basic_auth=("elastic", os.environ["ELASTIC_PASSWORD"]),
-)
+es = Elasticsearch("http://localhost:9200", basic_auth=("elastic", os.environ["ELASTIC_PASSWORD"]))
 
 model = SentenceTransformer("quora-distilbert-multilingual")
 

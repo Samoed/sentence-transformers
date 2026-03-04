@@ -80,12 +80,7 @@ args = CrossEncoderTrainingArguments(
 
 # 6. Create the trainer & start training
 trainer = CrossEncoderTrainer(
-    model=model,
-    args=args,
-    train_dataset=train_dataset,
-    eval_dataset=eval_dataset,
-    loss=loss,
-    evaluator=evaluator,
+    model=model, args=args, train_dataset=train_dataset, eval_dataset=eval_dataset, loss=loss, evaluator=evaluator
 )
 trainer.train()
 

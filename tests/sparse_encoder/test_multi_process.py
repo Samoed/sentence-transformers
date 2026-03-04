@@ -99,9 +99,7 @@ def test_multi_process_chunk_size(splade_bert_tiny_model: SparseEncoder):
 @pytest.mark.parametrize("convert_to_tensor", [True, False])
 @pytest.mark.parametrize("convert_to_sparse_tensor", [True, False])
 def test_multi_process_with_empty_texts(
-    splade_bert_tiny_model: SparseEncoder,
-    convert_to_tensor: bool,
-    convert_to_sparse_tensor: bool,
+    splade_bert_tiny_model: SparseEncoder, convert_to_tensor: bool, convert_to_sparse_tensor: bool
 ):
     # Test encoding with empty texts
     model = splade_bert_tiny_model
@@ -128,9 +126,7 @@ def test_multi_process_with_empty_texts(
 @pytest.mark.parametrize("convert_to_tensor", [True, False])
 @pytest.mark.parametrize("convert_to_sparse_tensor", [True, False])
 def test_multi_process_with_single_string(
-    splade_bert_tiny_model: SparseEncoder,
-    convert_to_tensor: bool,
-    convert_to_sparse_tensor: bool,
+    splade_bert_tiny_model: SparseEncoder, convert_to_tensor: bool, convert_to_sparse_tensor: bool
 ):
     # Test encoding with a single text
     model = splade_bert_tiny_model

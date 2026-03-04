@@ -419,9 +419,7 @@ def test_prompt_output_value_None(stsb_bert_tiny_model) -> None:
 @pytest.mark.parametrize("has_bos_token", [True, False])
 @pytest.mark.parametrize("has_eos_token", [True, False])
 def test_prompt_length_calculation(
-    stsb_bert_tiny_model: SentenceTransformer,
-    has_bos_token: bool,
-    has_eos_token: bool,
+    stsb_bert_tiny_model: SentenceTransformer, has_bos_token: bool, has_eos_token: bool
 ) -> None:
     # This test checks that the prompt length is calculated correctly, regardless of whether the tokenizer has a
     # beginning-of-sequence or end-of-sequence token.

@@ -10,9 +10,7 @@ from sentence_transformers.modules import Pooling
 @pytest.mark.parametrize("padding_side", ["right", "left"])
 @pytest.mark.parametrize("prompt", ["", "query: ", "Summarize the following information: "])
 def test_pooling_prompt_attention_mask_respects_include_prompt(
-    stsb_bert_tiny_model: SentenceTransformer,
-    padding_side: str,
-    prompt: str,
+    stsb_bert_tiny_model: SentenceTransformer, padding_side: str, prompt: str
 ) -> None:
     model = stsb_bert_tiny_model
     model.tokenizer.padding_side = padding_side

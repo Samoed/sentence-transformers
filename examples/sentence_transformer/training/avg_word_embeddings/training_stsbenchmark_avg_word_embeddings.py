@@ -39,10 +39,7 @@ logging.info(train_dataset)
 word_embedding_model = WordEmbeddings.from_text_file("glove.6B.300d.txt.gz")
 
 # Apply mean pooling to get one fixed sized sentence vector
-pooling_model = Pooling(
-    word_embedding_model.get_word_embedding_dimension(),
-    pooling_mode="mean",
-)
+pooling_model = Pooling(word_embedding_model.get_word_embedding_dimension(), pooling_mode="mean")
 
 # Add two trainable feed-forward networks (DAN)
 sent_embeddings_dimension = pooling_model.get_sentence_embedding_dimension()

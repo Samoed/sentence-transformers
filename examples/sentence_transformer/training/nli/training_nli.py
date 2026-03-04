@@ -47,9 +47,7 @@ logging.info(train_dataset)
 
 # 3. Define our training loss: https://sbert.net/docs/package_reference/sentence_transformer/losses.html#softmaxloss
 train_loss = SoftmaxLoss(
-    model=model,
-    sentence_embedding_dimension=model.get_sentence_embedding_dimension(),
-    num_labels=3,
+    model=model, sentence_embedding_dimension=model.get_sentence_embedding_dimension(), num_labels=3
 )
 
 # 4. Define an evaluator for use during training. This is useful to keep track of alongside the evaluation loss.

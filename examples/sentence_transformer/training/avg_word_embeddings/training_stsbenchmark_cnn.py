@@ -45,10 +45,7 @@ cnn = CNN(
 )
 
 # Apply mean pooling to get one fixed sized sentence vector
-pooling_model = Pooling(
-    cnn.get_word_embedding_dimension(),
-    pooling_mode="mean",
-)
+pooling_model = Pooling(cnn.get_word_embedding_dimension(), pooling_mode="mean")
 model = SentenceTransformer(modules=[word_embedding_model, cnn, pooling_model])
 
 # 3. Define our training loss

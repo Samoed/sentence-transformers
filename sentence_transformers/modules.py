@@ -22,12 +22,7 @@ from .sentence_transformer.modules import (
     WordEmbeddings,
     WordWeights,
 )
-from .sparse_encoder.modules import (
-    MLMTransformer,
-    SparseAutoEncoder,
-    SparseStaticEmbedding,
-    SpladePooling,
-)
+from .sparse_encoder.modules import MLMTransformer, SparseAutoEncoder, SparseStaticEmbedding, SpladePooling
 
 __all__ = [
     # Base modules

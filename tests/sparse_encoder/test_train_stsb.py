@@ -30,10 +30,7 @@ def dummy_sparse_encoder_model() -> SparseEncoder:
 
 
 def evaluate_stsb_test(
-    model: SparseEncoder,
-    expected_score: float,
-    test_dataset: Dataset,
-    num_test_samples: int = -1,
+    model: SparseEncoder, expected_score: float, test_dataset: Dataset, num_test_samples: int = -1
 ) -> None:
     if num_test_samples > 0:
         test_dataset = test_dataset.select(range(num_test_samples))

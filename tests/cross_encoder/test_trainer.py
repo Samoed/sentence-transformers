@@ -8,11 +8,7 @@ from pathlib import Path
 import pytest
 import torch
 
-from sentence_transformers.cross_encoder import (
-    CrossEncoder,
-    CrossEncoderTrainer,
-    CrossEncoderTrainingArguments,
-)
+from sentence_transformers.cross_encoder import CrossEncoder, CrossEncoderTrainer, CrossEncoderTrainingArguments
 from sentence_transformers.cross_encoder.losses import BinaryCrossEntropyLoss
 from sentence_transformers.util import is_datasets_available, is_training_available
 

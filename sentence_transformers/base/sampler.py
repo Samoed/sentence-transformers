@@ -355,9 +355,7 @@ def _xxhash_int64(value: str) -> int:
 
 
 def _hash_batch(
-    batch: dict[str, list[Any]],
-    columns: list[str],
-    exclude_columns: set[str],
+    batch: dict[str, list[Any]], columns: list[str], exclude_columns: set[str]
 ) -> dict[str, list[list[int]]]:
     # Must be defined at module scope because datasets.map with num_proc pickles this function.
     # Build per-row hash lists so we can later do fast overlap checks without re-reading the dataset.

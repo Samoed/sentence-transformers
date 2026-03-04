@@ -130,10 +130,7 @@ def dummy_dataset():
     ],
 )
 def test_model_card_base(
-    dummy_dataset: Dataset,
-    num_datasets: int,
-    num_labels: int,
-    expected_substrings: list[str],
+    dummy_dataset: Dataset, num_datasets: int, num_labels: int, expected_substrings: list[str]
 ) -> None:
     model = CrossEncoder("sentence-transformers-testing/stsb-bert-tiny-safetensors", num_labels=num_labels)
 
@@ -160,10 +157,7 @@ def test_model_card_base(
     assert "\n\n\n" not in model_card
 
 
-def test_model_card_set_transform(
-    dummy_dataset: Dataset,
-    reranker_bert_tiny_model: CrossEncoder,
-) -> None:
+def test_model_card_set_transform(dummy_dataset: Dataset, reranker_bert_tiny_model: CrossEncoder) -> None:
     model = reranker_bert_tiny_model
 
     # Let's avoid requesting the Hub for e.g. checking if a base model exists there

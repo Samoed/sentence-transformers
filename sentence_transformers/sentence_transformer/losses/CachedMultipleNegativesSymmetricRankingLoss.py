@@ -14,7 +14,7 @@ from sentence_transformers.sentence_transformer.losses.CachedMultipleNegativesRa
 @deprecated(
     "The CachedMultipleNegativesSymmetricRankingLoss is deprecated and will be removed in a future release. "
     "Please use CachedMultipleNegativesRankingLoss with `directions=('query_to_doc', 'doc_to_query')` and "
-    "`partition_mode='per_direction'` instead.",
+    "`partition_mode='per_direction'` instead."
 )
 class CachedMultipleNegativesSymmetricRankingLoss(CachedMultipleNegativesRankingLoss):
     def __init__(

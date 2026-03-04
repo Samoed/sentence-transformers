@@ -5,10 +5,7 @@ import torch
 from datasets import Dataset, load_dataset
 from unsloth import FastSentenceTransformer, is_bf16_supported
 
-from sentence_transformers.sentence_transformer import (
-    SentenceTransformerTrainer,
-    SentenceTransformerTrainingArguments,
-)
+from sentence_transformers.sentence_transformer import SentenceTransformerTrainer, SentenceTransformerTrainingArguments
 from sentence_transformers.sentence_transformer.evaluation import InformationRetrievalEvaluator
 from sentence_transformers.sentence_transformer.losses import MultipleNegativesRankingLoss
 from sentence_transformers.sentence_transformer.training_args import BatchSamplers
@@ -58,12 +55,7 @@ print(train_dataset[0])
 queries = dict(enumerate(eval_dataset["question"]))
 corpus = dict(enumerate(list(eval_dataset["passage_text"]) + train_dataset["passage_text"][:2000]))
 relevant_docs = {idx: [idx] for idx in queries}
-evaluator = InformationRetrievalEvaluator(
-    queries=queries,
-    corpus=corpus,
-    relevant_docs=relevant_docs,
-    batch_size=64,
-)
+evaluator = InformationRetrievalEvaluator(queries=queries, corpus=corpus, relevant_docs=relevant_docs, batch_size=64)
 evaluator(model)
 
 # 5. Define a loss function

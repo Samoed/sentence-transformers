@@ -613,9 +613,7 @@ def _compute_similarity(model: SentenceTransformer, query: str, passage: str) ->
     ],
 )
 def test_triplet_output_scores_match_similarity(
-    request: pytest.FixtureRequest,
-    static_retrieval_mrl_en_v1_model: SentenceTransformer,
-    test_dataset: str,
+    request: pytest.FixtureRequest, static_retrieval_mrl_en_v1_model: SentenceTransformer, test_dataset: str
 ) -> None:
     """Verify that triplet scores match recomputed query-positive/negative similarity.
 
@@ -656,9 +654,7 @@ def test_triplet_output_scores_match_similarity(
     ],
 )
 def test_n_tuple_output_scores_match_similarity(
-    request: pytest.FixtureRequest,
-    static_retrieval_mrl_en_v1_model: SentenceTransformer,
-    test_dataset: str,
+    request: pytest.FixtureRequest, static_retrieval_mrl_en_v1_model: SentenceTransformer, test_dataset: str
 ) -> None:
     """Verify that n-tuple scores match recomputed query-positive/negatives similarity.
 
@@ -705,9 +701,7 @@ def test_n_tuple_output_scores_match_similarity(
     ],
 )
 def test_n_tuple_scores_alias_output_scores_match_similarity(
-    request: pytest.FixtureRequest,
-    static_retrieval_mrl_en_v1_model: SentenceTransformer,
-    test_dataset: str,
+    request: pytest.FixtureRequest, static_retrieval_mrl_en_v1_model: SentenceTransformer, test_dataset: str
 ) -> None:
     """Verify that n-tuple-scores (deprecated alias) exposes correct similarity scores.
 
@@ -751,9 +745,7 @@ def test_n_tuple_scores_alias_output_scores_match_similarity(
     ],
 )
 def test_labeled_pair_output_scores_match_similarity(
-    request: pytest.FixtureRequest,
-    static_retrieval_mrl_en_v1_model: SentenceTransformer,
-    test_dataset: str,
+    request: pytest.FixtureRequest, static_retrieval_mrl_en_v1_model: SentenceTransformer, test_dataset: str
 ) -> None:
     """Verify that labeled-pair scores match recomputed query-passage similarity.
 
@@ -787,9 +779,7 @@ def test_labeled_pair_output_scores_match_similarity(
     ],
 )
 def test_labeled_list_output_scores_match_similarity(
-    request: pytest.FixtureRequest,
-    static_retrieval_mrl_en_v1_model: SentenceTransformer,
-    test_dataset: str,
+    request: pytest.FixtureRequest, static_retrieval_mrl_en_v1_model: SentenceTransformer, test_dataset: str
 ) -> None:
     """Verify that labeled-list scores match recomputed query-passage similarity for all items.
 

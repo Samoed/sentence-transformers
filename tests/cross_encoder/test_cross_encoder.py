@@ -173,10 +173,7 @@ def test_empty_predict(reranker_bert_tiny_model: CrossEncoder, convert_to_numpy:
 
 @pytest.mark.parametrize("convert_to_tensor", [True, False])
 @pytest.mark.parametrize("convert_to_numpy", [True, False])
-def test_predict_output_types(
-    convert_to_tensor: bool,
-    convert_to_numpy: bool,
-) -> None:
+def test_predict_output_types(convert_to_tensor: bool, convert_to_numpy: bool) -> None:
     model = CrossEncoder("cross-encoder-testing/reranker-bert-tiny-gooaq-bce")
     embeddings = model.predict(
         [["One sentence", "Another sentence"]],

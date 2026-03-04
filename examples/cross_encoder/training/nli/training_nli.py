@@ -87,9 +87,7 @@ trainer.train()
 
 # 7. Evaluate the final model on test dataset
 test_cls_evaluator = CrossEncoderClassificationEvaluator(
-    list(zip(test_dataset["premise"], test_dataset["hypothesis"])),
-    test_dataset["label"],
-    name="AllNLI-test",
+    list(zip(test_dataset["premise"], test_dataset["hypothesis"])), test_dataset["label"], name="AllNLI-test"
 )
 test_cls_evaluator(model)
 

@@ -14,12 +14,7 @@ import numpy as np
 import torch
 from torch import nn
 from tqdm.autonotebook import trange
-from transformers import (
-    AutoConfig,
-    PretrainedConfig,
-    PreTrainedModel,
-    is_datasets_available,
-)
+from transformers import AutoConfig, PretrainedConfig, PreTrainedModel, is_datasets_available
 from typing_extensions import deprecated
 
 from sentence_transformers.base.model import BaseModel

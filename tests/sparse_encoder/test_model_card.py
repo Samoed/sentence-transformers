@@ -203,9 +203,7 @@ def test_model_card_base(
 
 
 def test_model_card_set_transform(
-    splade_bert_tiny_model: SparseEncoder,
-    dummy_dataset: Dataset,
-    tmp_path: Path,
+    splade_bert_tiny_model: SparseEncoder, dummy_dataset: Dataset, tmp_path: Path
 ) -> None:
     model = splade_bert_tiny_model
 

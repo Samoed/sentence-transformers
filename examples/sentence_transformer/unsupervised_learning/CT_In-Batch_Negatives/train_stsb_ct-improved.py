@@ -13,10 +13,7 @@ from sentence_transformers.util import dot_score
 
 # Just some code to print debug information to stdout
 logging.basicConfig(
-    format="%(asctime)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-    level=logging.INFO,
-    handlers=[LoggingHandler()],
+    format="%(asctime)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S", level=logging.INFO, handlers=[LoggingHandler()]
 )
 # print debug information to stdout
 

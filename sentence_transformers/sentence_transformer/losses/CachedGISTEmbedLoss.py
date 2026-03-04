@@ -40,9 +40,7 @@ class RandContext:
 
 
 def _backward_hook(
-    grad_output: Tensor,
-    sentence_features: Iterable[dict[str, Tensor]],
-    loss_obj: CachedGISTEmbedLoss,
+    grad_output: Tensor, sentence_features: Iterable[dict[str, Tensor]], loss_obj: CachedGISTEmbedLoss
 ) -> None:
     """A backward hook to backpropagate the cached gradients mini-batch by mini-batch."""
     assert loss_obj.cache is not None

@@ -5,10 +5,7 @@ import traceback
 from datasets import Dataset, load_dataset
 from unsloth import FastSentenceTransformer
 
-from sentence_transformers.sentence_transformer import (
-    SentenceTransformerTrainer,
-    SentenceTransformerTrainingArguments,
-)
+from sentence_transformers.sentence_transformer import SentenceTransformerTrainer, SentenceTransformerTrainingArguments
 from sentence_transformers.sentence_transformer.evaluation import NanoBEIREvaluator
 from sentence_transformers.sentence_transformer.losses import CachedMultipleNegativesRankingLoss
 from sentence_transformers.sentence_transformer.training_args import BatchSamplers
