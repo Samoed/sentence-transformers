@@ -106,11 +106,6 @@ DEPRECATED_MODULE_PATHS = {
     "sentence_transformers.cross_encoder.evaluation.CESoftmaxAccuracyEvaluator": "sentence_transformers.cross_encoder.evaluation.deprecated",
     "sentence_transformers.cross_encoder.evaluation.CECorrelationEvaluator": "sentence_transformers.cross_encoder.evaluation.deprecated",
     "sentence_transformers.cross_encoder.evaluation.CERerankingEvaluator": "sentence_transformers.cross_encoder.evaluation.deprecated",
-    # Deprecated in Sentence Transformers TODO
-    # TODO: Perhaps import Asym/Router etc. in sentence_transformers/sentence_transformer/models/__init__.py to allow
-    # for importing from sentence_transformers.sentence_transformer.models etc.?
-    "sentence_transformers.sentence_transformer.modules.Asym": "sentence_transformers.base.modules.Router",
-    "sentence_transformers.sentence_transformer.modules.Router": "sentence_transformers.base.modules.Router",
 }
 
 
