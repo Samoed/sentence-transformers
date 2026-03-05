@@ -1075,9 +1075,9 @@ class SparseEncoder(BaseModel):
             "revision": revision,
             "local_files_only": local_files_only,
         }
-        model_kwargs = shared_kwargs if model_kwargs is None else {**shared_kwargs, **model_kwargs}
-        tokenizer_kwargs = shared_kwargs if tokenizer_kwargs is None else {**shared_kwargs, **tokenizer_kwargs}
-        config_kwargs = shared_kwargs if config_kwargs is None else {**shared_kwargs, **config_kwargs}
+        model_kwargs = {**shared_kwargs} if model_kwargs is None else {**shared_kwargs, **model_kwargs}
+        tokenizer_kwargs = {**shared_kwargs} if tokenizer_kwargs is None else {**shared_kwargs, **tokenizer_kwargs}
+        config_kwargs = {**shared_kwargs} if config_kwargs is None else {**shared_kwargs, **config_kwargs}
 
         config: PretrainedConfig = AutoConfig.from_pretrained(
             model_name_or_path, cache_dir=cache_folder, **config_kwargs
@@ -1170,9 +1170,9 @@ class SparseEncoder(BaseModel):
             "revision": revision,
             "local_files_only": local_files_only,
         }
-        model_kwargs = shared_kwargs if model_kwargs is None else {**shared_kwargs, **model_kwargs}
-        tokenizer_kwargs = shared_kwargs if tokenizer_kwargs is None else {**shared_kwargs, **tokenizer_kwargs}
-        config_kwargs = shared_kwargs if config_kwargs is None else {**shared_kwargs, **config_kwargs}
+        model_kwargs = {**shared_kwargs} if model_kwargs is None else {**shared_kwargs, **model_kwargs}
+        tokenizer_kwargs = {**shared_kwargs} if tokenizer_kwargs is None else {**shared_kwargs, **tokenizer_kwargs}
+        config_kwargs = {**shared_kwargs} if config_kwargs is None else {**shared_kwargs, **config_kwargs}
 
         # TODO: Rethink logging message
         logger.info(

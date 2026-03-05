@@ -212,9 +212,9 @@ class CrossEncoder(BaseModel, FitMixin):
             "revision": revision,
             "local_files_only": local_files_only,
         }
-        model_kwargs = shared_kwargs if model_kwargs is None else {**shared_kwargs, **model_kwargs}
-        tokenizer_kwargs = shared_kwargs if tokenizer_kwargs is None else {**shared_kwargs, **tokenizer_kwargs}
-        config_kwargs = shared_kwargs if config_kwargs is None else {**shared_kwargs, **config_kwargs}
+        model_kwargs = {**shared_kwargs} if model_kwargs is None else {**shared_kwargs, **model_kwargs}
+        tokenizer_kwargs = {**shared_kwargs} if tokenizer_kwargs is None else {**shared_kwargs, **tokenizer_kwargs}
+        config_kwargs = {**shared_kwargs} if config_kwargs is None else {**shared_kwargs, **config_kwargs}
 
         if not local_files_only:
             self.model_card_data.set_base_model(model_name_or_path, revision=revision)
