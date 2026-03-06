@@ -414,9 +414,7 @@ class Transformer(InputModule):
                     self.tokenizer.model_max_length, self.config.max_position_embeddings
                 )
 
-            # TODO: Ensure this is correctly under test for both Transformers v4 and
             if do_lower_case:
-                # TODO: Transformers v5 only has fast tokenizers
                 if self.tokenizer.is_fast:
 
                     def has_lowercase(normalizer):
@@ -975,9 +973,6 @@ class Transformer(InputModule):
         Returns the loaded model, or None if the config doesn't match any encoder-only architecture.
         """
 
-        # TODO: Test model saving/loading for all of these edge cases, checking for equivalence in outputs before and after
-        # E.g. using some tiny-random models
-
         def _load_encoder(model_cls, load_config=None, **extra_class_attrs):
             with set_temporary_class_attrs(
                 model_cls, _keys_to_ignore_on_load_unexpected=["decoder.*"], **extra_class_attrs
@@ -1071,11 +1066,6 @@ class Transformer(InputModule):
                         modality_config[modality] = {"method": method_name, "method_output_name": "pooler_output"}
                     else:
                         modality_config[modality] = {"method": method_name, "method_output_name": None}
-
-            # Re-add the "message" modality using the same config as "text" if available
-            # TODO: Check if this is right. Normally there's no 'message' support for get_..._features architectures
-            if "message" in modalities and "text" in modality_config:
-                modality_config["message"] = modality_config["text"]
 
             return modality_config, "sentence_embedding"
 

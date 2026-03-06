@@ -5,10 +5,12 @@ import logging
 import sys
 from pathlib import Path
 
+import numpy as np
 import pytest
 import torch
 from packaging.version import parse as parse_version
-from transformers import AutoModel
+from tokenizers.normalizers import NFC, Lowercase, Sequence
+from transformers import AutoModel, AutoProcessor
 from transformers import __version__ as transformers_version
 
 from sentence_transformers.base.modules.Transformer import TRANSFORMER_TASK_DEFAULTS, set_temporary_class_attrs
@@ -59,11 +61,124 @@ class TestTransformerInit:
         assert transformer.config.num_labels == 1
 
     def test_do_lower_case(self):
-        """do_lower_case should add Lowercase normalization to the tokenizer."""
+        """do_lower_case should add exactly one Lowercase normalizer and actually lowercase tokens."""
         transformer = Transformer(TINY_BERT, do_lower_case=True)
         assert transformer.do_lower_case is True
+
+        # Normalizer should be a Sequence containing exactly one Lowercase
+        normalizer = transformer.tokenizer.backend_tokenizer.normalizer
+        assert isinstance(normalizer, Sequence)
+        assert sum(1 for n in normalizer if isinstance(n, Lowercase)) == 1
+
+        # Tokens should be lowercased, and different cases should produce the same IDs
         tokens = transformer.tokenizer.tokenize("Hello WORLD")
         assert all(t == t.lower() for t in tokens)
+        features_lower = transformer.preprocess(["hello world"])
+        features_upper = transformer.preprocess(["HELLO WORLD"])
+        assert torch.equal(features_lower["input_ids"], features_upper["input_ids"])
+
+    def test_do_lower_case_noop_when_lowercase_already_present(self, monkeypatch):
+        """If the normalizer already has Lowercase, do_lower_case should not add another."""
+        # Pre-set the normalizer to already contain Lowercase before __init__ applies it
+        original_from_pretrained = AutoProcessor.from_pretrained
+
+        def patched_from_pretrained(*args, **kwargs):
+            processor = original_from_pretrained(*args, **kwargs)
+            processor.backend_tokenizer.normalizer = Sequence([Lowercase()])
+            return processor
+
+        monkeypatch.setattr(AutoProcessor, "from_pretrained", patched_from_pretrained)
+        transformer = Transformer(TINY_BERT, do_lower_case=True)
+        normalizer = transformer.tokenizer.backend_tokenizer.normalizer
+        assert isinstance(normalizer, Sequence)
+        assert sum(1 for n in normalizer if isinstance(n, Lowercase)) == 1
+
+    def test_do_lower_case_prepends_to_existing_sequence(self, monkeypatch):
+        """When normalizer is a Sequence without Lowercase, Lowercase should be prepended."""
+        original_from_pretrained = AutoProcessor.from_pretrained
+
+        def patched_from_pretrained(*args, **kwargs):
+            processor = original_from_pretrained(*args, **kwargs)
+            processor.backend_tokenizer.normalizer = Sequence([NFC()])
+            return processor
+
+        monkeypatch.setattr(AutoProcessor, "from_pretrained", patched_from_pretrained)
+        transformer = Transformer(TINY_BERT, do_lower_case=True)
+        normalizer = transformer.tokenizer.backend_tokenizer.normalizer
+        assert isinstance(normalizer, Sequence)
+        normalizer_list = list(normalizer)
+        assert isinstance(normalizer_list[0], Lowercase)
+        assert any(isinstance(n, NFC) for n in normalizer_list)
+
+    def test_do_lower_case_wraps_single_normalizer(self, monkeypatch):
+        """When normalizer is a single non-Sequence normalizer, it should be wrapped with Lowercase."""
+        original_from_pretrained = AutoProcessor.from_pretrained
+
+        def patched_from_pretrained(*args, **kwargs):
+            processor = original_from_pretrained(*args, **kwargs)
+            processor.backend_tokenizer.normalizer = NFC()
+            return processor
+
+        monkeypatch.setattr(AutoProcessor, "from_pretrained", patched_from_pretrained)
+        transformer = Transformer(TINY_BERT, do_lower_case=True)
+        normalizer = transformer.tokenizer.backend_tokenizer.normalizer
+        assert isinstance(normalizer, Sequence)
+        normalizer_list = list(normalizer)
+        assert isinstance(normalizer_list[0], Lowercase)
+        assert isinstance(normalizer_list[1], NFC)
+
+    def test_do_lower_case_with_none_normalizer(self, monkeypatch):
+        """When normalizer is None, do_lower_case should create a Sequence with just Lowercase."""
+        original_from_pretrained = AutoProcessor.from_pretrained
+
+        def patched_from_pretrained(*args, **kwargs):
+            processor = original_from_pretrained(*args, **kwargs)
+            processor.backend_tokenizer.normalizer = None
+            return processor
+
+        monkeypatch.setattr(AutoProcessor, "from_pretrained", patched_from_pretrained)
+        transformer = Transformer(TINY_BERT, do_lower_case=True)
+        normalizer = transformer.tokenizer.backend_tokenizer.normalizer
+        assert isinstance(normalizer, Sequence)
+        normalizer_list = list(normalizer)
+        assert len(normalizer_list) == 1
+        assert isinstance(normalizer_list[0], Lowercase)
+
+    def test_do_lower_case_false_does_not_modify_normalizer(self):
+        """do_lower_case=False should not modify the tokenizer normalizer."""
+        transformer_default = Transformer(TINY_BERT, do_lower_case=False)
+        transformer_none = Transformer(TINY_BERT)
+        norm_default = transformer_default.tokenizer.backend_tokenizer.normalizer
+        norm_none = transformer_none.tokenizer.backend_tokenizer.normalizer
+        if norm_default is None:
+            assert norm_none is None
+        else:
+            assert str(norm_default) == str(norm_none)
+
+    @pytest.mark.skipif(
+        parse_version(transformers_version) >= parse_version("5.0.0"),
+        reason="Transformers v5 only has fast tokenizers",
+    )
+    def test_do_lower_case_slow_tokenizer_fallback(self):
+        """For slow tokenizers, do_lower_case should set processor.do_lower_case."""
+        transformer = Transformer(TINY_BERT, do_lower_case=True, processor_kwargs={"use_fast": False})
+        assert transformer.tokenizer.is_fast is False
+        assert transformer.processor.do_lower_case is True
+
+    def test_do_lower_case_tokenizer_persisted_after_save_load(self, tmp_path):
+        """The Lowercase normalizer added to the tokenizer should persist after save/load."""
+        transformer = Transformer(TINY_BERT, do_lower_case=True)
+        tokens_before = transformer.tokenizer.tokenize("Hello WORLD")
+        assert all(t == t.lower() for t in tokens_before)
+
+        save_dir = str(tmp_path / "model")
+        transformer.save(save_dir)
+        reloaded = Transformer.load(save_dir)
+
+        # The tokenizer normalizer is saved with the tokenizer, so lowercasing still works
+        tokens_after = reloaded.tokenizer.tokenize("Hello WORLD")
+        assert tokens_before == tokens_after
+        assert all(t == t.lower() for t in tokens_after)
 
     def test_tokenizer_name_or_path_warning(self, caplog):
         """tokenizer_name_or_path should emit a deprecation warning."""
@@ -560,54 +675,165 @@ class TestLoadInitKwargs:
         assert kwargs["backend"] == "torch"
 
 
-@pytest.mark.slow
-@pytest.mark.parametrize(
-    "model_name, expected_class_name",
-    [
-        (TINY_BERT, "BertModel"),
-        ("hf-internal-testing/tiny-random-t5", "T5EncoderModel"),
-        ("hf-internal-testing/tiny-random-mt5", "MT5EncoderModel"),
-        ("google/t5gemma-s-s-prefixlm", "T5GemmaEncoderModel"),
-        ("google/t5gemma-2-270m-270m", "T5Gemma2Encoder"),
-    ],
-)
-@pytest.mark.skipif(not torch.cuda.is_available() and torch.cuda.device_count() == 0, reason="Requires torch backend")
-def test_transformer_load_save_roundtrip(tmp_path: Path, model_name: str, expected_class_name: str):
-    if parse_version(transformers_version) < parse_version("5.0.0") and expected_class_name == "T5Gemma2Encoder":
-        pytest.skip("T5Gemma2Encoder requires transformers>=5.0.0")
-    if parse_version(transformers_version) < parse_version("4.54.1") and expected_class_name == "T5GemmaEncoderModel":
-        pytest.skip("T5GemmaEncoderModel requires transformers>=4.54.1")
+class TestEncoderOnlySaveLoadRoundtrip:
+    """Test save/load roundtrip for encoder-only models extracted from encoder-decoder architectures.
 
-    transformer = Transformer(model_name_or_path=model_name)
-    actual_class_name = type(transformer.auto_model).__name__
-    assert actual_class_name == expected_class_name
+    Each encoder-decoder architecture in ``_ENCODER_ONLY_MODELS`` (plus the T5Gemma special cases)
+    should produce the correct encoder class, and outputs should be identical after save/load.
+    """
 
-    if expected_class_name == "T5Gemma2Encoder":
-        transformer.auto_model.config._attn_implementation = "eager"
+    # (model_name, expected_class_name, extra_kwargs)
+    # extra_kwargs may contain config_kwargs and is_audio
+    ENCODER_ONLY_TEXT_MODELS = [
+        ("hf-internal-testing/tiny-random-T5Model", "T5EncoderModel", {}),
+        ("hf-internal-testing/tiny-random-mt5", "MT5EncoderModel", {}),
+        ("hf-internal-testing/tiny-random-UMT5ForTokenClassification", "UMT5EncoderModel", {}),
+        ("hf-internal-testing/tiny-random-LongT5Model", "LongT5EncoderModel", {}),
+        ("hf-internal-testing/tiny-random-ProphetNetModel", "ProphetNetEncoder", {}),
+        ("hf-internal-testing/tiny-random-SwitchTransformersModel", "SwitchTransformersEncoderModel", {}),
+        ("hf-internal-testing/tiny-random-BlenderbotModel", "BlenderbotEncoder", {}),
+        ("hf-internal-testing/tiny-random-BlenderbotSmallModel", "BlenderbotSmallEncoder", {}),
+        ("hf-internal-testing/tiny-random-M2M100Model", "M2M100Encoder", {}),
+        ("hf-internal-testing/tiny-random-PegasusModel", "PegasusEncoder", {}),
+        ("hf-internal-testing/tiny-random-PegasusXModel", "PegasusXEncoder", {}),
+        (
+            "hf-internal-testing/tiny-random-MarianModel",
+            "MarianEncoder",
+            # The default pad_token is at idx 58100, but embeddings were reduced to 99 in the tiny model
+            {"config_kwargs": {"pad_token_id": 1}},
+        ),
+    ]
 
-    texts = ["hello world", "goodbye world"]
-    features = transformer.tokenize(texts)
-    with torch.no_grad():
-        out1 = transformer(features)
+    ENCODER_ONLY_AUDIO_MODELS = [
+        (
+            "hf-internal-testing/tiny-random-WhisperModel",
+            "WhisperEncoder",
+            {"config_kwargs": {"max_source_positions": 1500}},
+        ),
+        ("hf-internal-testing/tiny-random-MoonshineForConditionalGeneration", "MoonshineEncoder", {}),
+    ]
 
-    save_dir = tmp_path / "model"
-    transformer.save(str(save_dir))
-    reloaded = Transformer.load(str(save_dir))
+    ENCODER_ONLY_LARGE_MODELS = [
+        ("google/t5gemma-s-s-prefixlm", "T5GemmaEncoderModel", {}),
+        ("google/t5gemma-2-270m-270m", "T5Gemma2Encoder", {}),
+    ]
 
-    actual_class_name = type(reloaded.auto_model).__name__
-    assert actual_class_name == expected_class_name
+    @staticmethod
+    def _load_transformer(model_name: str, extra_kwargs: dict) -> Transformer:
+        config_kwargs = extra_kwargs.get("config_kwargs", {})
+        return Transformer(
+            model_name_or_path=model_name,
+            model_kwargs={"ignore_mismatched_sizes": True},
+            config_kwargs=config_kwargs,
+        )
 
-    if expected_class_name == "T5Gemma2Encoder":
-        reloaded.auto_model.config._attn_implementation = "eager"
+    @staticmethod
+    def _get_inputs(transformer: Transformer, is_audio: bool) -> list:
+        if is_audio:
+            return [np.random.randn(16000).astype(np.float32) for _ in range(2)]
+        return ["hello world", "goodbye world"]
 
-    features = reloaded.tokenize(texts)
-    with torch.no_grad():
-        out2 = reloaded(features)
+    @staticmethod
+    def _assert_outputs_match(out1: dict, out2: dict) -> None:
+        for key in out1:
+            v1, v2 = out1[key], out2[key]
+            if isinstance(v1, torch.Tensor):
+                assert torch.allclose(v1, v2, atol=1e-5), f"Outputs for key {key!r} differ after save/load"
+            else:
+                assert v1 == v2, f"Outputs for key {key!r} differ after save/load"
 
-    for key in out1.keys():
-        value1 = out1[key]
-        value2 = out2[key]
-        if isinstance(value1, torch.Tensor):
-            assert torch.allclose(value1, value2), f"Outputs for key {key} differ after save/load"
-        else:
-            assert value1 == value2, f"Outputs for key {key} differ after save/load"
+    @pytest.mark.slow
+    @pytest.mark.parametrize(
+        "model_name, expected_class_name, extra_kwargs",
+        [(TINY_BERT, "BertModel", {})] + ENCODER_ONLY_TEXT_MODELS,
+        ids=lambda val: val if isinstance(val, str) and "/" in val else "",
+    )
+    def test_text_model_roundtrip(self, tmp_path: Path, model_name: str, expected_class_name: str, extra_kwargs: dict):
+        transformer = self._load_transformer(model_name, extra_kwargs)
+        assert type(transformer.auto_model).__name__ == expected_class_name
+
+        inputs = self._get_inputs(transformer, is_audio=False)
+        features = transformer.preprocess(inputs)
+        with torch.no_grad():
+            out1 = transformer(features)
+
+        save_dir = tmp_path / "model"
+        transformer.save(str(save_dir))
+        reloaded = Transformer.load(str(save_dir))
+        assert type(reloaded.auto_model).__name__ == expected_class_name
+
+        features = reloaded.preprocess(inputs)
+        with torch.no_grad():
+            out2 = reloaded(features)
+
+        self._assert_outputs_match(out1, out2)
+
+    @pytest.mark.slow
+    @pytest.mark.parametrize(
+        "model_name, expected_class_name, extra_kwargs",
+        ENCODER_ONLY_AUDIO_MODELS,
+        ids=lambda val: val if isinstance(val, str) and "/" in val else "",
+    )
+    def test_audio_model_roundtrip(
+        self, tmp_path: Path, model_name: str, expected_class_name: str, extra_kwargs: dict
+    ):
+        transformer = self._load_transformer(model_name, extra_kwargs)
+        assert type(transformer.auto_model).__name__ == expected_class_name
+
+        inputs = self._get_inputs(transformer, is_audio=True)
+        features = transformer.preprocess(inputs)
+        with torch.no_grad():
+            out1 = transformer(features)
+
+        save_dir = tmp_path / "model"
+        transformer.save(str(save_dir))
+        reloaded = Transformer.load(str(save_dir))
+        assert type(reloaded.auto_model).__name__ == expected_class_name
+
+        features = reloaded.preprocess(inputs)
+        with torch.no_grad():
+            out2 = reloaded(features)
+
+        self._assert_outputs_match(out1, out2)
+
+    @pytest.mark.slow
+    @pytest.mark.parametrize(
+        "model_name, expected_class_name, extra_kwargs",
+        ENCODER_ONLY_LARGE_MODELS,
+        ids=lambda val: val if isinstance(val, str) and "/" in val else "",
+    )
+    def test_large_model_roundtrip(
+        self, tmp_path: Path, model_name: str, expected_class_name: str, extra_kwargs: dict
+    ):
+        if parse_version(transformers_version) < parse_version("5.0.0") and expected_class_name == "T5Gemma2Encoder":
+            pytest.skip("T5Gemma2Encoder requires transformers>=5.0.0")
+        if (
+            parse_version(transformers_version) < parse_version("4.54.1")
+            and expected_class_name == "T5GemmaEncoderModel"
+        ):
+            pytest.skip("T5GemmaEncoderModel requires transformers>=4.54.1")
+
+        transformer = self._load_transformer(model_name, extra_kwargs)
+        assert type(transformer.auto_model).__name__ == expected_class_name
+
+        if expected_class_name == "T5Gemma2Encoder":
+            transformer.auto_model.config._attn_implementation = "eager"
+
+        inputs = self._get_inputs(transformer, is_audio=False)
+        features = transformer.preprocess(inputs)
+        with torch.no_grad():
+            out1 = transformer(features)
+
+        save_dir = tmp_path / "model"
+        transformer.save(str(save_dir))
+        reloaded = Transformer.load(str(save_dir))
+        assert type(reloaded.auto_model).__name__ == expected_class_name
+
+        if expected_class_name == "T5Gemma2Encoder":
+            reloaded.auto_model.config._attn_implementation = "eager"
+
+        features = reloaded.preprocess(inputs)
+        with torch.no_grad():
+            out2 = reloaded(features)
+
+        self._assert_outputs_match(out1, out2)
