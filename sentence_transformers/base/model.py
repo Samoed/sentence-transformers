@@ -36,7 +36,7 @@ from sentence_transformers.base.modules.modality_utils import (
     Modality,
     PairStrInputs,
     StrInputs,
-    # infer_modality  # TODO: Remove this fully
+    infer_batch_modality,
 )
 from sentence_transformers.base.peft_mixin import PeftAdapterMixin
 from sentence_transformers.util import (
@@ -198,9 +198,7 @@ class BaseModel(nn.Sequential, PeftAdapterMixin, ABC):
     @property
     def modalities(self) -> list[Modality]:
         """Return the list of modalities supported by this model."""
-        if hasattr(self[0], "modalities"):
-            return self[0].modalities
-        return ["text"]
+        return getattr(self[0], "modalities", ["text"])
 
     def get_model_kwargs(self) -> list[str]:
         """
@@ -302,22 +300,35 @@ class BaseModel(nn.Sequential, PeftAdapterMixin, ABC):
         Returns:
             Dict[str, Tensor]: A dictionary of tensors with the preprocessed texts.
         """
-        # Infer modality if not already provided in kwargs
-        """
-        if "modality" not in kwargs:
+        # Validate that the inputs match a supported modality.
+        # If "message" is supported, any modality is allowed since the input module
+        # can convert it to message format (e.g. wrapping images in chat messages).
+        modality = None
+        if inputs:
             try:
-                kwargs["modality"] = infer_modality(inputs)
-            except (ValueError, TypeError, ImportError):
+                modality = infer_batch_modality(inputs)
+            except (ValueError, TypeError):
                 pass
-        """
+            else:
+                supported_modalities = self.modalities
+                if modality not in supported_modalities and "message" not in supported_modalities:
+                    raise ValueError(
+                        f"Modality '{modality}' is not supported by {type(self[0]).__name__}. "
+                        f"Supported modalities: {supported_modalities}"
+                    )
 
-        # TODO: When to pass via kwargs and when via explicit argument?
-        # TODO: Perhaps just call 'preprocess' and expect InputModule to handle forwarding to tokenize?
+        # Backwards compatibility: fall back to preprocess/tokenize without prompt if the
+        # input module doesn't accept it. Only the main path (preprocess with prompt) will
+        # be supported in the future.
         try:
             preprocessed = self[0].preprocess(inputs, prompt=prompt, **kwargs)
         except TypeError:
-            preprocessed = self[0].preprocess(inputs)
+            if prompt and modality == "text":
+                inputs = [prompt + inp for inp in inputs]  # type: ignore[operator]
+            preprocessed = self[0].preprocess(inputs, **kwargs)
         except AttributeError:
+            if prompt and modality == "text":
+                inputs = [prompt + inp for inp in inputs]  # type: ignore[operator]
             try:
                 preprocessed = self[0].tokenize(inputs, **kwargs)
             except TypeError:

@@ -328,6 +328,13 @@ class Router(InputModule):
             else {}
         )
 
+    @property
+    def modalities(self) -> list[Modality]:
+        """The union of modalities supported by all sub-module input modules."""
+        return list(
+            {modality for route in self.sub_modules.values() for modality in getattr(route[0], "modalities", ["text"])}
+        )
+
     def _get_routes_string(self):
         # Build concise but helpful error message
         routes = [f"task={name!r}" for name in self.sub_modules.keys()]
@@ -528,6 +535,7 @@ class Router(InputModule):
     def preprocess(
         self,
         inputs: list[StrInputs | PairStrInputs | DictInputs | ImageInputs | ArrayInputs],
+        prompt: str | None = None,
         task: str | None = None,
         modality: Modality | None = None,
         **kwargs,
@@ -563,7 +571,7 @@ class Router(InputModule):
         route = self._resolve_route(task=task, modality=modality)
 
         input_module = self.sub_modules[route][0]
-        tokenized = input_module.preprocess(inputs, **kwargs)
+        tokenized = input_module.preprocess(inputs, prompt=prompt, **kwargs)
         tokenized["task"] = task
         if modality is not None:
             tokenized["modality"] = modality

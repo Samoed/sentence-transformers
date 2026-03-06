@@ -10,6 +10,7 @@ from sentence_transformers.base.modules.modality_utils import (
     ArrayInputs,
     DictInputs,
     ImageInputs,
+    Modality,
     PairStrInputs,
     StrInputs,
 )
@@ -30,7 +31,7 @@ class InputModule(Module):
 
     - :meth:`sentence_transformers.sentence_transformer.modules.Module.forward`: The forward pass of the module.
     - :meth:`sentence_transformers.sentence_transformer.modules.Module.save`: Save the module to disk.
-    - :meth:`sentence_transformers.sentence_transformer.modules.InputModule.tokenize`: Tokenize the input texts and return a dictionary of tokenized features.
+    - :meth:`sentence_transformers.sentence_transformer.modules.InputModule.preprocess`: Preprocess the inputs and return a dictionary of preprocessed features.
 
     Optionally, you may also have to override:
 
@@ -63,21 +64,28 @@ class InputModule(Module):
     ``tokenizers`` library.
     """
 
+    @property
+    def modalities(self) -> list[Modality]:
+        """The list of supported input modalities. Defaults to ``["text"]``."""
+        return ["text"]
+
+    @staticmethod
+    def _prepend_prompt(inputs: list[str], prompt: str) -> list[str]:
+        """Prepend a prompt string to each text input."""
+        return [prompt + text for text in inputs]
+
     def preprocess(
         self,
-        inputs: list[StrInputs | PairStrInputs | DictInputs | ImageInputs | ArrayInputs]
-        | StrInputs
-        | PairStrInputs
-        | DictInputs
-        | ImageInputs
-        | ArrayInputs,
+        inputs: list[StrInputs | PairStrInputs | DictInputs | ImageInputs | ArrayInputs],
+        prompt: str | None = None,
         **kwargs,
     ) -> dict[str, torch.Tensor | Any]:
         """
         Preprocesses the input texts and returns a dictionary of preprocessed features.
 
         Args:
-            texts (list[str]): List of input texts to preprocess.
+            inputs (list[str]): List of input texts to preprocess.
+            prompt (str | None): Optional prompt to prepend to text inputs.
             **kwargs: Additional keyword arguments for preprocessing, e.g. ``task``.
 
         Returns:

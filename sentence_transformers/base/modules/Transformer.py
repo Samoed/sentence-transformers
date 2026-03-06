@@ -524,7 +524,6 @@ class Transformer(InputModule):
         self,
         inputs: list[StrInputs | PairStrInputs | DictInputs | ImageInputs | ArrayInputs],
         prompt: str | None = None,
-        padding: str | bool = True,
         **kwargs,
     ) -> dict[str, Any]:
         """Preprocess inputs into model-ready features.
@@ -533,7 +532,6 @@ class Transformer(InputModule):
             inputs: List of inputs. Can contain strings, dicts with modality keys, PIL images,
                 or numpy/torch arrays for audio/video.
             prompt: Optional prompt to prepend to text inputs or inject as a system message.
-            padding: Padding strategy for the processor.
             **kwargs: Additional keyword arguments forwarded to prompt length computation
                 (e.g. ``task``). Only used when ``prompt`` is provided for text inputs.
 
@@ -543,8 +541,8 @@ class Transformer(InputModule):
         """
         common_kwargs = {"return_tensors": "pt"}
         modality_kwargs = {
-            "text": {"padding": padding, "truncation": "longest_first"},
-            "audio": {"padding": padding},
+            "text": {"padding": True, "truncation": "longest_first"},
+            "audio": {"padding": True},
             "image": {},
             "video": {},
         }

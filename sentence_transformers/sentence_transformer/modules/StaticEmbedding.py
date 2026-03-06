@@ -26,6 +26,8 @@ logger = logging.getLogger(__name__)
 
 
 class StaticEmbedding(InputModule):
+    modalities: list[str] = ["text"]
+
     def __init__(
         self,
         tokenizer: Tokenizer | PreTrainedTokenizerFast,
@@ -106,7 +108,9 @@ class StaticEmbedding(InputModule):
         # For the model card
         self.base_model = kwargs.get("base_model", None)
 
-    def preprocess(self, inputs: list[str], **kwargs) -> dict[str, torch.Tensor]:
+    def preprocess(self, inputs: list[str], prompt: str | None = None, **kwargs) -> dict[str, torch.Tensor]:
+        if prompt:
+            inputs = self._prepend_prompt(inputs, prompt)
         encodings = self.tokenizer.encode_batch(inputs, add_special_tokens=False)
         encodings_ids = [encoding.ids for encoding in encodings]
 

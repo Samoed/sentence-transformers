@@ -1,5 +1,11 @@
 # Migration Guide
 
+## Migrating from v5.x to v5.4+
+
+TODO: Notes to self:
+- Updating the import paths (although there's backwards compatibility)
+- Avoiding using Router keys as dictionary keys in the input
+
 ## Migrating from v4.x to v5.x
 
 ```{eval-rst}

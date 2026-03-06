@@ -14,6 +14,7 @@ from torch import nn
 
 from sentence_transformers import SentenceTransformer, SentenceTransformerTrainer, SentenceTransformerTrainingArguments
 from sentence_transformers.base.modules.InputModule import InputModule
+from sentence_transformers.base.modules.modality_utils import Modality
 from sentence_transformers.modules import Dense, Normalize, Router, StaticEmbedding
 from sentence_transformers.sentence_transformer.losses import MultipleNegativesRankingLoss
 from sentence_transformers.util import is_datasets_available
@@ -36,6 +37,16 @@ class MockModule(InputModule):
 
     def save(self, output_path: str, *args, safe_serialization: bool = True, **kwargs) -> None:
         pass
+
+
+class MockModuleWithModalities(MockModule):
+    def __init__(self, modalities: list[Modality]):
+        super().__init__()
+        self._modalities = modalities
+
+    @property
+    def modalities(self) -> list[str]:
+        return self._modalities
 
 
 class MockModuleWithMaxLength(MockModule):
@@ -247,6 +258,7 @@ def test_router_is_alias_for_asym():
     assert Router is Asym
 
 
+@pytest.mark.xfail(reason="We're no longer supporting using tasks as dictionary keys.")
 def test_router_backwards_compatibility(static_embedding_model):
     """Test that Router can load models saved with Asym."""
 
@@ -1296,3 +1308,31 @@ def test_router_tokenize_with_modality_inference_failure(static_embedding_model:
     tokens = router.preprocess(texts, task="query")
     assert "task" in tokens
     assert tokens["task"] == "query"
+
+
+def test_router_modalities():
+    """Test that Router.modalities returns the union of modalities from all sub-module input modules."""
+    text_module = MockModuleWithModalities(["text"])
+    image_module = MockModuleWithModalities(["image"])
+    multimodal_module = MockModuleWithModalities(["text", "image", ("image", "text")])
+    multimodal_module_message = MockModuleWithModalities(["text", "image", "message"])
+
+    # Single text-only route
+    router = Router({"query": [text_module]})
+    assert sorted(router.modalities, key=str) == ["text"]
+
+    # Two routes with different modalities
+    router = Router({"query": [text_module], "document": [image_module]})
+    assert sorted(router.modalities, key=str) == ["image", "text"]
+
+    # Route with a multimodal module
+    router = Router({"query": [text_module], "document": [multimodal_module]})
+    assert sorted(router.modalities, key=str) == [("image", "text"), "image", "text"]
+
+    # Route with a multimodal module
+    router = Router({"query": [text_module], "document": [multimodal_module_message]})
+    assert sorted(router.modalities, key=str) == ["image", "message", "text"]
+
+    # All routes with the same modality — no duplicates
+    router = Router({"query": [text_module], "document": [text_module]})
+    assert sorted(router.modalities, key=str) == ["text"]

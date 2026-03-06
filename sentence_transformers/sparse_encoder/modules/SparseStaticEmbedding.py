@@ -41,6 +41,7 @@ class SparseStaticEmbedding(InputModule):
     """
 
     config_keys: list[str] = ["frozen"]
+    modalities: list[str] = ["text"]
 
     def __init__(
         self,
@@ -81,6 +82,18 @@ class SparseStaticEmbedding(InputModule):
 
         features["sentence_embedding"] = embeddings
         return features
+
+    def preprocess(
+        self,
+        inputs: list[str],
+        prompt: str | None = None,
+        **kwargs,
+    ) -> dict[str, torch.Tensor]:
+        if prompt:
+            inputs = self._prepend_prompt(inputs, prompt)
+        return dict(
+            self.tokenizer(inputs, padding=True, truncation=True, return_tensors="pt", add_special_tokens=False)
+        )
 
     def save(self, output_path: str, *args, safe_serialization: bool = True, **kwargs) -> None:
         self.save_tokenizer(output_path)
@@ -220,10 +233,3 @@ class SparseStaticEmbedding(InputModule):
 
     def get_sentence_embedding_dimension(self) -> int:
         return self.num_dimensions
-
-    def preprocess(
-        self, inputs: list[str] | list[dict] | list[tuple[str, str]], padding: str | bool = True, **kwargs
-    ) -> dict[str, torch.Tensor]:
-        return dict(
-            self.tokenizer(inputs, padding=padding, truncation=True, return_tensors="pt", add_special_tokens=False)
-        )

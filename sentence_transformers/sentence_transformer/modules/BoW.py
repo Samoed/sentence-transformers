@@ -21,6 +21,7 @@ class BoW(InputModule):
 
     save_in_root: bool = False
     config_keys: list[str] = ["vocab", "word_weights", "unknown_word_weight", "cumulative_term_frequency"]
+    modalities: list[str] = ["text"]
 
     def __init__(
         self,
@@ -60,7 +61,9 @@ class BoW(InputModule):
         # Nothing to do, everything is done in get_sentence_features
         return features
 
-    def preprocess(self, inputs: list[str], **kwargs) -> list[int]:
+    def preprocess(self, inputs: list[str], prompt: str | None = None, **kwargs) -> list[int]:
+        if prompt:
+            inputs = self._prepend_prompt(inputs, prompt)
         tokenized = [self.tokenizer.tokenize(text, **kwargs) for text in inputs]
         return self.get_sentence_features(tokenized)
 

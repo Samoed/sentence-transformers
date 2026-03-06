@@ -71,6 +71,25 @@ def test_from_model2vec() -> None:
     assert model.embedding.weight.shape == (29528, 256)
 
 
+def test_unsupported_modality(static_embedding_model: StaticEmbedding) -> None:
+    from PIL import Image
+
+    model = SentenceTransformer(modules=[static_embedding_model])
+    dummy_image = Image.new("RGB", (10, 10))
+
+    # Image-only input
+    with pytest.raises(ValueError, match="Modality 'image' is not supported by StaticEmbedding"):
+        model.encode([dummy_image])
+
+    # Mixed text+image input via multimodal dict
+    with pytest.raises(ValueError, match="is not supported by StaticEmbedding"):
+        model.encode([{"text": "a cat", "image": dummy_image}])
+
+    # Mixed text+image input via multimodal dict
+    with pytest.raises(ValueError, match="is not supported by StaticEmbedding"):
+        model.encode([{"text": "a cat", "image": dummy_image}, {"text": "a dog"}])
+
+
 def test_loading_model2vec() -> None:
     model = SentenceTransformer("minishlab/potion-base-8M")
     assert model.get_sentence_embedding_dimension() == 256

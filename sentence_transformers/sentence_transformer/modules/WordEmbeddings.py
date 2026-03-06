@@ -16,7 +16,7 @@ import torch
 from torch import nn
 from tqdm import tqdm
 
-from sentence_transformers.base.modules.Module import Module
+from sentence_transformers.base.modules.InputModule import InputModule
 from sentence_transformers.util import fullname, http_get, import_from_string
 
 from .tokenizer import TransformersTokenizerWrapper, WhitespaceTokenizer, WordTokenizer
@@ -24,9 +24,10 @@ from .tokenizer import TransformersTokenizerWrapper, WhitespaceTokenizer, WordTo
 logger = logging.getLogger(__name__)
 
 
-class WordEmbeddings(Module):
+class WordEmbeddings(InputModule):
     config_keys: list[str] = ["tokenizer_class", "update_embeddings", "max_seq_length"]
     config_file_name: str = "wordembedding_config.json"
+    modalities: list[str] = ["text"]
 
     def __init__(
         self,
@@ -55,7 +56,7 @@ class WordEmbeddings(Module):
         self.update_embeddings = update_embeddings
         self.max_seq_length = max_seq_length
 
-    def forward(self, features):
+    def forward(self, features, **kwargs):
         token_embeddings = self.emb_layer(features["input_ids"])
         cls_tokens = None
         features.update(
@@ -67,7 +68,9 @@ class WordEmbeddings(Module):
         )
         return features
 
-    def preprocess(self, inputs: list[str], **kwargs):
+    def preprocess(self, inputs: list[str], prompt: str | None = None, **kwargs):
+        if prompt:
+            inputs = self._prepend_prompt(inputs, prompt)
         tokenized_texts = [self.tokenizer.tokenize(text, **kwargs) for text in inputs]
         sentence_lengths = [len(tokens) for tokens in tokenized_texts]
         max_len = max(sentence_lengths)
@@ -90,7 +93,7 @@ class WordEmbeddings(Module):
     def get_word_embedding_dimension(self) -> int:
         return self.embeddings_dimension
 
-    def save(self, output_path: str, safe_serialization: bool = True):
+    def save(self, output_path: str, *args, safe_serialization: bool = True, **kwargs):
         self.save_config(output_path)
         self.save_torch_weights(output_path, safe_serialization=safe_serialization)
         self.tokenizer.save(output_path)
