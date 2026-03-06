@@ -180,6 +180,17 @@ class TestTransformerInit:
         assert tokens_before == tokens_after
         assert all(t == t.lower() for t in tokens_after)
 
+    def test_processing_kwargs_default_empty(self):
+        """processing_kwargs should default to an empty dict when not provided."""
+        transformer = Transformer(TINY_BERT)
+        assert transformer.processing_kwargs == {}
+
+    def test_processing_kwargs_stored(self):
+        """processing_kwargs passed to __init__ should be stored on the instance."""
+        kwargs = {"text": {"truncation": "only_first"}, "chat_template": {"add_generation_prompt": True}}
+        transformer = Transformer(TINY_BERT, processing_kwargs=kwargs)
+        assert transformer.processing_kwargs == kwargs
+
     def test_tokenizer_name_or_path_warning(self, caplog):
         """tokenizer_name_or_path should emit a deprecation warning."""
         with caplog.at_level(logging.WARNING):
@@ -314,6 +325,25 @@ class TestPreprocess:
         """preprocess without a prompt should not include prompt_length."""
         result = bert_tiny_transformer.preprocess(["hello world"])
         assert "prompt_length" not in result
+
+    def test_preprocess_processing_kwargs_text_override(self):
+        """processing_kwargs should override default text preprocessing kwargs."""
+        # With max_length=5 and truncation, the output should be truncated
+        transformer = Transformer(
+            TINY_BERT,
+            processing_kwargs={"text": {"max_length": 5, "truncation": True}},
+        )
+        result = transformer.preprocess(["this is a longer sentence that should get truncated"])
+        assert result["input_ids"].shape[1] == 5
+
+    def test_preprocess_processing_kwargs_common_override(self):
+        """processing_kwargs 'common' should override common_kwargs like return_tensors."""
+        transformer = Transformer(
+            TINY_BERT,
+            processing_kwargs={"common": {"return_tensors": "np"}},
+        )
+        result = transformer.preprocess(["hello world"])
+        assert isinstance(result["input_ids"], np.ndarray)
 
 
 class TestForward:
@@ -478,6 +508,27 @@ class TestProcessChatMessages:
                 common_kwargs={},
             )
 
+    def test_processing_kwargs_chat_template_passed_through(self, bert_tiny_transformer, monkeypatch):
+        """processing_kwargs['chat_template'] should be forwarded to apply_chat_template."""
+        model = bert_tiny_transformer
+        model.processing_kwargs = {"chat_template": {"add_generation_prompt": True, "continue_final_message": False}}
+        model.modality_config["message"] = {"method": "forward", "method_output_name": "last_hidden_state"}
+
+        captured_kwargs = {}
+
+        def mock_apply_chat_template(messages, **kwargs):
+            captured_kwargs.update(kwargs)
+            return {"input_ids": torch.tensor([[1, 2, 3]]), "attention_mask": torch.tensor([[1, 1, 1]])}
+
+        monkeypatch.setattr(model.processor, "apply_chat_template", mock_apply_chat_template)
+        model._process_chat_messages(
+            messages=[[{"role": "user", "content": "test"}]],
+            modality_kwargs={"text": {}, "audio": {}, "image": {}, "video": {}},
+            common_kwargs={"return_tensors": "pt"},
+        )
+        assert captured_kwargs["add_generation_prompt"] is True
+        assert captured_kwargs["continue_final_message"] is False
+
 
 class TestModelLoading:
     def test_invalid_backend_error(self):
@@ -582,6 +633,37 @@ class TestSerialization:
         reloaded = Transformer.load(save_dir)
         assert reloaded.max_seq_length == 42
         assert reloaded.tokenizer.model_max_length == 42
+
+    def test_processing_kwargs_save_load_roundtrip(self, tmp_path):
+        """processing_kwargs should be persisted to config JSON and restored on load."""
+        processing_kwargs = {
+            "text": {"truncation": "only_first"},
+            "chat_template": {"add_generation_prompt": True},
+        }
+        transformer = Transformer(TINY_BERT, processing_kwargs=processing_kwargs)
+        assert transformer.processing_kwargs == processing_kwargs
+
+        save_dir = str(tmp_path / "model")
+        transformer.save(save_dir)
+
+        # Verify the JSON file contains processing_kwargs
+        config_path = Path(save_dir) / "sentence_bert_config.json"
+        config = json.loads(config_path.read_text())
+        assert config["processing_kwargs"] == processing_kwargs
+
+        # Verify the reloaded Transformer has the same processing_kwargs
+        reloaded = Transformer.load(save_dir)
+        assert reloaded.processing_kwargs == processing_kwargs
+
+    def test_processing_kwargs_omitted_from_config_when_empty(self, bert_tiny_transformer, tmp_path):
+        """Empty processing_kwargs should not appear in the saved config JSON."""
+        assert bert_tiny_transformer.processing_kwargs == {}
+        save_dir = str(tmp_path / "model")
+        bert_tiny_transformer.save(save_dir)
+
+        config_path = Path(save_dir) / "sentence_bert_config.json"
+        config = json.loads(config_path.read_text())
+        assert "processing_kwargs" not in config
 
     def test_get_config_dict(self, bert_tiny_transformer):
         config = bert_tiny_transformer.get_config_dict()

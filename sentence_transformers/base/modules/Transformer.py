@@ -300,6 +300,13 @@ class Transformer(InputModule):
             Transformers processor/tokenizer
         config_kwargs: Keyword arguments passed to the Hugging Face
             Transformers config
+        processing_kwargs: Optional keyword arguments applied when *calling*
+            the processor during preprocessing. Keys are modality names
+            (``"text"``, ``"audio"``, ``"image"``, ``"video"``), ``"common"``
+            for kwargs shared across all modalities, or ``"chat_template"``
+            for kwargs forwarded to ``apply_chat_template`` (e.g.
+            ``{"add_generation_prompt": True}``). Modality and common kwargs
+            override the built-in defaults.
         cache_dir: Cache dir for Hugging Face Transformers to store/load
             models
         do_lower_case: If true, lowercases the input (independent if the
@@ -322,6 +329,7 @@ class Transformer(InputModule):
         "modality_config",
         "module_output_name",
         "message_format",
+        "processing_kwargs",
     ]
     save_in_root: bool = True
 
@@ -337,6 +345,7 @@ class Transformer(InputModule):
         model_kwargs: dict[str, Any] | None = None,
         processor_kwargs: dict[str, Any] | None = None,
         config_kwargs: dict[str, Any] | None = None,
+        processing_kwargs: dict[str, dict[str, Any]] | None = None,
         cache_dir: str | None = None,
         do_lower_case: bool = False,
         tokenizer_name_or_path: str | None = None,
@@ -361,6 +370,7 @@ class Transformer(InputModule):
             processor_kwargs = {}
         if config_kwargs is None:
             config_kwargs = {}
+        self.processing_kwargs: dict[str, dict[str, Any]] = processing_kwargs or {}
         self._prompt_length_mapping = {}
         self._method_signature_cache: dict[str, set[str]] = {}
 
@@ -537,8 +547,6 @@ class Transformer(InputModule):
             input type and optionally a ``prompt_length`` key for prompt-aware pooling.
         """
         common_kwargs = {"return_tensors": "pt"}
-        # TODO: We should likely set as little defaults and architecture-specific functionality as possible here,
-        # and also allow users to pass extra kwargs.
         modality_kwargs = {
             "text": {"padding": padding, "truncation": "longest_first"},
             "audio": {"padding": padding},
@@ -549,6 +557,13 @@ class Transformer(InputModule):
             # Whisper requires inputs to be exactly 30 seconds long, while its WhisperFeatureExtractor defaults to
             # padding=True (a.k.a. "longest"), instead of defaulting to the required "max_length".
             modality_kwargs["audio"]["padding"] = "max_length"
+
+        # Apply user-configured processing_kwargs on top of the defaults
+        if "common" in self.processing_kwargs:
+            common_kwargs.update(self.processing_kwargs["common"])
+        for modality_key in modality_kwargs:
+            if modality_key in self.processing_kwargs:
+                modality_kwargs[modality_key].update(self.processing_kwargs[modality_key])
 
         prompt_length = None
 
@@ -811,6 +826,7 @@ class Transformer(InputModule):
 
         # Ideally we'd use the same code path for both ProcessorMixin and Tokenizers, but the latter expects
         # the text kwargs to be passed at the top level instead of in a nested "text_kwargs" dict.
+        chat_template_kwargs = self.processing_kwargs.get("chat_template", {})
         if isinstance(self.processor, ProcessorMixin):
             return self.processor.apply_chat_template(
                 messages,
@@ -821,7 +837,7 @@ class Transformer(InputModule):
                 audio_kwargs=modality_kwargs["audio"],
                 videos_kwargs=modality_kwargs["video"],
                 common_kwargs=common_kwargs,
-                # TODO: Qwen3-VL-Embedding needs add_generation_prompt=True; find a model-agnostic way to set this
+                **chat_template_kwargs,
             )
 
         # apply_chat_template expects padding/truncation/max_length/return_tensors as top-level kwargs,
@@ -839,7 +855,7 @@ class Transformer(InputModule):
             tokenizer_kwargs=modality_kwargs["text"],
             common_kwargs=common_kwargs,
             **top_level_kwargs,
-            # TODO: Qwen3-VL-Embedding needs add_generation_prompt=True; find a model-agnostic way to set this
+            **chat_template_kwargs,
         )
 
     def _get_prompt_length(self, prompt: str, **kwargs) -> int | None:
@@ -1374,6 +1390,8 @@ class Transformer(InputModule):
         config_dict["modality_config"] = {
             serialize_tuple_keys(modality): params for modality, params in self.modality_config.items()
         }
+        if not self.processing_kwargs:
+            config_dict.pop("processing_kwargs", None)
         return config_dict
 
     def __repr__(self) -> str:
