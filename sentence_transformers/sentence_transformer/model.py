@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import itertools
 import logging
 import math
 import queue
@@ -15,6 +16,7 @@ import numpy.typing as npt
 import torch
 from torch import Tensor, nn
 from tqdm.autonotebook import trange
+from transformers.utils import logging as transformers_logging
 from typing_extensions import deprecated
 
 from sentence_transformers.base.model import BaseModel
@@ -22,37 +24,31 @@ from sentence_transformers.base.modules import Transformer
 from sentence_transformers.base.modules.modality_utils import ArrayInputs, DictInputs, ImageInputs, StrInputs
 from sentence_transformers.sentence_transformer.modules import Pooling
 from sentence_transformers.util import batch_to_device, truncate_embeddings
-from sentence_transformers.util.decorators import deprecated_tokenizer_kwargs_decorator
+from sentence_transformers.util.decorators import deprecated_kwargs
 from sentence_transformers.util.quantization import quantize_embeddings
 from sentence_transformers.util.similarity import SimilarityFunction
 
 from .fit_mixin import FitMixin
 from .model_card import SentenceTransformerModelCardData
 
-logger = logging.getLogger(__name__)
+# NOTE: transformers wraps the regular logging module for e.g. warning_once
+logger = transformers_logging.get_logger(__name__)
+
+ALLOWED_PRECISIONS = {"float32", "int8", "uint8", "binary", "ubinary"}
 
 
 class SentenceTransformer(BaseModel, FitMixin):
     """
-    Loads or creates a SentenceTransformer model that can be used to map sentences / text to embeddings.
+    Loads or creates a SentenceTransformer model that can be used to map text and other inputs to embeddings.
 
     Args:
         model_name_or_path (str, optional): If it is a filepath on disk, it loads the model from that path. If it is not a path,
             it first tries to download a pre-trained SentenceTransformer model. If that fails, tries to construct a model
             from the Hugging Face Hub with that name.
-        modules (Iterable[nn.Module], optional): A list of torch Modules that should be called sequentially, can be used to create custom
+        modules (list[nn.Module], optional): A list of torch Modules that should be called sequentially, can be used to create custom
             SentenceTransformer models from scratch.
         device (str, optional): Device (like "cuda", "cpu", "mps", "npu") that should be used for computation. If None, checks if a GPU
             can be used.
-        prompts (Dict[str, str], optional): A dictionary with prompts for the model. The key is the prompt name, the value is the prompt text.
-            The prompt text will be prepended before any text to encode. For example:
-            `{"query": "query: ", "passage": "passage: "}` or `{"clustering": "Identify the main category based on the
-            titles in "}`.
-        default_prompt_name (str, optional): The name of the prompt that should be used by default. If not set,
-            no prompt will be applied.
-        similarity_fn_name (str or SimilarityFunction, optional): The name of the similarity function to use. Valid options are "cosine", "dot",
-            "euclidean", and "manhattan". If not set, it is automatically set to "cosine" if `similarity` or
-            `similarity_pairwise` are called while `model.similarity_fn_name` is still `None`.
         cache_folder (str, optional): Path to store models. Can also be set by the SENTENCE_TRANSFORMERS_HOME environment variable.
         trust_remote_code (bool, optional): Whether or not to allow for custom models defined on the Hub in their own modeling files.
             This option should only be set to True for repositories you trust and in which you have read the code, as it
@@ -62,7 +58,6 @@ class SentenceTransformer(BaseModel, FitMixin):
         local_files_only (bool, optional): Whether or not to only look at local files (i.e., do not try to download the model).
         token (bool or str, optional): Hugging Face authentication token to download private models.
         use_auth_token (bool or str, optional): Deprecated argument. Please use `token` instead.
-        truncate_dim (int, optional): The dimension to truncate sentence embeddings to. Defaults to None.
         model_kwargs (Dict[str, Any], optional): Additional model configuration parameters to be passed to the Hugging Face Transformers model.
         processor_kwargs (Dict[str, Any], optional): Additional processor/tokenizer configuration parameters to be passed to the Hugging Face Transformers tokenizer/processor.
         config_kwargs (Dict[str, Any], optional): Additional model configuration parameters to be passed to the Hugging Face Transformers config.
@@ -70,6 +65,16 @@ class SentenceTransformer(BaseModel, FitMixin):
             card data object that contains information about the model. This is used to generate a model card when saving
             the model. If not set, a default model card data object is created.
         backend (str): The backend to use for inference. Can be one of "torch" (default), "onnx", or "openvino".
+        prompts (Dict[str, str], optional): A dictionary with prompts for the model. The key is the prompt name, the value is the prompt text.
+            The prompt text will be prepended before any text to encode. For example:
+            `{"query": "query: ", "passage": "passage: "}` or `{"clustering": "Identify the main category based on the
+            titles in "}`.
+        default_prompt_name (str, optional): The name of the prompt that should be used by default. If not set,
+            no prompt will be applied.
+        similarity_fn_name (str or SimilarityFunction, optional): The name of the similarity function to use. Valid options are "cosine", "dot",
+            "euclidean", and "manhattan". If not set, it is automatically set to "cosine" if `similarity` or
+            `similarity_pairwise` are called while `model.similarity_fn_name` is still `None`.
+        truncate_dim (int, optional): The dimension to truncate sentence embeddings to. Defaults to None.
 
     Example:
         ::
@@ -100,7 +105,7 @@ class SentenceTransformer(BaseModel, FitMixin):
     model_card_data_class = SentenceTransformerModelCardData
     default_huggingface_organization: str | None = "sentence-transformers"
 
-    @deprecated_tokenizer_kwargs_decorator
+    @deprecated_kwargs(tokenizer_kwargs="processor_kwargs")
     def __init__(
         self,
         model_name_or_path: str | None = None,
@@ -121,7 +126,7 @@ class SentenceTransformer(BaseModel, FitMixin):
         # SentenceTransformer-specific args
         prompts: dict[str, str] | None = None,
         default_prompt_name: str | None = None,
-        similarity_fn_name: str | SimilarityFunction | None = None,
+        similarity_fn_name: Literal["cosine", "dot", "euclidean", "manhattan"] | SimilarityFunction | None = None,
         truncate_dim: int | None = None,
     ) -> None:
         # Set default prompts for SentenceTransformer
@@ -130,7 +135,6 @@ class SentenceTransformer(BaseModel, FitMixin):
             default_prompts.update(prompts)
         prompts = default_prompts
 
-        # SentenceTransformer-specific attributes
         self.prompts = prompts
         self.default_prompt_name = default_prompt_name
         self.similarity_fn_name = similarity_fn_name
@@ -161,13 +165,13 @@ class SentenceTransformer(BaseModel, FitMixin):
                 f"dictionary with keys {list(self.prompts.keys())!r}."
             )
 
-        if self.prompts and (non_empty_keys := [k for k, v in self.prompts.items() if v != ""]):
+        if non_empty_keys := [k for k, v in self.prompts.items() if v != ""]:
             if len(non_empty_keys) == 1:
                 logger.info(f"1 prompt is loaded, with the key: {non_empty_keys[0]}")
             else:
                 logger.info(f"{len(non_empty_keys)} prompts are loaded, with the keys: {non_empty_keys}")
         if self.default_prompt_name:
-            logger.warning(
+            logger.warning_once(
                 f"Default prompt name is set to '{self.default_prompt_name}'. "
                 "This prompt will be applied to all `encode()` calls, except if `encode()` "
                 "is called with `prompt` or `prompt_name` parameters."
@@ -181,15 +185,16 @@ class SentenceTransformer(BaseModel, FitMixin):
             and "/" in model_name_or_path
             and "instructor" in model_name_or_path.split("/")[1].lower()
         ):
-            if any([module.include_prompt for module in self if isinstance(module, Pooling)]):
+            if any(module.include_prompt for module in self if isinstance(module, Pooling)):
                 logger.warning(
                     "Instructor models require `include_prompt=False` in the pooling configuration. "
                     "Either update the model configuration or call `model.set_pooling_include_prompt(False)` after loading the model."
                 )
 
+    @deprecated_kwargs(sentences="inputs")
     def encode_query(
         self,
-        sentences: list[StrInputs | DictInputs | ImageInputs | ArrayInputs]
+        inputs: list[StrInputs | DictInputs | ImageInputs | ArrayInputs]
         | StrInputs
         | DictInputs
         | ImageInputs
@@ -210,7 +215,7 @@ class SentenceTransformer(BaseModel, FitMixin):
         **kwargs,
     ) -> list[Tensor] | np.ndarray | Tensor | dict[str, Tensor] | list[dict[str, Tensor]]:
         """
-        Computes sentence embeddings specifically optimized for query representation.
+        Computes embeddings specifically optimized for query representation.
 
         This method is a specialized version of :meth:`encode` that differs in exactly two ways:
 
@@ -224,12 +229,14 @@ class SentenceTransformer(BaseModel, FitMixin):
             Adjusting ``batch_size`` can significantly improve processing speed. The optimal value depends on your
             hardware, model size, precision, and input length. Benchmark a few batch sizes on a small subset of your
             data to find the best value.
+
+        All other parameters are identical to :meth:`encode`. See :meth:`encode` for the full parameter documentation.
         """
-        if prompt_name is None and "query" in self.prompts and prompt is None:
+        if prompt_name is None and prompt is None and "query" in self.prompts:
             prompt_name = "query"
 
         return self.encode(
-            sentences=sentences,
+            inputs=inputs,
             prompt_name=prompt_name,
             prompt=prompt,
             batch_size=batch_size,
@@ -247,9 +254,10 @@ class SentenceTransformer(BaseModel, FitMixin):
             **kwargs,
         )
 
+    @deprecated_kwargs(sentences="inputs")
     def encode_document(
         self,
-        sentences: list[StrInputs | DictInputs | ImageInputs | ArrayInputs]
+        inputs: list[StrInputs | DictInputs | ImageInputs | ArrayInputs]
         | StrInputs
         | DictInputs
         | ImageInputs
@@ -270,12 +278,12 @@ class SentenceTransformer(BaseModel, FitMixin):
         **kwargs,
     ) -> list[Tensor] | np.ndarray | Tensor | dict[str, Tensor] | list[dict[str, Tensor]]:
         """
-        Computes sentence embeddings specifically optimized for document/passage representation.
+        Computes embeddings specifically optimized for document/passage representation.
 
         This method is a specialized version of :meth:`encode` that differs in exactly two ways:
 
-        1. If no ``prompt_name`` or ``prompt`` is provided, it uses a predefined "document" prompt,
-           if available in the model's ``prompts`` dictionary.
+        1. If no ``prompt_name`` or ``prompt`` is provided, it uses the first available prompt from the following
+           candidates: ``"document"``, ``"passage"``, ``"corpus"`` (checked in that order).
         2. It sets the ``task`` to "document". If the model has a :class:`~sentence_transformers.base.modules.Router`
            module, it will use the "document" task type to route the input through the appropriate submodules.
 
@@ -284,6 +292,8 @@ class SentenceTransformer(BaseModel, FitMixin):
             Adjusting ``batch_size`` can significantly improve processing speed. The optimal value depends on your
             hardware, model size, precision, and input length. Benchmark a few batch sizes on a small subset of your
             data to find the best value.
+
+        All other parameters are identical to :meth:`encode`. See :meth:`encode` for the full parameter documentation.
         """
         if prompt_name is None and prompt is None:
             for candidate_prompt_name in ["document", "passage", "corpus"]:
@@ -292,7 +302,7 @@ class SentenceTransformer(BaseModel, FitMixin):
                     break
 
         return self.encode(
-            sentences=sentences,
+            inputs=inputs,
             prompt_name=prompt_name,
             prompt=prompt,
             batch_size=batch_size,
@@ -314,7 +324,7 @@ class SentenceTransformer(BaseModel, FitMixin):
     @overload
     def encode(
         self,
-        sentences: StrInputs | DictInputs | ImageInputs | ArrayInputs,
+        inputs: StrInputs | DictInputs | ImageInputs | ArrayInputs,
         prompt_name: str | None = ...,
         prompt: str | None = ...,
         batch_size: int = ...,
@@ -334,7 +344,7 @@ class SentenceTransformer(BaseModel, FitMixin):
     @overload
     def encode(
         self,
-        sentences: list[StrInputs | DictInputs | ImageInputs | ArrayInputs]
+        inputs: list[StrInputs | DictInputs | ImageInputs | ArrayInputs]
         | StrInputs
         | DictInputs
         | ImageInputs
@@ -358,7 +368,7 @@ class SentenceTransformer(BaseModel, FitMixin):
     @overload
     def encode(
         self,
-        sentences: list[StrInputs | DictInputs | ImageInputs | ArrayInputs]
+        inputs: list[StrInputs | DictInputs | ImageInputs | ArrayInputs]
         | StrInputs
         | DictInputs
         | ImageInputs
@@ -382,7 +392,7 @@ class SentenceTransformer(BaseModel, FitMixin):
     @overload
     def encode(
         self,
-        sentences: list[StrInputs | DictInputs | ImageInputs | ArrayInputs],
+        inputs: list[StrInputs | DictInputs | ImageInputs | ArrayInputs],
         prompt_name: str | None = ...,
         prompt: str | None = ...,
         batch_size: int = ...,
@@ -402,7 +412,7 @@ class SentenceTransformer(BaseModel, FitMixin):
     @overload
     def encode(
         self,
-        sentences: list[StrInputs | DictInputs | ImageInputs | ArrayInputs],
+        inputs: list[StrInputs | DictInputs | ImageInputs | ArrayInputs],
         prompt_name: str | None = ...,
         prompt: str | None = ...,
         batch_size: int = ...,
@@ -422,7 +432,7 @@ class SentenceTransformer(BaseModel, FitMixin):
     @overload
     def encode(
         self,
-        sentences: StrInputs | DictInputs | ImageInputs | ArrayInputs,
+        inputs: StrInputs | DictInputs | ImageInputs | ArrayInputs,
         prompt_name: str | None = ...,
         prompt: str | None = ...,
         batch_size: int = ...,
@@ -442,7 +452,7 @@ class SentenceTransformer(BaseModel, FitMixin):
     @overload
     def encode(
         self,
-        sentences: StrInputs | DictInputs | ImageInputs | ArrayInputs,
+        inputs: StrInputs | DictInputs | ImageInputs | ArrayInputs,
         prompt_name: str | None = ...,
         prompt: str | None = ...,
         batch_size: int = ...,
@@ -460,9 +470,10 @@ class SentenceTransformer(BaseModel, FitMixin):
     ) -> Tensor: ...
 
     @torch.inference_mode()
+    @deprecated_kwargs(sentences="inputs")
     def encode(
         self,
-        sentences: list[StrInputs | DictInputs | ImageInputs | ArrayInputs]
+        inputs: list[StrInputs | DictInputs | ImageInputs | ArrayInputs]
         | StrInputs
         | DictInputs
         | ImageInputs
@@ -483,7 +494,7 @@ class SentenceTransformer(BaseModel, FitMixin):
         **kwargs,
     ) -> list[Tensor] | np.ndarray | Tensor | dict[str, Tensor] | list[dict[str, Tensor]]:
         """
-        Computes sentence embeddings.
+        Computes embeddings for the given inputs.
 
         .. tip::
 
@@ -502,23 +513,43 @@ class SentenceTransformer(BaseModel, FitMixin):
             data to find the best value.
 
         Args:
-            sentences (Union[str, List[str]]): The sentences to embed.
-            prompt_name (Optional[str], optional): The name of the prompt to use for encoding.
-            prompt (Optional[str], optional): The prompt to use for encoding.
+            inputs: The inputs to embed. Can be a string, a list of strings, or multimodal inputs
+                (dicts, images, arrays).
+            prompt_name (str, optional): The name of the prompt to use for encoding. Must be a key in the ``prompts``
+                dictionary, which is either set in the constructor or loaded from the model configuration. For example if
+                ``prompt_name`` is "query" and the ``prompts`` is {"query": "query: ", ...}, then the sentence "What
+                is the capital of France?" will be encoded as "query: What is the capital of France?" because the sentence
+                is appended to the prompt. If ``prompt`` is also set, this argument is ignored. Defaults to None.
+            prompt (str, optional): The prompt to use for encoding. For example, if the prompt is "query: ", then the
+                sentence "What is the capital of France?" will be encoded as "query: What is the capital of France?"
+                because the sentence is appended to the prompt. If ``prompt`` is set, ``prompt_name`` is ignored.
+                Defaults to None.
             batch_size (int, optional): The batch size used for the computation. Defaults to 32.
-            show_progress_bar (bool, optional): Whether to output a progress bar when encode sentences.
+            show_progress_bar (bool, optional): Whether to output a progress bar when encoding. Defaults to None,
+                in which case the progress bar will be shown if the logger's effective level is INFO or DEBUG.
             output_value (Optional[Literal["sentence_embedding", "token_embeddings"]], optional): The type of embeddings to return.
             precision (Literal["float32", "int8", "uint8", "binary", "ubinary"], optional): The precision to use for the embeddings.
             convert_to_numpy (bool, optional): Whether the output should be a list of numpy vectors.
             convert_to_tensor (bool, optional): Whether the output should be one large tensor.
-            device (Union[str, List[str], None], optional): Device(s) to use for computation.
+            device (str, torch.device, list, or None, optional): Device(s) to use for computation. Can be:
+
+                - A single device string (e.g., "cuda:0", "cpu") for single-process encoding
+                - A list of device strings (e.g., ["cuda:0", "cuda:1"], ["cpu", "cpu", "cpu", "cpu"]) to distribute
+                  encoding across multiple processes
+                - None to auto-detect available device for single-process encoding
+
+                If a list is provided, multi-process encoding will be used. Defaults to None.
             normalize_embeddings (bool, optional): Whether to normalize returned vectors to have length 1.
             truncate_dim (int, optional): The dimension to truncate sentence embeddings to.
-            pool (Dict[Literal["input", "output", "processes"], Any], optional): A pool created by `start_multi_process_pool()`.
+            pool (Dict[Literal["input", "output", "processes"], Any], optional): A pool created by
+                ``start_multi_process_pool()``.
             chunk_size (int, optional): Size of chunks for multi-process encoding.
+            **kwargs: Additional keyword arguments to pass to the model's ``preprocess`` and ``forward`` methods.
 
         Returns:
-            Union[List[Tensor], ndarray, Tensor]: By default, a 2d numpy array with shape [num_inputs, output_dimension] is returned.
+            Union[List[Tensor], ndarray, Tensor, dict[str, Tensor], list[dict[str, Tensor]]]: By default, a 2d numpy
+                array with shape [num_inputs, output_dimension] is returned. If ``output_value`` is ``None``, a list
+                of dicts (or a single dict for singular input) is returned.
         """
         if self.device.type == "hpu" and not self.is_hpu_graph_enabled:
             import habana_frameworks.torch as ht
@@ -539,9 +570,9 @@ class SentenceTransformer(BaseModel, FitMixin):
             convert_to_numpy = False
 
         # Cast an individual input to a list with length 1
-        is_singular_input = self.is_singular_input(sentences)
+        is_singular_input = self.is_singular_input(inputs)
         if is_singular_input:
-            sentences = [sentences]
+            inputs = [inputs]
 
         # Validate kwargs
         model_kwargs = self.get_model_kwargs()
@@ -555,10 +586,14 @@ class SentenceTransformer(BaseModel, FitMixin):
                 )
             )
 
+        # Validate precision
+        if precision is not None and precision not in ALLOWED_PRECISIONS:
+            raise ValueError(f"Precision {precision!r} is not supported, must be one of {ALLOWED_PRECISIONS}")
+
         # If pool or a list of devices is provided, use multi-process encoding
         if pool is not None or (isinstance(device, list) and len(device) > 0):
             embeddings = self._multi_process(
-                sentences,
+                inputs,
                 # Utility and post-processing parameters
                 show_progress_bar=show_progress_bar,
                 # Multi-process encoding parameters
@@ -580,11 +615,6 @@ class SentenceTransformer(BaseModel, FitMixin):
             if is_singular_input:
                 embeddings = embeddings[0]
             return embeddings
-
-        # Validate precision
-        allowed_precisions = {"float32", "int8", "uint8", "binary", "ubinary"}
-        if precision and precision not in allowed_precisions:
-            raise ValueError(f"Precision {precision!r} is not supported")
 
         # Handle prompts
         if prompt is None:
@@ -610,79 +640,51 @@ class SentenceTransformer(BaseModel, FitMixin):
         self.to(device)
 
         truncate_dim = truncate_dim if truncate_dim is not None else self.truncate_dim
-
         all_embeddings = []
+        is_hpu = self.device.type == "hpu"
+        for start_index in trange(0, len(inputs), batch_size, desc="Batches", disable=not show_progress_bar):
+            inputs_batch = inputs[start_index : start_index + batch_size]
+            features = self.preprocess(inputs_batch, prompt=prompt, **kwargs)
 
-        for start_index in trange(0, len(sentences), batch_size, desc="Batches", disable=not show_progress_bar):
-            sentences_batch = sentences[start_index : start_index + batch_size]
-            features = self.preprocess(sentences_batch, prompt=prompt, **kwargs)
-
-            # HPU-specific padding
-            if self.device.type == "hpu":
-                if "input_ids" in features:
-                    curr_tokenize_len = features["input_ids"].shape
-                    additional_pad_len = 2 ** math.ceil(math.log2(curr_tokenize_len[1])) - curr_tokenize_len[1]
-                    features["input_ids"] = torch.cat(
-                        (
-                            features["input_ids"],
-                            torch.ones((curr_tokenize_len[0], additional_pad_len), dtype=torch.int8),
-                        ),
-                        -1,
-                    )
-                    features["attention_mask"] = torch.cat(
-                        (
-                            features["attention_mask"],
-                            torch.zeros((curr_tokenize_len[0], additional_pad_len), dtype=torch.int8),
-                        ),
-                        -1,
-                    )
-                    if "token_type_ids" in features:
-                        features["token_type_ids"] = torch.cat(
-                            (
-                                features["token_type_ids"],
-                                torch.zeros((curr_tokenize_len[0], additional_pad_len), dtype=torch.int8),
-                            ),
-                            -1,
-                        )
+            if is_hpu:
+                features = self._pad_features_for_hpu(features)
 
             features = batch_to_device(features, device)
 
-            with torch.no_grad():
-                out_features = self.forward(features, **kwargs)
-                if self.device.type == "hpu":
-                    out_features = copy.deepcopy(out_features)
+            out_features = self.forward(features, **kwargs)
+            if is_hpu:
+                out_features = copy.deepcopy(out_features)
 
-                if truncate_dim:
-                    out_features["sentence_embedding"] = truncate_embeddings(
-                        out_features["sentence_embedding"], truncate_dim
-                    )
+            if truncate_dim is not None:
+                out_features["sentence_embedding"] = truncate_embeddings(
+                    out_features["sentence_embedding"], truncate_dim
+                )
 
-                if output_value == "token_embeddings":
-                    embeddings = []
-                    for token_emb, attention in zip(out_features[output_value], out_features["attention_mask"]):
-                        last_mask_id = len(attention) - 1
-                        while last_mask_id > 0 and attention[last_mask_id].item() == 0:
-                            last_mask_id -= 1
-                        embeddings.append(token_emb[0 : last_mask_id + 1])
-                elif output_value is None:
-                    embeddings = []
-                    for idx in range(len(out_features["sentence_embedding"])):
-                        batch_item = {}
-                        for name, value in out_features.items():
-                            try:
-                                batch_item[name] = value[idx]
-                            except TypeError:
-                                batch_item[name] = value
-                        embeddings.append(batch_item)
-                else:
-                    embeddings = out_features[output_value]
-                    embeddings = embeddings.detach()
-                    if normalize_embeddings:
-                        embeddings = torch.nn.functional.normalize(embeddings, p=2, dim=1)
-                    if convert_to_numpy:
-                        embeddings = embeddings.cpu()
+            if output_value == "token_embeddings":
+                embeddings = []
+                for token_emb, attention in zip(out_features[output_value], out_features["attention_mask"]):
+                    last_mask_id = len(attention) - 1
+                    while last_mask_id > 0 and attention[last_mask_id].item() == 0:
+                        last_mask_id -= 1
+                    embeddings.append(token_emb[: last_mask_id + 1])
+            elif output_value is None:
+                embeddings = []
+                for idx in range(len(out_features["sentence_embedding"])):
+                    batch_item = {}
+                    for name, value in out_features.items():
+                        try:
+                            batch_item[name] = value[idx]
+                        except TypeError:
+                            batch_item[name] = value
+                    embeddings.append(batch_item)
+            else:
+                embeddings = out_features[output_value]
+                if normalize_embeddings:
+                    embeddings = torch.nn.functional.normalize(embeddings, p=2, dim=1)
+                if convert_to_numpy:
+                    embeddings = embeddings.cpu()
 
-                all_embeddings.extend(embeddings)
+            all_embeddings.extend(embeddings)
 
         if all_embeddings and precision and precision != "float32":
             all_embeddings = quantize_embeddings(all_embeddings, precision=precision)
@@ -709,24 +711,50 @@ class SentenceTransformer(BaseModel, FitMixin):
 
         return all_embeddings
 
+    @staticmethod
+    def _pad_features_for_hpu(features: dict[str, Tensor]) -> dict[str, Tensor]:
+        """Pad input features to the next power of 2 for HPU graph compatibility."""
+        if "input_ids" not in features:
+            return features
+
+        batch_size, seq_len = features["input_ids"].shape
+        padded_len = 2 ** math.ceil(math.log2(seq_len)) if seq_len > 0 else 0
+        pad_len = padded_len - seq_len
+        if pad_len == 0:
+            return features
+
+        features["input_ids"] = torch.cat(
+            (features["input_ids"], torch.ones((batch_size, pad_len), dtype=torch.int8)), -1
+        )
+        features["attention_mask"] = torch.cat(
+            (features["attention_mask"], torch.zeros((batch_size, pad_len), dtype=torch.int8)), -1
+        )
+        if "token_type_ids" in features:
+            features["token_type_ids"] = torch.cat(
+                (features["token_type_ids"], torch.zeros((batch_size, pad_len), dtype=torch.int8)), -1
+            )
+        return features
+
     @property
     def similarity_fn_name(self) -> Literal["cosine", "dot", "euclidean", "manhattan"]:
-        """Return the name of the similarity function."""
+        """Return the name of the similarity function.
+
+        If not previously set, accessing this property defaults it to ``"cosine"``.
+        """
         if self._similarity_fn_name is None:
             self.similarity_fn_name = SimilarityFunction.COSINE
         return self._similarity_fn_name
 
     @similarity_fn_name.setter
     def similarity_fn_name(
-        self, value: Literal["cosine", "dot", "euclidean", "manhattan"] | SimilarityFunction
+        self, value: Literal["cosine", "dot", "euclidean", "manhattan"] | SimilarityFunction | None
     ) -> None:
         if isinstance(value, SimilarityFunction):
             value = value.value
-        self._similarity_fn_name = value
-
         if value is not None:
             self._similarity = SimilarityFunction.to_similarity_fn(value)
             self._similarity_pairwise = SimilarityFunction.to_similarity_pairwise_fn(value)
+        self._similarity_fn_name = value
 
     @overload
     def similarity(self, embeddings1: Tensor, embeddings2: Tensor) -> Tensor: ...
@@ -737,11 +765,12 @@ class SentenceTransformer(BaseModel, FitMixin):
     @property
     def similarity(self) -> Callable[[Tensor | npt.NDArray[np.float32], Tensor | npt.NDArray[np.float32]], Tensor]:
         """
-        Compute the similarity between two collections of embeddings. The output will be a matrix with the similarity
-        scores between all embeddings from the first parameter and all embeddings from the second parameter.
+        Return a function that computes the similarity between two collections of embeddings. The output will be a
+        matrix with the similarity scores between all embeddings from the first parameter and all embeddings from the
+        second parameter.
         """
-        if self.similarity_fn_name is None:
-            self.similarity_fn_name = SimilarityFunction.COSINE
+        # Access similarity_fn_name to trigger lazy initialization of _similarity
+        self.similarity_fn_name  # noqa: B018
         return self._similarity
 
     @overload
@@ -757,10 +786,10 @@ class SentenceTransformer(BaseModel, FitMixin):
         self,
     ) -> Callable[[Tensor | npt.NDArray[np.float32], Tensor | npt.NDArray[np.float32]], Tensor]:
         """
-        Compute the pairwise similarity between two collections of embeddings.
+        Return a function that computes the pairwise similarity between two collections of embeddings.
         """
-        if self.similarity_fn_name is None:
-            self.similarity_fn_name = SimilarityFunction.COSINE
+        # Access similarity_fn_name to trigger lazy initialization of _similarity_pairwise
+        self.similarity_fn_name  # noqa: B018
         return self._similarity_pairwise
 
     @deprecated(
@@ -809,8 +838,12 @@ class SentenceTransformer(BaseModel, FitMixin):
         device: str | list[str | torch.device] | None = None,
         chunk_size: int | None = None,
         **encode_kwargs,
-    ):
-        """Internal method for multi-process encoding."""
+    ) -> list | Tensor | np.ndarray:
+        """Internal method for multi-process encoding.
+
+        Either ``pool`` or ``device`` (as a list) must be provided. If ``pool`` is ``None`` and ``device``
+        is a list, a temporary pool is created and cleaned up after encoding.
+        """
         convert_to_tensor = encode_kwargs.get("convert_to_tensor", False)
         convert_to_numpy = encode_kwargs.get("convert_to_numpy", False)
         encode_kwargs["show_progress_bar"] = False
@@ -846,7 +879,7 @@ class SentenceTransformer(BaseModel, FitMixin):
             embeddings = [output[1] for output in output_list]
             if embeddings:
                 if isinstance(embeddings[0], list):
-                    embeddings = sum(embeddings, [])
+                    embeddings = list(itertools.chain.from_iterable(embeddings))
                 elif isinstance(embeddings[0], torch.Tensor):
                     embeddings = torch.cat(embeddings)
                 elif isinstance(embeddings[0], np.ndarray):
@@ -865,7 +898,10 @@ class SentenceTransformer(BaseModel, FitMixin):
     def _multi_process_worker(
         target_device: str, model: SentenceTransformer, input_queue: Queue, results_queue: Queue
     ) -> None:
-        """Internal working process to encode sentences in multi-process setup."""
+        """Internal working process to encode inputs in multi-process setup.
+
+        Workers are terminated externally via ``stop_multi_process_pool``.
+        """
         while True:
             try:
                 chunk_id, inputs, kwargs = input_queue.get()
@@ -894,11 +930,11 @@ class SentenceTransformer(BaseModel, FitMixin):
                 module.include_prompt = include_prompt
                 break
 
-    def get_sentence_features(self, *features) -> dict[Literal["sentence_embedding"], Tensor]:
-        """Get sentence features from the first module."""
+    @deprecated("The `get_sentence_features` method is deprecated and will be removed in a future version.")
+    def get_sentence_features(self, *features) -> dict[str, Tensor]:
         return self._first_module().get_sentence_features(*features)
 
-    def get_sentence_embedding_dimension(self) -> int | None:
+    def get_embedding_dimension(self) -> int | None:
         """
         Returns the number of dimensions in the output of :meth:`SentenceTransformer.encode`.
 
@@ -906,26 +942,42 @@ class SentenceTransformer(BaseModel, FitMixin):
             Optional[int]: The number of dimensions in the output of `encode`. If it's not known, it's `None`.
         """
         output_dim = None
-        for mod in reversed(self._modules.values()):
-            sent_embedding_dim_method = getattr(mod, "get_sentence_embedding_dimension", None)
-            if callable(sent_embedding_dim_method):
-                output_dim = sent_embedding_dim_method()
+        for module in reversed(self._modules.values()):
+            for name in (
+                "get_embedding_dimension",
+                "get_sentence_embedding_dimension",
+                "get_word_embedding_dimension",
+            ):
+                method = getattr(module, name, None)
+                if callable(method):
+                    output_dim = method()
+                    break
+            if output_dim is not None:
                 break
         if self.truncate_dim is not None:
-            return min(output_dim or np.inf, self.truncate_dim)
+            if output_dim is None:
+                return self.truncate_dim
+            return min(output_dim, self.truncate_dim)
         return output_dim
 
+    @deprecated(
+        "The `get_sentence_embedding_dimension` method has been renamed to `get_embedding_dimension`.",
+        category=FutureWarning,
+    )
+    def get_sentence_embedding_dimension(self) -> int | None:
+        return self.get_embedding_dimension()
+
     @contextmanager
-    def truncate_sentence_embeddings(self, truncate_dim: int | None) -> Iterator[None]:
+    def truncate_embeddings(self, truncate_dim: int | None) -> Iterator[None]:
         """
         In this context, :meth:`SentenceTransformer.encode` outputs
-        sentence embeddings truncated at dimension ``truncate_dim``.
+        embeddings truncated at dimension ``truncate_dim``.
 
         This may be useful when you are using the same model for different applications where different dimensions
         are needed.
 
         Args:
-            truncate_dim (int, optional): The dimension to truncate sentence embeddings to. ``None`` does no truncation.
+            truncate_dim (int, optional): The dimension to truncate embeddings to. ``None`` does no truncation.
 
         Example:
             ::
@@ -934,7 +986,7 @@ class SentenceTransformer(BaseModel, FitMixin):
 
                 model = SentenceTransformer("all-mpnet-base-v2")
 
-                with model.truncate_sentence_embeddings(truncate_dim=16):
+                with model.truncate_embeddings(truncate_dim=16):
                     embeddings_truncated = model.encode(["hello there", "hiya"])
                 assert embeddings_truncated.shape[-1] == 16
         """
@@ -945,53 +997,14 @@ class SentenceTransformer(BaseModel, FitMixin):
         finally:
             self.truncate_dim = original_output_dim
 
-    def save(
-        self,
-        path: str,
-        model_name: str | None = None,
-        create_model_card: bool = True,
-        train_datasets: list[str] | None = None,
-        safe_serialization: bool = True,
-    ) -> None:
-        """
-        Saves a model and its configuration files to a directory, so that it can be loaded again.
-
-        Args:
-            path (str): Path on disk where the model will be saved.
-            model_name (str, optional): Optional model name.
-            create_model_card (bool, optional): If True, create a README.md with basic information about this model.
-            train_datasets (List[str], optional): Optional list with the names of the datasets used to train the model.
-            safe_serialization (bool, optional): If True, save the model using safetensors. If False, save the model
-                the traditional (but unsafe) PyTorch way.
-        """
-        # Call parent save method
-        super().save(
-            path=path,
-            model_name=model_name,
-            create_model_card=create_model_card,
-            train_datasets=train_datasets,
-            safe_serialization=safe_serialization,
-        )
-
-        # Save SentenceTransformer-specific config
-        import json
-        import os
-
-        config_path = os.path.join(path, "config_sentence_transformers.json")
-        if os.path.exists(config_path):
-            with open(config_path, encoding="utf8") as fIn:
-                config = json.load(fIn)
-        else:
-            config = {}
-
-        # Add SentenceTransformer-specific attributes
-        if self.similarity_fn_name is not None:
-            config["similarity_fn_name"] = self.similarity_fn_name
-        if self.truncate_dim is not None:
-            config["truncate_dim"] = self.truncate_dim
-
-        with open(config_path, "w", encoding="utf8") as fOut:
-            json.dump(config, fOut, indent=2)
+    @contextmanager
+    @deprecated(
+        "The `truncate_sentence_embeddings` method has been renamed to `truncate_embeddings`.",
+        category=FutureWarning,
+    )
+    def truncate_sentence_embeddings(self, truncate_dim: int | None) -> Iterator[None]:
+        with self.truncate_embeddings(truncate_dim):
+            yield
 
     def _update_default_model_id(self, model_card: str) -> str:
         """Update the default model ID in the model card."""
@@ -1004,7 +1017,7 @@ class SentenceTransformer(BaseModel, FitMixin):
 
     @staticmethod
     @deprecated("SentenceTransformer.load(...) is deprecated, use SentenceTransformer(...) instead.")
-    def load(input_path) -> SentenceTransformer:
+    def load(input_path: str) -> SentenceTransformer:
         """Deprecated: Use SentenceTransformer(input_path) instead."""
         return SentenceTransformer(input_path)
 
@@ -1022,7 +1035,8 @@ class SentenceTransformer(BaseModel, FitMixin):
     ) -> tuple[list[nn.Module] | OrderedDict[str, nn.Module], dict[str, Any]]:
         """
         Creates a simple Transformer + Mean Pooling model and returns the modules.
-        Subclasses should override this to provide their own model creation logic.
+
+        This is used as a fallback when no pre-trained SentenceTransformer model is found.
 
         Args:
             model_name_or_path (str): The name or path of the pre-trained model.
@@ -1034,10 +1048,9 @@ class SentenceTransformer(BaseModel, FitMixin):
             model_kwargs (Optional[Dict[str, Any]], optional): Additional keyword arguments for the model. Defaults to None.
             processor_kwargs (Optional[Dict[str, Any]], optional): Additional keyword arguments for the processor/tokenizer. Defaults to None.
             config_kwargs (Optional[Dict[str, Any]], optional): Additional keyword arguments for the config. Defaults to None.
-            has_modules (bool, optional): Whether the model has modules.json. Defaults to False.
 
         Returns:
-            List[nn.Module]: A list containing the transformer model and the pooling model.
+            tuple[list[nn.Module] | OrderedDict[str, nn.Module], dict[str, Any]]: A tuple of (modules, config).
         """
         logger.warning(
             f"No {self.__class__.__name__} model found with name {model_name_or_path}. Creating a new one with mean pooling."
@@ -1063,13 +1076,12 @@ class SentenceTransformer(BaseModel, FitMixin):
         )
         modules = [transformer_model]
         if transformer_model.module_output_name == "token_embeddings":
-            modules.append(Pooling(transformer_model.get_word_embedding_dimension(), "mean"))
+            modules.append(Pooling(transformer_model.get_embedding_dimension(), "mean"))
         if not local_files_only:
             self.model_card_data.set_base_model(model_name_or_path, revision=revision)
         return modules, {}
 
     def _parse_model_config(self, model_config: dict[str, Any]) -> None:
-        # Set score functions & prompts if not already overridden by the __init__ calls
         # Only update prompts that aren't already set by the user or defaults
         for prompt_name, prompt_text in model_config.get("prompts", {}).items():
             if prompt_name not in self.prompts or not self.prompts[prompt_name]:
@@ -1078,13 +1090,18 @@ class SentenceTransformer(BaseModel, FitMixin):
             self.default_prompt_name = model_config.get("default_prompt_name", None)
         if self._similarity_fn_name is None:
             self.similarity_fn_name = model_config.get("similarity_fn_name", None)
+        if self.truncate_dim is None:
+            self.truncate_dim = model_config.get("truncate_dim", None)
 
     def _get_model_config(self) -> dict[str, Any]:
-        return super()._get_model_config() | {
+        config = super()._get_model_config() | {
             "prompts": self.prompts,
             "default_prompt_name": self.default_prompt_name,
             "similarity_fn_name": self.similarity_fn_name,
         }
+        if self.truncate_dim is not None:
+            config["truncate_dim"] = self.truncate_dim
+        return config
 
     def _load_converted_modules(
         self,
@@ -1099,7 +1116,7 @@ class SentenceTransformer(BaseModel, FitMixin):
         config_kwargs: dict[str, Any] | None = None,
         model_type: str | None = None,
     ) -> tuple[list[nn.Module] | OrderedDict[str, nn.Module], dict[str, Any]]:
-        # If we're loading a CrossEncoder or SparseEncoder model, just load it with Transformer + Pooling
+        # Fallback for loading models saved as a different model type (e.g. CrossEncoder, SparseEncoder)
         return super()._load_default_modules(
             model_name_or_path,
             token,

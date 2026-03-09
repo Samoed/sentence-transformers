@@ -9,24 +9,27 @@ import torch
 from torch import nn
 
 from sentence_transformers.base.modules.Module import Module
+from sentence_transformers.util.decorators import deprecated_kwargs
 
 
 class LSTM(Module):
     """Bidirectional LSTM running over word embeddings."""
 
-    config_keys: list[str] = ["word_embedding_dimension", "hidden_dim", "num_layers", "dropout", "bidirectional"]
+    config_keys: list[str] = ["embedding_dimension", "hidden_dim", "num_layers", "dropout", "bidirectional"]
     config_file_name: str = "lstm_config.json"
+    config_key_renames = {"word_embedding_dimension": "embedding_dimension"}
 
+    @deprecated_kwargs(**config_key_renames)
     def __init__(
         self,
-        word_embedding_dimension: int,
+        embedding_dimension: int,
         hidden_dim: int,
         num_layers: int = 1,
         dropout: float = 0,
         bidirectional: bool = True,
     ):
         super().__init__()
-        self.word_embedding_dimension = word_embedding_dimension
+        self.embedding_dimension = embedding_dimension
         self.hidden_dim = hidden_dim
         self.num_layers = num_layers
         self.dropout = dropout
@@ -37,7 +40,7 @@ class LSTM(Module):
             self.embeddings_dimension *= 2
 
         self.encoder = nn.LSTM(
-            word_embedding_dimension,
+            embedding_dimension,
             hidden_dim,
             num_layers=num_layers,
             dropout=dropout,
@@ -57,7 +60,7 @@ class LSTM(Module):
         features.update({"token_embeddings": unpack})
         return features
 
-    def get_word_embedding_dimension(self) -> int:
+    def get_embedding_dimension(self) -> int:
         return self.embeddings_dimension
 
     def save(self, output_path: str, *args, safe_serialization: bool = True, **kwargs) -> None:

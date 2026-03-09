@@ -71,11 +71,11 @@ def test_pooling_prompt_attention_mask_respects_include_prompt(
 def test_pooling_forward_all_strategies(pooling_mode: str) -> None:
     # Basic sanity check that all pooling strategies run and produce the
     # expected sentence embedding shape.
-    word_embedding_dimension = 8
-    pooling = Pooling(word_embedding_dimension=word_embedding_dimension, pooling_mode=pooling_mode)
+    embedding_dimension = 8
+    pooling = Pooling(embedding_dimension=embedding_dimension, pooling_mode=pooling_mode)
 
     batch_size, seq_len = 3, 5
-    token_embeddings = torch.randn(batch_size, seq_len, word_embedding_dimension)
+    token_embeddings = torch.randn(batch_size, seq_len, embedding_dimension)
 
     # Mix of left / right padding patterns, but always at least one non-pad token
     attention_mask = torch.tensor(
@@ -97,13 +97,13 @@ def test_pooling_forward_all_strategies(pooling_mode: str) -> None:
 
     assert sentence_embedding.shape == (
         batch_size,
-        pooling.get_sentence_embedding_dimension(),
+        pooling.get_embedding_dimension(),
     )
 
 
 def test_pooling_cls_uses_cls_token_embeddings() -> None:
     dim = 4
-    pooling = Pooling(word_embedding_dimension=dim, pooling_mode="cls")
+    pooling = Pooling(embedding_dimension=dim, pooling_mode="cls")
 
     batch_size, seq_len = 2, 3
     token_embeddings = torch.randn(batch_size, seq_len, dim)
@@ -124,7 +124,7 @@ def test_pooling_cls_uses_cls_token_embeddings() -> None:
 
 def test_pooling_max_respects_attention_mask() -> None:
     dim = 1
-    pooling = Pooling(word_embedding_dimension=dim, pooling_mode="max")
+    pooling = Pooling(embedding_dimension=dim, pooling_mode="max")
 
     # Last position has the largest value but is masked out; max should
     # therefore come from the last unmasked token.
@@ -147,7 +147,7 @@ def test_pooling_mean_and_mean_sqrt_len_tokens() -> None:
     # Enable both mean and mean_sqrt_len at once to test that the
     # output dimension doubles and that both values are correct.
     pooling = Pooling(
-        word_embedding_dimension=dim,
+        embedding_dimension=dim,
         pooling_mode_mean_tokens=True,
         pooling_mode_mean_sqrt_len_tokens=True,
     )
@@ -178,7 +178,7 @@ def test_pooling_mean_and_mean_sqrt_len_tokens() -> None:
 
 def test_pooling_weightedmean_respects_attention_mask() -> None:
     dim = 1
-    pooling = Pooling(word_embedding_dimension=dim, pooling_mode="weightedmean")
+    pooling = Pooling(embedding_dimension=dim, pooling_mode="weightedmean")
 
     # With seq_len = 3, the weights are [1, 2, 3]. Only the first two
     # positions are attended to, so the weighted mean is:
@@ -200,7 +200,7 @@ def test_pooling_weightedmean_respects_attention_mask() -> None:
 
 def test_pooling_lasttoken_finds_last_attended_token() -> None:
     dim = 1
-    pooling = Pooling(word_embedding_dimension=dim, pooling_mode="lasttoken")
+    pooling = Pooling(embedding_dimension=dim, pooling_mode="lasttoken")
 
     # Each row has a different pattern of attended tokens; the last
     # attended position should be selected.
@@ -227,7 +227,7 @@ def test_pooling_lasttoken_finds_last_attended_token() -> None:
 
 def test_pooling_lasttoken_all_padding_returns_zero_vector() -> None:
     dim = 2
-    pooling = Pooling(word_embedding_dimension=dim, pooling_mode="lasttoken")
+    pooling = Pooling(embedding_dimension=dim, pooling_mode="lasttoken")
 
     token_embeddings = torch.ones(1, 4, dim)
     attention_mask = torch.zeros(1, 4, dtype=torch.int64)
@@ -250,7 +250,7 @@ def test_pooling_lasttoken_all_padding_returns_zero_vector() -> None:
 )
 def test_pooling_excludes_prompt_tokens_directly(padding_side: str, prompt_length_value) -> None:
     dim = 1
-    pooling = Pooling(word_embedding_dimension=dim, pooling_mode="mean", include_prompt=False)
+    pooling = Pooling(embedding_dimension=dim, pooling_mode="mean", include_prompt=False)
 
     batch_size, seq_len = 2, 5
     token_embeddings = torch.randn(batch_size, seq_len, dim)

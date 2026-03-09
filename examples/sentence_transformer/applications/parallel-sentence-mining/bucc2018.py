@@ -55,8 +55,8 @@ use_pca = False
 pca_dimensions = 128
 
 # We store the embeddings on disk, so that they can later be loaded from disk
-source_embedding_file = f"{model_name}_{os.path.basename(source_file)}_{pca_dimensions if use_pca else model.get_sentence_embedding_dimension()}.emb"
-target_embedding_file = f"{model_name}_{os.path.basename(target_file)}_{pca_dimensions if use_pca else model.get_sentence_embedding_dimension()}.emb"
+source_embedding_file = f"{model_name}_{os.path.basename(source_file)}_{pca_dimensions if use_pca else model.get_embedding_dimension()}.emb"
+target_embedding_file = f"{model_name}_{os.path.basename(target_file)}_{pca_dimensions if use_pca else model.get_embedding_dimension()}.emb"
 
 
 # Use PCA to reduce the dimensionality of the sentence embedding model
@@ -82,7 +82,7 @@ if use_pca:
     pca.fit(train_matrix)
 
     dense = Dense(
-        in_features=model.get_sentence_embedding_dimension(),
+        in_features=model.get_embedding_dimension(),
         out_features=pca_dimensions,
         bias=False,
         activation_function=torch.nn.Identity(),

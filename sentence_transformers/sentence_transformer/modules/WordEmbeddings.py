@@ -90,7 +90,7 @@ class WordEmbeddings(InputModule):
 
         return output
 
-    def get_word_embedding_dimension(self) -> int:
+    def get_embedding_dimension(self) -> int:
         return self.embeddings_dimension
 
     def save(self, output_path: str, *args, safe_serialization: bool = True, **kwargs):

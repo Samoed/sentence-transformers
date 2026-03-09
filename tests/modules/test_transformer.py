@@ -414,9 +414,9 @@ class TestForward:
         assert "all_layer_embeddings" in result
 
 
-class TestGetWordEmbeddingDimension:
+class TestGetEmbeddingDimension:
     def test_standard_hidden_size(self, bert_tiny_transformer):
-        dim = bert_tiny_transformer.get_word_embedding_dimension()
+        dim = bert_tiny_transformer.get_embedding_dimension()
         assert dim == bert_tiny_transformer.config.hidden_size
 
     def test_hidden_sizes_list(self, bert_tiny_transformer):
@@ -424,28 +424,28 @@ class TestGetWordEmbeddingDimension:
         model = bert_tiny_transformer
         del model.config.hidden_size
         model.config.hidden_sizes = [64, 128, 256]
-        assert model.get_word_embedding_dimension() == 256
+        assert model.get_embedding_dimension() == 256
 
     def test_hidden_dim(self, bert_tiny_transformer):
         """Models with hidden_dim should return it."""
         model = bert_tiny_transformer
         del model.config.hidden_size
         model.config.hidden_dim = 384
-        assert model.get_word_embedding_dimension() == 384
+        assert model.get_embedding_dimension() == 384
 
     def test_raises_when_no_dimension_found(self, bert_tiny_transformer):
         """Should raise ValueError when no dimension attribute is found."""
         model = bert_tiny_transformer
         del model.config.hidden_size
         with pytest.raises(ValueError, match="Could not determine embedding dimension"):
-            model.get_word_embedding_dimension()
+            model.get_embedding_dimension()
 
     def test_projection_dim_for_sentence_embedding(self, bert_tiny_transformer):
         """When module_output_name is 'sentence_embedding', projection_dim takes priority."""
         model = bert_tiny_transformer
         model.module_output_name = "sentence_embedding"
         model.config.projection_dim = 512
-        assert model.get_word_embedding_dimension() == 512
+        assert model.get_embedding_dimension() == 512
 
     def test_text_config_fallback(self, bert_tiny_transformer):
         """Should fall back to text_config.hidden_size when main config lacks it."""
@@ -456,7 +456,7 @@ class TestGetWordEmbeddingDimension:
             hidden_size = 768
 
         model.config.text_config = FakeTextConfig()
-        assert model.get_word_embedding_dimension() == 768
+        assert model.get_embedding_dimension() == 768
 
 
 class TestGetPromptLength:

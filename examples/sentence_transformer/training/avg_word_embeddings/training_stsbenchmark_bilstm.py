@@ -36,10 +36,10 @@ logging.info(train_dataset)
 # Map tokens to traditional word embeddings like GloVe
 word_embedding_model = WordEmbeddings.from_text_file("glove.6B.300d.txt.gz")
 
-lstm = LSTM(word_embedding_dimension=word_embedding_model.get_word_embedding_dimension(), hidden_dim=1024)
+lstm = LSTM(embedding_dimension=word_embedding_model.get_embedding_dimension(), hidden_dim=1024)
 
 # Apply mean pooling to get one fixed sized sentence vector
-pooling_model = Pooling(lstm.get_word_embedding_dimension(), pooling_mode="mean")
+pooling_model = Pooling(lstm.get_embedding_dimension(), pooling_mode="mean")
 model = SentenceTransformer(modules=[word_embedding_model, lstm, pooling_model])
 
 # 3. Define our training loss

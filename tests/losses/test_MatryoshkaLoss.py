@@ -84,7 +84,7 @@ def test_model_dimension_none_no_validation(mock_loss):
     """Test that when model dimension is None, no validation or warning occurs."""
 
     class _MockModel:
-        def get_sentence_embedding_dimension(self):
+        def get_embedding_dimension(self):
             return None
 
     model = _MockModel()

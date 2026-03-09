@@ -393,7 +393,7 @@ def test_router_save_load_with_multiple_modules_per_route(static_embedding_model
     # Create two different mock modules for testing
     static_embedding_model_one = deepcopy(static_embedding_model)
     static_embedding_model_two = deepcopy(static_embedding_model)
-    dense = Dense(in_features=static_embedding_model.get_sentence_embedding_dimension(), out_features=128)
+    dense = Dense(in_features=static_embedding_model.get_embedding_dimension(), out_features=128)
     normalize_one = Normalize()
     normalize_two = Normalize()
     router = Router(
@@ -416,7 +416,7 @@ def test_router_save_load_with_multiple_modules_per_route(static_embedding_model
 
     # The first route has priority here, but usually all routes have the same embedding dimension
     # as they can't be compared otherwise
-    assert loaded_model.get_sentence_embedding_dimension() == 128
+    assert loaded_model.get_embedding_dimension() == 128
 
     # If we swap the order of the routes, the new first route should be used
     loaded_router.sub_modules = nn.ModuleDict(
@@ -425,7 +425,7 @@ def test_router_save_load_with_multiple_modules_per_route(static_embedding_model
             "query": loaded_router.sub_modules["query"],
         }
     )
-    assert loaded_model.get_sentence_embedding_dimension() == 768
+    assert loaded_model.get_embedding_dimension() == 768
 
 
 def test_router_with_trainer(static_embedding_model: StaticEmbedding, tmp_path: Path):
@@ -676,10 +676,10 @@ def test_router_as_middle_module(static_embedding_model: StaticEmbedding, tmp_pa
     # Test that the model processes through all modules (static_embedding + router)
     # by checking the embedding dimensions match what we expect
     query_embedding = model.encode_query(query_texts)
-    assert query_embedding.shape[1] == static_embedding_model.get_sentence_embedding_dimension()
+    assert query_embedding.shape[1] == static_embedding_model.get_embedding_dimension()
 
     doc_embedding = model.encode_document(doc_texts)
-    assert doc_embedding.shape[1] == static_embedding_model.get_sentence_embedding_dimension()
+    assert doc_embedding.shape[1] == static_embedding_model.get_embedding_dimension()
 
     # Test that default encode uses the default route (query)
     default_embedding = model.encode(query_texts)
@@ -1008,11 +1008,11 @@ def test_router_tokenizer_property_no_tokenizer():
     assert router.tokenizer is None
 
 
-def test_router_get_sentence_embedding_dimension():
-    """Test get_sentence_embedding_dimension method."""
+def test_router_get_embedding_dimension():
+    """Test get_embedding_dimension method."""
 
     class ModuleWithDimension(MockModule):
-        def get_sentence_embedding_dimension(self):
+        def get_embedding_dimension(self):
             return 768
 
     class ModuleWithoutDimension(MockModule):
@@ -1021,16 +1021,16 @@ def test_router_get_sentence_embedding_dimension():
     # Test with module that has dimension
     module_with_dim = ModuleWithDimension()
     router = Router({"query": [module_with_dim]})
-    assert router.get_sentence_embedding_dimension() == 768
+    assert router.get_embedding_dimension() == 768
 
     # Test with module without dimension
     module_without_dim = ModuleWithoutDimension()
     router = Router({"query": [module_without_dim]})
-    assert router.get_sentence_embedding_dimension() is None
+    assert router.get_embedding_dimension() is None
 
     # Test with multiple modules where last one has dimension
     router = Router({"query": [module_without_dim, module_with_dim]})
-    assert router.get_sentence_embedding_dimension() == 768
+    assert router.get_embedding_dimension() == 768
 
 
 def test_router_resolve_route_error_messages(static_embedding_model: StaticEmbedding):

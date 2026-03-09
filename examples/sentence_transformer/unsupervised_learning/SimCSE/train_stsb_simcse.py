@@ -29,7 +29,7 @@ model_save_path = "output/training_stsb_simcse-{}-{}-{}".format(
 
 # Here we define our SentenceTransformer model
 word_embedding_model = Transformer(model_name, max_seq_length=max_seq_length)
-pooling_model = Pooling(word_embedding_model.get_word_embedding_dimension())
+pooling_model = Pooling(word_embedding_model.get_embedding_dimension())
 model = SentenceTransformer(modules=[word_embedding_model, pooling_model])
 
 # We use 1 Million sentences from Wikipedia to train our model

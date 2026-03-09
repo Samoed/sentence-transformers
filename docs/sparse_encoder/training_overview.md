@@ -93,7 +93,7 @@ But if instead you want to train from another checkpoint, or from scratch, then 
         model = SparseEncoder("google-bert/bert-base-uncased")
         # SparseEncoder(
         #   (0): Transformer({'transformer_task': 'fill-mask', 'modality_config': {'text': {'method': 'forward', 'method_output_name': 'logits'}}, 'module_output_name': 'token_embeddings', 'architecture': 'BertForMaskedLM'})
-        #   (1): SpladePooling({'pooling_strategy': 'max', 'activation_function': 'relu', 'word_embedding_dimension': None})
+        #   (1): SpladePooling({'pooling_strategy': 'max', 'activation_function': 'relu', 'embedding_dimension': None})
         # )
 
 .. tab:: Inference-free Splade
@@ -188,12 +188,12 @@ But if instead you want to train from another checkpoint, or from scratch, then 
         transformer = Transformer("google-bert/bert-base-uncased")
         
         # Initialize pooling
-        pooling = Pooling(transformer.get_word_embedding_dimension(), pooling_mode="mean")
+        pooling = Pooling(transformer.get_embedding_dimension(), pooling_mode="mean")
         
         # Initialize SparseAutoEncoder module
         sae = SparseAutoEncoder(
-            input_dim=transformer.get_word_embedding_dimension(),
-            hidden_dim=4 * transformer.get_word_embedding_dimension(),
+            input_dim=transformer.get_embedding_dimension(),
+            hidden_dim=4 * transformer.get_embedding_dimension(),
             k=256,  # Number of top values to keep
             k_aux=512,  # Number of top values for auxiliary loss
         )
@@ -209,7 +209,7 @@ But if instead you want to train from another checkpoint, or from scratch, then 
         model = SparseEncoder("mixedbread-ai/mxbai-embed-large-v1")
         # SparseEncoder(
         #   (0): Transformer({'max_seq_length': 512, 'do_lower_case': False, 'architecture': 'BertModel'})
-        #   (1): Pooling({'word_embedding_dimension': 1024, 'pooling_mode_cls_token': True, 'pooling_mode_mean_tokens': False, 'pooling_mode_max_tokens': False, 'pooling_mode_mean_sqrt_len_tokens': False, 'pooling_mode_weightedmean_tokens': False, 'pooling_mode_lasttoken': False, 'include_prompt': True})
+        #   (1): Pooling({'embedding_dimension': 1024, 'pooling_mode_cls_token': True, 'pooling_mode_mean_tokens': False, 'pooling_mode_max_tokens': False, 'pooling_mode_mean_sqrt_len_tokens': False, 'pooling_mode_weightedmean_tokens': False, 'pooling_mode_lasttoken': False, 'include_prompt': True})
         #   (2): SparseAutoEncoder({'input_dim': 1024, 'hidden_dim': 4096, 'k': 256, 'k_aux': 512, 'normalize': False, 'dead_threshold': 30})
         # )
 
@@ -763,7 +763,7 @@ The :class:`~sentence_transformers.sparse_encoder.trainer.SparseEncoderTrainer` 
             tokenizer_args={"model_max_length": 512},
         )
         splade_pooling = SpladePooling(
-            pooling_strategy="max", word_embedding_dimension=mlm_transformer.get_sentence_embedding_dimension()
+            pooling_strategy="max", embedding_dimension=mlm_transformer.get_embedding_dimension()
         )
         router = Router.for_query_document(
             query_modules=[SparseStaticEmbedding(tokenizer=mlm_transformer.tokenizer, frozen=False)],

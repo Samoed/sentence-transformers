@@ -54,7 +54,7 @@ test_evaluator = EmbeddingSimilarityEvaluator(
 
 # Initialize an SBERT model
 word_embedding_model = Transformer(model_name, max_seq_length=max_seq_length)
-pooling_model = Pooling(word_embedding_model.get_word_embedding_dimension())
+pooling_model = Pooling(word_embedding_model.get_embedding_dimension())
 model = SentenceTransformer(modules=[word_embedding_model, pooling_model])
 
 # Loss

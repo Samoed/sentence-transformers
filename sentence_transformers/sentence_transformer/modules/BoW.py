@@ -67,7 +67,7 @@ class BoW(InputModule):
         tokenized = [self.tokenizer.tokenize(text, **kwargs) for text in inputs]
         return self.get_sentence_features(tokenized)
 
-    def get_sentence_embedding_dimension(self):
+    def get_embedding_dimension(self):
         return self.sentence_embedding_dimension
 
     def get_sentence_features(
@@ -76,7 +76,7 @@ class BoW(InputModule):
         vectors = []
 
         for tokens in tokenized_texts:
-            vector = torch.zeros(self.get_sentence_embedding_dimension(), dtype=torch.float32)
+            vector = torch.zeros(self.get_embedding_dimension(), dtype=torch.float32)
             for token in tokens:
                 if self.cumulative_term_frequency:
                     vector[token] += self.weights[token]

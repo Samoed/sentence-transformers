@@ -4,6 +4,7 @@ import torch
 from torch import Tensor
 
 from sentence_transformers.base.modules.Module import Module
+from sentence_transformers.util.decorators import deprecated_kwargs
 
 
 class Pooling(Module):
@@ -15,7 +16,7 @@ class Pooling(Module):
     together.
 
     Args:
-        word_embedding_dimension: Dimensions for the word embeddings
+        embedding_dimension: Dimensions for the input embeddings
         pooling_mode: Either "cls", "lasttoken", "max", "mean",
             "mean_sqrt_len_tokens", or "weightedmean". If set,
             overwrites the other pooling_mode_* settings
@@ -50,7 +51,7 @@ class Pooling(Module):
     )
 
     config_keys = [
-        "word_embedding_dimension",
+        "embedding_dimension",
         "pooling_mode_cls_token",
         "pooling_mode_mean_tokens",
         "pooling_mode_max_tokens",
@@ -59,10 +60,12 @@ class Pooling(Module):
         "pooling_mode_lasttoken",
         "include_prompt",
     ]
+    config_key_renames = {"word_embedding_dimension": "embedding_dimension"}
 
+    @deprecated_kwargs(**config_key_renames)
     def __init__(
         self,
-        word_embedding_dimension: int,
+        embedding_dimension: int,
         pooling_mode: str | None = None,
         pooling_mode_cls_token: bool = False,
         pooling_mode_max_tokens: bool = False,
@@ -89,7 +92,7 @@ class Pooling(Module):
             pooling_mode_weightedmean_tokens = pooling_mode == "weightedmean"
             pooling_mode_lasttoken = pooling_mode == "lasttoken"
 
-        self.word_embedding_dimension = word_embedding_dimension
+        self.embedding_dimension = embedding_dimension
         self.pooling_mode_cls_token = pooling_mode_cls_token
         self.pooling_mode_mean_tokens = pooling_mode_mean_tokens
         self.pooling_mode_max_tokens = pooling_mode_max_tokens
@@ -109,7 +112,7 @@ class Pooling(Module):
                 pooling_mode_lasttoken,
             ]
         )
-        self.pooling_output_dimension = pooling_mode_multiplier * word_embedding_dimension
+        self.pooling_output_dimension = pooling_mode_multiplier * embedding_dimension
 
     def __repr__(self) -> str:
         return f"Pooling({self.get_config_dict()})"
@@ -254,7 +257,7 @@ class Pooling(Module):
         features["sentence_embedding"] = output_vector
         return features
 
-    def get_sentence_embedding_dimension(self) -> int:
+    def get_embedding_dimension(self) -> int:
         return self.pooling_output_dimension
 
     def save(self, output_path: str, *args, safe_serialization: bool = True, **kwargs) -> None:

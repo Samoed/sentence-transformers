@@ -136,11 +136,46 @@ def test_decode_empty_tensor(splade_bert_tiny_model: SparseEncoder) -> None:
     empty_sparse = torch.sparse_coo_tensor(
         indices=torch.zeros((2, 0), dtype=torch.long),
         values=torch.zeros((0,), dtype=torch.float),
-        size=(1, model.get_sentence_embedding_dimension()),
+        size=(1, model.get_embedding_dimension()),
     )
 
     decoded = model.decode(empty_sparse)
     assert len(decoded) == 0 or (isinstance(decoded, list) and all(not item for item in decoded))
+
+
+@pytest.mark.parametrize("top_k", [0, -1, -5])
+def test_decode_invalid_top_k(splade_bert_tiny_model: SparseEncoder, top_k: int) -> None:
+    model = splade_bert_tiny_model
+    embeddings = model.encode("Hello world")
+    with pytest.raises(ValueError, match="top_k must be a positive integer"):
+        model.decode(embeddings, top_k=top_k)
+
+
+def test_decode_invalid_input_type(splade_bert_tiny_model: SparseEncoder) -> None:
+    model = splade_bert_tiny_model
+    with pytest.raises(TypeError, match="Expected torch.Tensor"):
+        model.decode([1, 2, 3])
+
+
+def test_decode_invalid_ndim(splade_bert_tiny_model: SparseEncoder) -> None:
+    model = splade_bert_tiny_model
+    tensor_3d = torch.zeros(2, 3, 4)
+    with pytest.raises(ValueError, match="Input tensor must be 1D or 2D"):
+        model.decode(tensor_3d)
+
+
+def test_decode_batch_with_empty_sample(splade_bert_tiny_model: SparseEncoder) -> None:
+    model = splade_bert_tiny_model
+    vocab_size = model.get_embedding_dimension()
+    # Create a batch where the first sample has values but the second is all zeros
+    indices = torch.tensor([[0, 0], [1, 5]])  # both non-zero entries in sample 0
+    values = torch.tensor([1.0, 2.0])
+    batch_sparse = torch.sparse_coo_tensor(indices, values, size=(2, vocab_size))
+
+    decoded = model.decode(batch_sparse)
+    assert len(decoded) == 2
+    assert len(decoded[0]) == 2  # sample 0 has 2 non-zero entries
+    assert decoded[1] == []  # sample 1 is empty
 
 
 @pytest.mark.parametrize("top_k", [None, 5, 1000])
@@ -171,7 +206,7 @@ def test_decode_returns_sorted_weights(
 
 def test_inference_free_splade(inference_free_splade_bert_tiny_model: SparseEncoder):
     model = inference_free_splade_bert_tiny_model
-    dimensionality = model.get_sentence_embedding_dimension()
+    dimensionality = model.get_embedding_dimension()
 
     query = "What is the capital of France?"
     document = "The capital of France is Paris."
@@ -308,7 +343,7 @@ def test_intersection(splade_bert_tiny_model: SparseEncoder):
     # Let's check that the intersection is a tensor and has the correct shape
     intersection = model.intersection(query_embeddings, document_embeddings)
     assert isinstance(intersection, torch.Tensor)
-    assert intersection.shape == (model.get_sentence_embedding_dimension(),)
+    assert intersection.shape == (model.get_embedding_dimension(),)
 
     # Check that the intersection sparsity is less than both query and document sparsities
     intersection_sparsity = model.sparsity(intersection)
@@ -325,7 +360,7 @@ def test_intersection(splade_bert_tiny_model: SparseEncoder):
 
     intersection_batch = model.intersection(query_embeddings, document_embeddings)
     assert isinstance(intersection_batch, torch.Tensor)
-    assert intersection_batch.shape == (len(documents), model.get_sentence_embedding_dimension())
+    assert intersection_batch.shape == (len(documents), model.get_embedding_dimension())
 
     decoded_intersection_batch = model.decode(intersection_batch)
     assert len(decoded_intersection_batch) == len(documents)
@@ -343,7 +378,7 @@ def test_encode_with_dataset_column(splade_bert_tiny_model: SparseEncoder) -> No
     embeddings = model.encode(dataset["text"], convert_to_tensor=True)
 
     # Check the shape of the embeddings
-    assert embeddings.shape == (2, model.get_sentence_embedding_dimension())
+    assert embeddings.shape == (2, model.get_embedding_dimension())
 
 
 @pytest.mark.parametrize("convert_to_tensor", [True, False])
@@ -644,7 +679,7 @@ def test_encode_query(
     assert len(encode_calls) == 1
     _, kwargs = encode_calls[0]
 
-    assert kwargs["sentences"] == sentences
+    assert kwargs["inputs"] == sentences
     assert kwargs["convert_to_tensor"] == convert_to_tensor
     assert kwargs["convert_to_sparse_tensor"] == convert_to_sparse_tensor
     assert kwargs["prompt"] == prompt
@@ -694,7 +729,7 @@ def test_encode_document(
     else:
         expected_prompt_name = "document"
 
-    assert kwargs["sentences"] == sentences
+    assert kwargs["inputs"] == sentences
     assert kwargs["convert_to_tensor"] == convert_to_tensor
     assert kwargs["convert_to_sparse_tensor"] == convert_to_sparse_tensor
     assert kwargs["prompt"] == prompt

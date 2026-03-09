@@ -29,7 +29,7 @@ output_dir = f"output/training_tsdae-{model_name.replace('/', '-')}-{train_batch
 
 # 1. Defining our sentence transformer model
 word_embedding_model = Transformer(model_name, max_seq_length=max_seq_length)
-pooling_model = Pooling(word_embedding_model.get_word_embedding_dimension(), "cls")
+pooling_model = Pooling(word_embedding_model.get_embedding_dimension(), "cls")
 model = SentenceTransformer(modules=[word_embedding_model, pooling_model])
 # or to load a pre-trained SentenceTransformer model OR use mean pooling
 # model = SentenceTransformer(model_name)

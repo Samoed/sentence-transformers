@@ -122,24 +122,24 @@ logging.info("Teacher Performance")
 dev_evaluator_stsb(teacher_model)
 
 # Student model has fewer dimensions. Compute PCA for the teacher to reduce the dimensions
-if student_model.get_sentence_embedding_dimension() < teacher_model.get_sentence_embedding_dimension():
+if student_model.get_embedding_dimension() < teacher_model.get_embedding_dimension():
     logging.info("Student model has fewer dimensions than the teacher. Compute PCA for down projection")
     pca_sentences = nli_train_dataset[:20000]["sentence"] + wikipedia_train_dataset[:20000]["sentence"]
     pca_embeddings = teacher_model.encode(pca_sentences, convert_to_numpy=True)
-    pca = PCA(n_components=student_model.get_sentence_embedding_dimension())
+    pca = PCA(n_components=student_model.get_embedding_dimension())
     pca.fit(pca_embeddings)
 
     # Add Dense layer to teacher that projects the embeddings down to the student embedding size
     dense = Dense(
-        in_features=teacher_model.get_sentence_embedding_dimension(),
-        out_features=student_model.get_sentence_embedding_dimension(),
+        in_features=teacher_model.get_embedding_dimension(),
+        out_features=student_model.get_embedding_dimension(),
         bias=False,
         activation_function=torch.nn.Identity(),
     )
     dense.linear.weight = torch.nn.Parameter(torch.tensor(pca.components_))
     teacher_model.add_module("dense", dense)
 
-    logging.info(f"Teacher Performance with {teacher_model.get_sentence_embedding_dimension()} dimensions:")
+    logging.info(f"Teacher Performance with {teacher_model.get_embedding_dimension()} dimensions:")
     dev_evaluator_stsb(teacher_model)
 
 

@@ -9,30 +9,33 @@ import torch
 from torch import nn
 
 from sentence_transformers.base.modules.Module import Module
+from sentence_transformers.util.decorators import deprecated_kwargs
 
 
 class CNN(Module):
     """CNN-layer with multiple kernel-sizes over the word embeddings"""
 
-    config_keys: list[str] = ["in_word_embedding_dimension", "out_channels", "kernel_sizes"]
+    config_keys: list[str] = ["in_embedding_dimension", "out_channels", "kernel_sizes"]
     config_file_name: str = "cnn_config.json"
+    config_key_renames = {"in_word_embedding_dimension": "in_embedding_dimension"}
 
+    @deprecated_kwargs(**config_key_renames)
     def __init__(
         self,
-        in_word_embedding_dimension: int,
+        in_embedding_dimension: int,
         out_channels: int = 256,
         kernel_sizes: list[int] = [1, 3, 5],
         stride_sizes: list[int] = None,
     ):
         nn.Module.__init__(self)
-        self.in_word_embedding_dimension = in_word_embedding_dimension
+        self.in_embedding_dimension = in_embedding_dimension
         self.out_channels = out_channels
         self.kernel_sizes = kernel_sizes
 
         self.embeddings_dimension = out_channels * len(kernel_sizes)
         self.convs = nn.ModuleList()
 
-        in_channels = in_word_embedding_dimension
+        in_channels = in_embedding_dimension
         if stride_sizes is None:
             stride_sizes = [1] * len(kernel_sizes)
 
@@ -57,7 +60,7 @@ class CNN(Module):
         features.update({"token_embeddings": out})
         return features
 
-    def get_word_embedding_dimension(self) -> int:
+    def get_embedding_dimension(self) -> int:
         return self.embeddings_dimension
 
     def save(self, output_path: str, *args, safe_serialization: bool = True, **kwargs) -> None:

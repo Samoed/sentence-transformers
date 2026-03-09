@@ -69,7 +69,7 @@ pca_comp = np.asarray(pca.components_)
 
 # We add a dense layer to the model, so that it will produce directly embeddings with the new size
 dense = Dense(
-    in_features=model.get_sentence_embedding_dimension(),
+    in_features=model.get_embedding_dimension(),
     out_features=new_dimension,
     bias=False,
     activation_function=torch.nn.Identity(),

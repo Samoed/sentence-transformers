@@ -63,7 +63,7 @@ def test_load_with_safetensors() -> None:
             cache_dir=cache_folder,
             model_kwargs={"use_safetensors": False},
         )
-        pooling = Pooling(transformer.get_word_embedding_dimension())
+        pooling = Pooling(transformer.get_embedding_dimension())
         pytorch_model = SentenceTransformer(modules=[transformer, pooling])
 
         # Only the pytorch file must be loaded
@@ -107,7 +107,7 @@ def test_torch_dtype(torch_dtype) -> None:
         model_kwargs={"torch_dtype": torch_dtype},
     )
     embedding = model.encode("Test sentence")
-    assert embedding.shape[-1] == model.get_sentence_embedding_dimension()
+    assert embedding.shape[-1] == model.get_embedding_dimension()
 
 
 def test_push_to_hub(
@@ -646,7 +646,7 @@ def test_encode_truncate(
             embeddings_shape = embeddings.shape
         expected_shape = (expected_dim,) if isinstance(sentences, str) else (len(sentences), expected_dim)
         assert embeddings_shape == expected_shape
-        assert model.get_sentence_embedding_dimension() == expected_dim
+        assert model.get_embedding_dimension() == expected_dim
 
         # Convert embeddings to a torch Tensor for ease of testing
         if isinstance(embeddings, list):
@@ -670,7 +670,7 @@ def test_encode_truncate(
             assert torch.allclose(embeddings, util.truncate_embeddings(embeddings_full_unnormalized, expected_dim))
 
     # Test init w/o setting truncate_dim (it's None)
-    original_output_dim: int = model.get_sentence_embedding_dimension()
+    original_output_dim: int = model.get_embedding_dimension()
     test(model, expected_dim=original_output_dim)
 
     # Test init w/ a set truncate_dim
@@ -1015,7 +1015,7 @@ def test_encode_query(
     _, kwargs = encode_calls[0]
 
     # Check that sentences were passed correctly
-    assert kwargs["sentences"] == sentences
+    assert kwargs["inputs"] == sentences
 
     # Check prompt handling
     assert kwargs["prompt"] == prompt
@@ -1072,7 +1072,7 @@ def test_encode_document(
         expected_prompt_name = "document"
 
     # Check that sentences were passed correctly
-    assert kwargs["sentences"] == sentences
+    assert kwargs["inputs"] == sentences
 
     # Check prompt handling
     assert kwargs["prompt"] == prompt
@@ -1206,7 +1206,7 @@ def test_encode_with_dataset_column(stsb_bert_tiny_model: SentenceTransformer) -
     embeddings = model.encode(dataset["text"], convert_to_tensor=True)
 
     # Check the shape of the embeddings
-    assert embeddings.shape == (2, model.get_sentence_embedding_dimension())
+    assert embeddings.shape == (2, model.get_embedding_dimension())
 
 
 def test_get_model_kwargs(stsb_bert_tiny_model: SentenceTransformer) -> None:

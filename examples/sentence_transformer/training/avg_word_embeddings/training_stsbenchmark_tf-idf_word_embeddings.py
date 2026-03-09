@@ -68,10 +68,10 @@ unknown_word_weight = math.log(num_docs / 1)
 word_weights = WordWeights(vocab=vocab, word_weights=word_weights, unknown_word_weight=unknown_word_weight)
 
 # Apply mean pooling to get one fixed sized sentence vector
-pooling_model = Pooling(word_embedding_model.get_word_embedding_dimension(), pooling_mode="mean")
+pooling_model = Pooling(word_embedding_model.get_embedding_dimension(), pooling_mode="mean")
 
 # Add two trainable feed-forward networks (DAN)
-sent_embeddings_dimension = pooling_model.get_sentence_embedding_dimension()
+sent_embeddings_dimension = pooling_model.get_embedding_dimension()
 dan1 = Dense(in_features=sent_embeddings_dimension, out_features=sent_embeddings_dimension)
 dan2 = Dense(in_features=sent_embeddings_dimension, out_features=sent_embeddings_dimension)
 model = SentenceTransformer(modules=[word_embedding_model, word_weights, pooling_model, dan1, dan2])

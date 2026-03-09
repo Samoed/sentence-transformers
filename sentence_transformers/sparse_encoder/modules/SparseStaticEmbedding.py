@@ -231,5 +231,5 @@ class SparseStaticEmbedding(InputModule):
         tokenizer_info = f", tokenizer={self.tokenizer.__class__.__name__}"
         return f"SparseStaticEmbedding({self.get_config_dict()}, dim={self.num_dimensions}{tokenizer_info})"
 
-    def get_sentence_embedding_dimension(self) -> int:
+    def get_embedding_dimension(self) -> int:
         return self.num_dimensions

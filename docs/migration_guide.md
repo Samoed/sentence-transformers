@@ -6,6 +6,13 @@ TODO: Notes to self:
 - Updating the import paths (although there's backwards compatibility)
 - Avoiding using Router keys as dictionary keys in the input
 - Renamed tokenizer_kwargs to processor_kwargs (with backwards compatibility)
+- Renamed SentenceTransformer.get_sentence_embedding_dimension to SentenceTransformer.get_embedding_dimension (with backwards compatibility)
+- Renamed SparseEncoder.get_sentence_embedding_dimension to SparseEncoder.get_embedding_dimension (with backwards compatibility)
+- Renamed SentenceTransformer.truncate_sentence_embeddings to SentenceTransformer.truncate_embeddings (with backwards compatibility)
+- Renamed SoftmaxLoss `sentence_embedding_dimension` parameter to `embedding_dimension` (with backwards compatibility)
+- Renamed `get_word_embedding_dimension` to `get_embedding_dimension` on Transformer, LSTM, CNN, WordEmbeddings, WeightedLayerPooling (with backwards compatibility)
+- Renamed `word_embedding_dimension` constructor parameter to `embedding_dimension` on Pooling, LSTM, WeightedLayerPooling, SpladePooling (with backwards compatibility)
+- Renamed `in_word_embedding_dimension` constructor parameter to `in_embedding_dimension` on CNN (with backwards compatibility)
 
 ## Migrating from v4.x to v5.x
 

@@ -73,7 +73,7 @@ class Dense(Module):
         )
         return features
 
-    def get_sentence_embedding_dimension(self) -> int:
+    def get_embedding_dimension(self) -> int:
         return self.out_features
 
     def get_config_dict(self):

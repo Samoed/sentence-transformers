@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import warnings
 from abc import ABC, abstractmethod
 from typing import Any
 
@@ -60,6 +61,11 @@ class Module(ABC, torch.nn.Module):
     """
     A list of keys used to save the module's configuration. These keys are used to save the module's configuration
     when saving the model to disk.
+    """
+    config_key_renames: dict[str, str] = {}
+    """
+    A mapping of deprecated config key names to their new names. Used by :meth:`load_config` to silently
+    remap old config keys so that loading old saved models does not emit deprecation warnings.
     """
     save_in_root: bool = False
     """
@@ -204,6 +210,13 @@ class Module(ABC, torch.nn.Module):
 
         with open(config_path, encoding="utf-8") as f:
             config = json.load(f)
+
+        # Silently remap deprecated config keys so loading old saved models
+        # does not trigger deprecation warnings from the constructor.
+        for old_key, new_key in cls.config_key_renames.items():
+            if old_key in config and new_key not in config:
+                config[new_key] = config.pop(old_key)
+
         return config
 
     @staticmethod
@@ -409,6 +422,30 @@ class Module(ABC, torch.nn.Module):
             save_safetensors_model(self, os.path.join(output_path, "model.safetensors"))
         else:
             torch.save(self.state_dict(), os.path.join(output_path, "pytorch_model.bin"))
+
+    _DEPRECATED_METHOD_RENAMES: dict[str, str] = {
+        "get_sentence_embedding_dimension": "get_embedding_dimension",
+        "get_word_embedding_dimension": "get_embedding_dimension",
+    }
+
+    def __getattr__(self, name: str):
+        """Provide backward compatibility for renamed methods.
+
+        We use ``__getattr__`` instead of defining regular deprecated methods so that
+        ``hasattr(module, "<old_name>")`` remains ``False`` for modules that don't
+        define the new method (``get_embedding_dimension``).
+        """
+        new_name = self._DEPRECATED_METHOD_RENAMES.get(name)
+        if new_name is not None:
+            for cls in type(self).__mro__:
+                if new_name in cls.__dict__:
+                    warnings.warn(
+                        f"The `{name}` method has been renamed to `{new_name}`.",
+                        FutureWarning,
+                        stacklevel=2,
+                    )
+                    return getattr(self, new_name)
+        return super().__getattr__(name)
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.get_config_dict()})"

@@ -1,9 +1,48 @@
 from __future__ import annotations
 
 import functools
-import logging
 
-logger = logging.getLogger(__name__)
+from transformers.utils import logging as transformers_logging
+
+# NOTE: transformers wraps the regular logging module for e.g. warning_once
+logger = transformers_logging.get_logger(__name__)
+
+
+def deprecated_kwargs(**renames: str):
+    """Decorator factory that transparently renames deprecated keyword arguments.
+
+    Emits a deprecation warning when a caller uses the old name. If both old and
+    new names are provided, the old name is silently dropped in favor of the new.
+
+    Usage::
+
+        @deprecated_kwargs(sentence_embedding_dimension="embedding_dimension")
+        def __init__(self, embedding_dimension: int, ...):
+            ...
+
+    Note: for backward-compatible loading of saved configs without warnings,
+    use ``config_key_renames`` on the :class:`Module` subclass. This
+    decorator is for warning users who explicitly pass the old keyword argument.
+    """
+
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            for old_name, new_name in renames.items():
+                if old_name in kwargs:
+                    logger.warning_once(
+                        f"The `{old_name}` argument was renamed and is now deprecated. "
+                        f"Please use `{new_name}` instead."
+                    )
+                    if new_name not in kwargs:
+                        kwargs[new_name] = kwargs.pop(old_name)
+                    else:
+                        kwargs.pop(old_name)
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 def transformer_kwargs_decorator(func):
@@ -44,31 +83,6 @@ def transformer_kwargs_decorator(func):
                 for dict_name in ("model_kwargs", "processor_kwargs", "config_kwargs"):
                     kwargs.setdefault(dict_name, {})
                     kwargs[dict_name].setdefault("cache_dir", cache_dir)
-
-        return func(*args, **kwargs)
-
-    return wrapper
-
-
-def deprecated_tokenizer_kwargs_decorator(func):
-    """Decorator that renames the deprecated ``tokenizer_kwargs`` parameter to ``processor_kwargs``.
-
-    Apply this decorator to public-facing ``__init__`` methods (e.g.
-    :class:`SentenceTransformer`, :class:`SparseEncoder`, :class:`CrossEncoder`)
-    so that callers who still pass ``tokenizer_kwargs`` receive a deprecation
-    warning and have the value transparently forwarded as ``processor_kwargs``.
-    """
-
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        if "tokenizer_kwargs" in kwargs:
-            tokenizer_kwargs = kwargs.pop("tokenizer_kwargs")
-            logger.warning(
-                "The `tokenizer_kwargs` argument was renamed and is now deprecated. "
-                "Please use `processor_kwargs` instead."
-            )
-            if "processor_kwargs" not in kwargs:
-                kwargs["processor_kwargs"] = tokenizer_kwargs
 
         return func(*args, **kwargs)
 
@@ -130,32 +144,20 @@ def cross_encoder_predict_rank_args_decorator(func):
 
     Handles the following legacy kwargs:
 
+    * ``sentences`` -> ``inputs`` (via :func:`deprecated_kwargs`)
     * ``activation_fct`` -> ``activation_fn``
     * ``num_workers`` -> removed (no-op)
     """
 
+    @deprecated_kwargs(sentences="inputs", activation_fct="activation_fn")
     @functools.wraps(func)
     def wrapper(self, *args, **kwargs):
-        kwargs_renamed_mapping = {
-            "activation_fct": "activation_fn",
-        }
-        for old_name, new_name in kwargs_renamed_mapping.items():
-            if old_name in kwargs:
-                kwarg_value = kwargs.pop(old_name)
-                logger.warning(
-                    f"The CrossEncoder.predict `{old_name}` argument was renamed and is now deprecated. Please use `{new_name}` instead."
-                )
-                if new_name not in kwargs:
-                    kwargs[new_name] = kwarg_value
-
-        deprecated_args = ["num_workers"]
-
-        for deprecated_arg in deprecated_args:
-            if deprecated_arg in kwargs:
-                kwargs.pop(deprecated_arg)
-                logger.warning(
-                    f"The CrossEncoder.predict `{deprecated_arg}` argument is deprecated and has no effect. It will be removed in a future version."
-                )
+        if "num_workers" in kwargs:
+            kwargs.pop("num_workers")
+            logger.warning(
+                "The CrossEncoder.predict `num_workers` argument is deprecated and has no effect. "
+                "It will be removed in a future version."
+            )
 
         return func(self, *args, **kwargs)
 

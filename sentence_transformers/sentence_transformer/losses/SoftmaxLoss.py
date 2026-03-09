@@ -9,15 +9,17 @@ from packaging import version
 from torch import Tensor, nn
 
 from sentence_transformers.sentence_transformer.model import SentenceTransformer
+from sentence_transformers.util.decorators import deprecated_kwargs
 
 logger = logging.getLogger(__name__)
 
 
 class SoftmaxLoss(nn.Module):
+    @deprecated_kwargs(sentence_embedding_dimension="embedding_dimension")
     def __init__(
         self,
         model: SentenceTransformer,
-        sentence_embedding_dimension: int,
+        embedding_dimension: int,
         num_labels: int,
         concatenation_sent_rep: bool = True,
         concatenation_sent_difference: bool = True,
@@ -33,7 +35,7 @@ class SoftmaxLoss(nn.Module):
 
         Args:
             model (SentenceTransformer): The SentenceTransformer model.
-            sentence_embedding_dimension (int): The dimension of the sentence embeddings.
+            embedding_dimension (int): The dimension of the embeddings.
             num_labels (int): The number of different labels.
             concatenation_sent_rep (bool): Whether to concatenate vectors u,v for the softmax classifier. Defaults to True.
             concatenation_sent_difference (bool): Whether to add abs(u-v) for the softmax classifier. Defaults to True.
@@ -76,7 +78,7 @@ class SoftmaxLoss(nn.Module):
                     ],
                     "label": [1, 2, 0, 0],
                 })
-                loss = losses.SoftmaxLoss(model, model.get_sentence_embedding_dimension(), num_labels=3)
+                loss = losses.SoftmaxLoss(model, model.get_embedding_dimension(), num_labels=3)
 
                 trainer = SentenceTransformerTrainer(
                     model=model,
@@ -100,9 +102,7 @@ class SoftmaxLoss(nn.Module):
         if concatenation_sent_multiplication:
             num_vectors_concatenated += 1
         logger.info(f"Softmax loss: #Vectors concatenated: {num_vectors_concatenated}")
-        self.classifier = nn.Linear(
-            num_vectors_concatenated * sentence_embedding_dimension, num_labels, device=model.device
-        )
+        self.classifier = nn.Linear(num_vectors_concatenated * embedding_dimension, num_labels, device=model.device)
         self.loss_fct = loss_fct
 
         if version.parse(transformers.__version__) < version.parse("4.43.0"):

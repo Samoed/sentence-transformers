@@ -92,7 +92,7 @@ def test_unsupported_modality(static_embedding_model: StaticEmbedding) -> None:
 
 def test_loading_model2vec() -> None:
     model = SentenceTransformer("minishlab/potion-base-8M")
-    assert model.get_sentence_embedding_dimension() == 256
+    assert model.get_embedding_dimension() == 256
     assert model.max_seq_length == math.inf
 
     test_sentences = ["It's so sunny outside!", "The sun is shining outside!"]

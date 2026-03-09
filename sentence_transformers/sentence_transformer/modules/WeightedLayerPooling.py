@@ -9,18 +9,19 @@ import torch
 from torch import Tensor, nn
 
 from sentence_transformers.base.modules.Module import Module
+from sentence_transformers.util.decorators import deprecated_kwargs
 
 
 class WeightedLayerPooling(Module):
     """Token embeddings are weighted mean of their different hidden layer representations"""
 
-    config_keys: list[str] = ["word_embedding_dimension", "layer_start", "num_hidden_layers"]
+    config_keys: list[str] = ["embedding_dimension", "layer_start", "num_hidden_layers"]
+    config_key_renames = {"word_embedding_dimension": "embedding_dimension"}
 
-    def __init__(
-        self, word_embedding_dimension, num_hidden_layers: int = 12, layer_start: int = 4, layer_weights=None
-    ):
+    @deprecated_kwargs(**config_key_renames)
+    def __init__(self, embedding_dimension, num_hidden_layers: int = 12, layer_start: int = 4, layer_weights=None):
         super().__init__()
-        self.word_embedding_dimension = word_embedding_dimension
+        self.embedding_dimension = embedding_dimension
         self.layer_start = layer_start
         self.num_hidden_layers = num_hidden_layers
         self.layer_weights = (
@@ -41,8 +42,8 @@ class WeightedLayerPooling(Module):
         features.update({"token_embeddings": weighted_average})
         return features
 
-    def get_word_embedding_dimension(self):
-        return self.word_embedding_dimension
+    def get_embedding_dimension(self):
+        return self.embedding_dimension
 
     def save(self, output_path: str, *args, safe_serialization: bool = True, **kwargs) -> None:
         self.save_config(output_path)

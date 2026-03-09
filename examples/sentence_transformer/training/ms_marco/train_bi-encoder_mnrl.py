@@ -85,7 +85,7 @@ if args.use_pre_trained_model:
 else:
     logging.info("Create new SBERT model")
     word_embedding_model = Transformer(model_name, max_seq_length=max_seq_length)
-    pooling_model = Pooling(word_embedding_model.get_word_embedding_dimension(), args.pooling)
+    pooling_model = Pooling(word_embedding_model.get_embedding_dimension(), args.pooling)
     model = SentenceTransformer(modules=[word_embedding_model, pooling_model])
 
 model_save_path = "output/train_bi-encoder-mnrl-{}-margin_{:.1f}-{}".format(

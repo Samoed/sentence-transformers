@@ -6,6 +6,7 @@ from typing import Literal
 import torch
 
 from sentence_transformers.base.modules.Module import Module
+from sentence_transformers.util.decorators import deprecated_kwargs
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +33,7 @@ class SpladePooling(Module):
             - `relu`: ReLU activation (standard in all Splade models).
             - `log1p_relu`: log(1 + ReLU(x)) variant used in Opensearch Splade models, see https://huggingface.co/papers/2504.14839.
 
-        word_embedding_dimension (int, optional): Dimensionality of the output embeddings (if needed).
+        embedding_dimension (int, optional): Dimensionality of the output embeddings (if needed).
         chunk_size (int, optional): Chunk size along the sequence length dimension (i.e., number of tokens per chunk).
             If None, processes entire sequence at once. Using smaller chunks the reduces memory usage but may
             lower the training and inference speed. Default is None.
@@ -40,13 +41,15 @@ class SpladePooling(Module):
 
     SPLADE_POOLING_MODES = ("sum", "max")
     SPLADE_ACTIVATION = ["relu", "log1p_relu"]
-    config_keys: list[str] = ["pooling_strategy", "activation_function", "word_embedding_dimension"]
+    config_keys: list[str] = ["pooling_strategy", "activation_function", "embedding_dimension"]
+    config_key_renames = {"word_embedding_dimension": "embedding_dimension"}
 
+    @deprecated_kwargs(**config_key_renames)
     def __init__(
         self,
         pooling_strategy: Literal["max", "sum"] = "max",
         activation_function: Literal["relu", "log1p_relu"] = "relu",
-        word_embedding_dimension: int | None = None,
+        embedding_dimension: int | None = None,
         chunk_size: int | None = None,
     ) -> None:
         super().__init__()
@@ -56,7 +59,7 @@ class SpladePooling(Module):
         self.activation_function = activation_function
         if activation_function not in self.SPLADE_ACTIVATION:
             raise ValueError("activation_function must be either 'relu' or 'log1p_relu'")
-        self.word_embedding_dimension = word_embedding_dimension  # This will be set in the forward method
+        self.embedding_dimension = embedding_dimension  # This will be set in the forward method
         self.chunk_size = chunk_size
 
     def forward(
@@ -127,8 +130,8 @@ class SpladePooling(Module):
                     )
                 raise e
 
-        if self.word_embedding_dimension is None:
-            self.word_embedding_dimension = pooled_scores.shape[1]
+        if self.embedding_dimension is None:
+            self.embedding_dimension = pooled_scores.shape[1]
         features["sentence_embedding"] = pooled_scores
         return features
 
@@ -138,10 +141,10 @@ class SpladePooling(Module):
     def __repr__(self) -> str:
         return f"SpladePooling({self.get_config_dict()})"
 
-    def get_sentence_embedding_dimension(self) -> int:
-        """Get the dimension of the sentence embedding.
+    def get_embedding_dimension(self) -> int:
+        """Get the dimension of the embedding.
 
         Returns:
-            int: Dimension of the sentence embedding
+            int: Dimension of the embedding
         """
-        return self.word_embedding_dimension
+        return self.embedding_dimension

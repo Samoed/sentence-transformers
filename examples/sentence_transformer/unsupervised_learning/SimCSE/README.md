@@ -19,7 +19,7 @@ from torch.utils.data import DataLoader
 # Define your sentence transformer model using CLS pooling
 model_name = "distilroberta-base"
 word_embedding_model = Transformer(model_name, max_seq_length=32)
-pooling_model = Pooling(word_embedding_model.get_word_embedding_dimension())
+pooling_model = Pooling(word_embedding_model.get_embedding_dimension())
 model = SentenceTransformer(modules=[word_embedding_model, pooling_model])
 
 # Define a list with sentences (1k - 100k sentences)

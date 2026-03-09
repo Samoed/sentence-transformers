@@ -72,7 +72,7 @@ for seed in range(seed_count):
 
     # Apply mean pooling to get one fixed sized sentence vector
     pooling_model = Pooling(
-        word_embedding_model.get_word_embedding_dimension(),
+        word_embedding_model.get_embedding_dimension(),
         pooling_mode_mean_tokens=True,
         pooling_mode_cls_token=False,
         pooling_mode_max_tokens=False,

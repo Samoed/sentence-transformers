@@ -76,7 +76,7 @@ def test_multi_process_pool(stsb_bert_tiny_model: SentenceTransformer):
 
     # Should be numpy array with correct shape and the same embeddings
     assert isinstance(embeddings_multi, np.ndarray)
-    assert embeddings_multi.shape == (len(texts), model.get_sentence_embedding_dimension())
+    assert embeddings_multi.shape == (len(texts), model.get_embedding_dimension())
     assert np.allclose(embeddings_standard, embeddings_multi, atol=1e-6)
 
 
@@ -148,7 +148,7 @@ def test_multi_process_chunk_size(stsb_bert_tiny_model: SentenceTransformer):
 
     # Should produce correct embeddings
     assert isinstance(embeddings, np.ndarray)
-    assert embeddings.shape == (len(texts), model.get_sentence_embedding_dimension())
+    assert embeddings.shape == (len(texts), model.get_embedding_dimension())
 
 
 @pytest.mark.slow
@@ -277,7 +277,7 @@ def test_multi_process_more_workers_than_texts(stsb_bert_tiny_model: SentenceTra
 
     # Should be numpy array with correct shape
     assert isinstance(embeddings, np.ndarray)
-    assert embeddings.shape == (len(texts), model.get_sentence_embedding_dimension())
+    assert embeddings.shape == (len(texts), model.get_embedding_dimension())
 
 
 @pytest.mark.slow
@@ -291,7 +291,7 @@ def test_multi_process_with_large_chunk_size(stsb_bert_tiny_model: SentenceTrans
 
     # Should produce correct embeddings
     assert isinstance(embeddings, np.ndarray)
-    assert embeddings.shape == (len(texts), model.get_sentence_embedding_dimension())
+    assert embeddings.shape == (len(texts), model.get_embedding_dimension())
 
 
 @pytest.mark.slow
@@ -307,9 +307,9 @@ def test_multi_process_output_tensors_two_devices(stsb_bert_tiny_model: Sentence
     embeddings = model.encode(texts, device=["cpu", "cuda"], convert_to_tensor=True)
     assert isinstance(embeddings, torch.Tensor)
     assert embeddings.device.type == "cpu"
-    assert embeddings.shape == (len(texts), model.get_sentence_embedding_dimension())
+    assert embeddings.shape == (len(texts), model.get_embedding_dimension())
 
     # But the default is still just numpy
     embeddings = model.encode(texts, device=["cpu", "cuda"])
     assert isinstance(embeddings, np.ndarray)
-    assert embeddings.shape == (len(texts), model.get_sentence_embedding_dimension())
+    assert embeddings.shape == (len(texts), model.get_embedding_dimension())

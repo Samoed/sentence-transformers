@@ -52,7 +52,7 @@ model_output_path = "output/train_simcse{}-{}".format(output_name, datetime.now(
 word_embedding_model = Transformer(model_name, max_seq_length=max_seq_length)
 
 # Apply mean pooling to get one fixed sized sentence vector
-pooling_model = Pooling(word_embedding_model.get_word_embedding_dimension())
+pooling_model = Pooling(word_embedding_model.get_embedding_dimension())
 model = SentenceTransformer(modules=[word_embedding_model, pooling_model])
 
 # Read the train corpus

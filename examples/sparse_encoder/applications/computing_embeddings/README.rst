@@ -118,7 +118,7 @@ You can specify ``max_active_dims`` either when initializing the model or during
    embeddings = model.encode(sentences)
 
    # Print embedding dimensionality and sparsity
-   print(f"Embedding dim: {model.get_sentence_embedding_dimension()}")
+   print(f"Embedding dim: {model.get_embedding_dimension()}")
 
    stats = model.sparsity(embeddings)
    print(f"Embedding sparsity: {stats}")

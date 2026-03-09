@@ -39,7 +39,7 @@ def test_LabelAccuracyEvaluator(paraphrase_distilroberta_base_v1_model: Sentence
 
     train_loss = SoftmaxLoss(
         model=model,
-        sentence_embedding_dimension=model.get_sentence_embedding_dimension(),
+        embedding_dimension=model.get_embedding_dimension(),
         num_labels=3,
     )
 

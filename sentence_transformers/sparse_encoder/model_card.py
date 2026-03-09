@@ -121,7 +121,7 @@ class SparseEncoderModelCardData(BaseModelCardData):
             }.get(self.model.similarity_fn_name, self.model.similarity_fn_name.replace("_", " ").title())
         return {
             "model_max_length": self.model.get_max_seq_length(),
-            "output_dimensionality": self.model.get_sentence_embedding_dimension(),
+            "output_dimensionality": self.model.get_embedding_dimension(),
             "model_string": str(self.model),
             "similarity_fn_name": similarity_fn_name,
             "max_active_dims": getattr(self.model, "max_active_dims", None),

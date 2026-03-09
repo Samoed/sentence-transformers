@@ -680,7 +680,7 @@ class Transformer(InputModule):
 
         return features
 
-    def get_word_embedding_dimension(self) -> int:
+    def get_embedding_dimension(self) -> int:
         """Get the output embedding dimension from the transformer model.
 
         Returns:

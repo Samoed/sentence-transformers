@@ -226,11 +226,11 @@ class SparseAutoEncoder(Module):
     def __repr__(self):
         return f"SparseAutoEncoder({self.get_config_dict()})"
 
-    def get_sentence_embedding_dimension(self) -> int:
+    def get_embedding_dimension(self) -> int:
         """
-        Get the dimension of the sentence embedding. Warning: the number of non-zero elements in the embedding is only k out of the hidden_dim.
+        Get the dimension of the embedding. Warning: the number of non-zero elements in the embedding is only k out of the hidden_dim.
 
         Returns:
-            int: Dimension of the sentence embedding
+            int: Dimension of the embedding
         """
         return self.hidden_dim

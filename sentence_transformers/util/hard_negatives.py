@@ -447,7 +447,7 @@ def mine_hard_negatives(
     if use_faiss:
         import faiss
 
-        index = faiss.IndexFlatIP(model.get_sentence_embedding_dimension())
+        index = faiss.IndexFlatIP(model.get_embedding_dimension())
         # Move the index to the GPU if available
         try:
             co = faiss.GpuMultipleClonerOptions()

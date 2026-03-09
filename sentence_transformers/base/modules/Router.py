@@ -166,14 +166,14 @@ class Router(InputModule):
                 # Create separate encoders for different modalities
                 text_encoder = Transformer("sentence-transformers/all-MiniLM-L6-v2")
                 # Project to 768 dims to match image encoder
-                text_dense = Dense(text_encoder.get_word_embedding_dimension(), 768, module_input_name="token_embeddings")
+                text_dense = Dense(text_encoder.get_embedding_dimension(), 768, module_input_name="token_embeddings")
                 image_encoder = Transformer(
                     "ModernVBERT/modernvbert",
                     model_kwargs={"trust_remote_code": True},
                     processor_kwargs={"trust_remote_code": True},
                     config_kwargs={"trust_remote_code": True},
                 )
-                pooling = Pooling(text_encoder.get_word_embedding_dimension())
+                pooling = Pooling(text_encoder.get_embedding_dimension())
 
                 # Route based on modality
                 router = Router(
@@ -486,11 +486,17 @@ class Router(InputModule):
             features = module(features, **module_kwargs)
         return features
 
-    def get_sentence_embedding_dimension(self) -> int:
+    def get_embedding_dimension(self) -> int:
         for sub_modules in self.sub_modules.values():
             for module in reversed(sub_modules):
-                if hasattr(module, "get_sentence_embedding_dimension"):
-                    return module.get_sentence_embedding_dimension()
+                # Fallback names for third-party modules that only define a deprecated name
+                for name in (
+                    "get_embedding_dimension",
+                    "get_sentence_embedding_dimension",
+                    "get_word_embedding_dimension",
+                ):
+                    if hasattr(module, name):
+                        return getattr(module, name)()
         return None
 
     def save(self, output_path: str, safe_serialization: bool = True, **kwargs):

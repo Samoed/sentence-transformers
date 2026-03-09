@@ -83,7 +83,7 @@ if use_pca:
     pca.fit(train_matrix)
 
     dense = Dense(
-        in_features=model.get_sentence_embedding_dimension(),
+        in_features=model.get_embedding_dimension(),
         out_features=pca_dimensions,
         bias=False,
         activation_function=torch.nn.Identity(),

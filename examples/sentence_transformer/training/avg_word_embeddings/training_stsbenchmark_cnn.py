@@ -39,13 +39,13 @@ logging.info(train_dataset)
 word_embedding_model = Transformer(model_name)
 
 cnn = CNN(
-    in_word_embedding_dimension=word_embedding_model.get_word_embedding_dimension(),
+    in_embedding_dimension=word_embedding_model.get_embedding_dimension(),
     out_channels=256,
     kernel_sizes=[1, 3, 5],
 )
 
 # Apply mean pooling to get one fixed sized sentence vector
-pooling_model = Pooling(cnn.get_word_embedding_dimension(), pooling_mode="mean")
+pooling_model = Pooling(cnn.get_embedding_dimension(), pooling_mode="mean")
 model = SentenceTransformer(modules=[word_embedding_model, cnn, pooling_model])
 
 # 3. Define our training loss

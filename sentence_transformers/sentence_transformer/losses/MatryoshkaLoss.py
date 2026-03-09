@@ -198,7 +198,7 @@ class MatryoshkaLoss(nn.Module):
         elif len(matryoshka_weights) != len(matryoshka_dims):
             raise ValueError("matryoshka_weights must be the same length as matryoshka_dims.")
 
-        model_embedding_dim = model.get_sentence_embedding_dimension()
+        model_embedding_dim = model.get_embedding_dimension()
         if model_embedding_dim is not None:
             if any(d > model_embedding_dim for d in matryoshka_dims):
                 raise ValueError(
@@ -261,7 +261,7 @@ class MatryoshkaLoss(nn.Module):
                 if (
                     isinstance(labels, torch.Tensor)
                     and labels.ndim == 2
-                    and labels.size(-1) == self.model.get_sentence_embedding_dimension()
+                    and labels.size(-1) == self.model.get_embedding_dimension()
                 ):
                     dim_labels = labels[:, :dim]
 

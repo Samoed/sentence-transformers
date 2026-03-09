@@ -75,7 +75,7 @@ def clip_vit_b_32_model() -> SentenceTransformer:
 @pytest.fixture(scope="session")
 def _distilbert_base_uncased_model() -> SentenceTransformer:
     word_embedding_model = Transformer("distilbert-base-uncased")
-    pooling_model = Pooling(word_embedding_model.get_word_embedding_dimension())
+    pooling_model = Pooling(word_embedding_model.get_embedding_dimension())
     model = SentenceTransformer(modules=[word_embedding_model, pooling_model])
     return model
 

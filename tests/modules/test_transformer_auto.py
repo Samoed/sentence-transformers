@@ -634,10 +634,10 @@ def arch_model_modalities(arch_model):
 class TestTransformerArchitectures:
     """Test suite for Transformer module with various tiny model architectures."""
 
-    def test_get_word_embedding_dimension(self, arch_model):
+    def test_get_embedding_dimension(self, arch_model):
         """Test that word embedding dimension can be retrieved."""
         arch, model = arch_model
-        dim = model.get_word_embedding_dimension()
+        dim = model.get_embedding_dimension()
         assert isinstance(dim, int)
         assert dim > 0
 
@@ -651,7 +651,7 @@ class TestTransformerArchitectures:
         model.save(str(save_path))
         loaded_model = Transformer(str(save_path))
 
-        assert loaded_model.get_word_embedding_dimension() == model.get_word_embedding_dimension()
+        assert loaded_model.get_embedding_dimension() == model.get_embedding_dimension()
 
     def test_modalities_property(self, arch_model_modalities):
         """Test that the modalities property returns a list."""
@@ -733,7 +733,7 @@ class TestTransformerArchitectures:
                     # Verify batch size is correct
                     output_tensor = output[model.module_output_name]
                     assert output_tensor.shape[0] == len(inputs), f"Batch size mismatch for {modality_desc}"
-                    assert output_tensor.shape[-1] == model.get_word_embedding_dimension(), (
+                    assert output_tensor.shape[-1] == model.get_embedding_dimension(), (
                         f"Embedding dimension mismatch for {modality_desc}"
                     )
 

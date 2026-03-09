@@ -22,7 +22,7 @@ class LayerNorm(Module):
         features["sentence_embedding"] = self.norm(features["sentence_embedding"])
         return features
 
-    def get_sentence_embedding_dimension(self):
+    def get_embedding_dimension(self):
         return self.dimension
 
     def save(self, output_path, safe_serialization: bool = True) -> None:

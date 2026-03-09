@@ -116,7 +116,7 @@ def test_train_nli_slow(
     _, test_dataset = sts_resource
     train_loss = SoftmaxLoss(
         model=model,
-        sentence_embedding_dimension=model.get_sentence_embedding_dimension(),
+        embedding_dimension=model.get_embedding_dimension(),
         num_labels=3,
     )
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -148,7 +148,7 @@ def test_train_nli(
     train_dataset = nli_resource.select(range(100))
     train_loss = SoftmaxLoss(
         model=model,
-        sentence_embedding_dimension=model.get_sentence_embedding_dimension(),
+        embedding_dimension=model.get_embedding_dimension(),
         num_labels=3,
     )
     with tempfile.TemporaryDirectory() as tmp_dir:

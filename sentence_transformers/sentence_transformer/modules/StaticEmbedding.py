@@ -126,7 +126,7 @@ class StaticEmbedding(InputModule):
     def max_seq_length(self) -> int:
         return math.inf
 
-    def get_sentence_embedding_dimension(self) -> int:
+    def get_embedding_dimension(self) -> int:
         return self.embedding_dim
 
     def save(self, output_path: str, *args, safe_serialization: bool = True, **kwargs) -> None:
