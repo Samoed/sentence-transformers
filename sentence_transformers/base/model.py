@@ -678,10 +678,6 @@ class BaseModel(nn.Sequential, PeftAdapterMixin, ABC):
         )
         repo_id = repo_url.repo_id  # Update the repo_id in case the old repo_id didn't contain a user or organization
         self.model_card_data.set_model_id(repo_id)
-        if revision is not None:
-            logger.warning(
-                "Revision support for `push_to_hub` is not yet implemented. Ignoring the `revision` argument."
-            )
 
         if commit_message is None:
             if "generated_from_trainer" in self.model_card_data.tags:
@@ -1143,9 +1139,9 @@ class BaseModel(nn.Sequential, PeftAdapterMixin, ABC):
     def gradient_checkpointing_enable(self, gradient_checkpointing_kwargs=None) -> None:
         """Enable gradient checkpointing for the model."""
         # Propagate the gradient checkpointing to the transformer model
-        for child in self.modules():
-            if hasattr(child, "gradient_checkpointing_enable"):
-                child.gradient_checkpointing_enable(gradient_checkpointing_kwargs)
+        for module in self.modules():
+            if module is not self and hasattr(module, "gradient_checkpointing_enable"):
+                module.gradient_checkpointing_enable(gradient_checkpointing_kwargs)
 
     @property
     def device(self) -> device:
