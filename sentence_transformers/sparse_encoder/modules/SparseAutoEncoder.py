@@ -103,7 +103,7 @@ class SparseAutoEncoder(Module):
         x = x / (std + eps)
         return x, mu, std
 
-    def preprocess(self, x: torch.Tensor):
+    def prepare(self, x: torch.Tensor):
         if not self.normalize:
             return x, dict()
         x, mu, std = self.LN(x)
@@ -163,13 +163,13 @@ class SparseAutoEncoder(Module):
 
         # If the model is in inference mode, we don't need to e.g. compute the 4k, auxk, or apply the decoder
         if torch.is_inference_mode_enabled():
-            x, info = self.preprocess(x)
+            x, info = self.prepare(x)
             latents_pre_act = self.encode_pre_act(x)
             latents_k, _ = self.top_k(latents_pre_act, k, compute_aux=False)
             features["sentence_embedding"] = latents_k
             return features
 
-        x, info = self.preprocess(x)
+        x, info = self.prepare(x)
         latents_pre_act = self.encode_pre_act(x)
 
         latents_k, latents_auxk = self.top_k(latents_pre_act, k)
