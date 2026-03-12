@@ -21,12 +21,12 @@ from transformers.integrations import WandbCallback
 from transformers.processing_utils import ProcessorMixin
 from transformers.trainer import TRAINING_ARGS_NAME
 from transformers.trainer_utils import EvalLoopOutput
-from transformers.utils.deprecation import deprecate_kwarg
 
 from sentence_transformers.base.data_collator import BaseDataCollator
 from sentence_transformers.base.evaluation import SentenceEvaluator, SequentialEvaluator
 from sentence_transformers.base.model import BaseModel
 from sentence_transformers.base.model_card import BaseModelCardCallback, BaseModelCardData
+from sentence_transformers.base.modules import Router
 from sentence_transformers.base.sampler import (
     DefaultBatchSampler,
     GroupByLabelBatchSampler,
@@ -37,6 +37,7 @@ from sentence_transformers.base.sampler import (
 )
 from sentence_transformers.base.training_args import BaseTrainingArguments, BatchSamplers, MultiDatasetBatchSamplers
 from sentence_transformers.util import disable_logging, fullname, is_datasets_available, is_training_available
+from sentence_transformers.util.decorators import deprecated_kwargs
 
 if is_datasets_available():
     from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict, Value
@@ -127,7 +128,7 @@ class BaseTrainer(Trainer, ABC):
     data_collator_class = BaseDataCollator
     training_args_class = BaseTrainingArguments
 
-    @deprecate_kwarg("tokenizer", new_name="processing_class", version="6.0.0", raise_if_both_names=True)
+    @deprecated_kwargs(tokenizer="processing_class")
     def __init__(
         self,
         model: BaseModel | None = None,
@@ -340,7 +341,19 @@ class BaseTrainer(Trainer, ABC):
 
             This method can be overridden by subclassing the trainer to use a custom data collator.
         """
-        return self.data_collator_class(tokenize_fn=model.preprocess)
+        if Router in [module.__class__ for module in model.children()] and not args.router_mapping:
+            raise ValueError(
+                "You are using a Router module in your model, but you did not provide a `router_mapping` in the "
+                "training arguments. This means that the Router module will not be able to route the inputs to "
+                "the correct submodules. Please provide a `router_mapping` that maps column names to routes, "
+                "e.g. {'column_one': 'query', 'column_two': 'document', 'column_three': 'document'}."
+            )
+
+        return self.data_collator_class(
+            preprocess_fn=model.preprocess,
+            router_mapping=args.router_mapping,
+            prompts=args.prompts,
+        )
 
     def add_model_card_callback(self, default_args_dict: dict[str, Any]) -> None:
         """
@@ -1091,11 +1104,21 @@ class BaseTrainer(Trainer, ABC):
         loss: nn.Module | dict[str, nn.Module],
     ) -> bool:
         """
-        We should add a dataset name column to the dataset, if the dataset is a DatasetDict, *and* the
-        loss is a dictionary.
-        """
+        We should add a dataset name column to the dataset, if the dataset is a DatasetDict, *and* one of:
 
-        return isinstance(dataset, (DatasetDict, IterableDatasetDict)) and isinstance(loss, dict)
+        a. The loss is a dictionary, or
+        b. The prompts contain a mapping of dataset names, or
+        c. The router_mapping contains a mapping of dataset names.
+        """
+        return isinstance(dataset, (DatasetDict, IterableDatasetDict)) and (
+            isinstance(loss, dict)
+            or (args.prompts and isinstance(args.prompts, dict))
+            or (
+                args.router_mapping
+                and isinstance(args.router_mapping, dict)
+                and isinstance(next(iter(args.router_mapping.values())), dict)
+            )
+        )
 
     def add_dataset_name_column(
         self,

@@ -152,7 +152,7 @@ class CrossEncoderModelCardData(BaseModelCardData):
 
     def get_model_specific_metadata(self) -> dict[str, Any]:
         return {
-            "model_max_length": self.model.max_length,
+            "model_max_length": self.model.max_seq_length,
             "model_num_labels": self.model.num_labels,
         }
 

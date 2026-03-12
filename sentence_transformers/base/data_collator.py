@@ -12,10 +12,11 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class BaseDataCollator:
-    """Collator for a SentenceTransformers model.
-    This encodes the text columns to {column}_input_ids and {column}_attention_mask columns.
-    This works with the two text dataset that is used as the example in the training overview:
-    https://www.sbert.net/docs/sentence_transformer/training_overview.html
+    """Base data collator for Sentence Transformers models.
+
+    Preprocesses text columns via ``preprocess_fn`` (typically ``model.preprocess``),
+    producing ``{column}_input_ids``, ``{column}_attention_mask``, etc.  Handles prompt
+    resolution (per-column or per-dataset) and Router task mapping.
 
     It is important that the columns are in the expected order. For example, if your dataset has columns
     "answer", "question" in that order, then the MultipleNegativesRankingLoss will consider
@@ -23,10 +24,53 @@ class BaseDataCollator:
     "given the answer, what is the question?".
     """
 
-    tokenize_fn: Callable
+    preprocess_fn: Callable
     valid_label_columns: list[str] = field(default_factory=lambda: ["label", "labels", "score", "scores"])
+    router_mapping: dict[str, str] | dict[str, dict[str, str]] | None = field(default_factory=dict, repr=False)
+    prompts: dict[str, str] | dict[str, dict[str, str]] | None = field(default_factory=dict, repr=False)
 
     _warned_columns: set[tuple[str]] = field(default_factory=set, init=False, repr=False)
+
+    def _resolve_router_mapping(self, batch: dict[str, Any]) -> dict[str, str]:
+        """Resolve the router mapping for this batch, handling nested (per-dataset) mappings."""
+        router_mapping = self.router_mapping
+        if (
+            router_mapping
+            and isinstance(router_mapping, dict)
+            and isinstance(next(iter(router_mapping.values())), dict)
+        ):
+            if "dataset_name" in batch and batch["dataset_name"] in router_mapping:
+                router_mapping = router_mapping[batch["dataset_name"]]
+            else:
+                router_mapping = {}
+        return router_mapping
+
+    def _resolve_prompts(self, batch: dict[str, Any]) -> str | dict[str, str]:
+        """Resolve the prompts for this batch, handling nested (per-dataset) mappings."""
+        prompts = self.prompts
+        if prompts and isinstance(prompts, dict):
+            is_multi_dataset = "dataset_name" in batch
+            if is_multi_dataset and batch["dataset_name"] in prompts:
+                prompts = prompts[batch["dataset_name"]]
+            elif isinstance(next(iter(prompts.values())), dict):
+                if not is_multi_dataset:
+                    raise ValueError(
+                        "The prompts provided to the trainer are a nested dictionary. In this setting, the first "
+                        "level of the dictionary should map to dataset names and the second level to column names. "
+                        "However, as the provided dataset is a not a DatasetDict, no dataset names can be inferred. "
+                        f"The keys to the provided prompts dictionary are {list(prompts.keys())!r}"
+                    )
+                else:
+                    prompts = {}
+        return prompts
+
+    def _get_prompt_for_column(self, prompts: str | dict[str, str], column_name: str) -> str | None:
+        """Get the prompt string for a specific column."""
+        if isinstance(prompts, str):
+            return prompts
+        elif isinstance(prompts, dict) and column_name in prompts:
+            return prompts[column_name]
+        return None
 
     def __call__(self, features: list[dict[str, Any]]) -> dict[str, torch.Tensor]:
         column_names = list(features[0].keys())
@@ -48,10 +92,16 @@ class BaseDataCollator:
                 column_names.remove(label_column)
                 break
 
+        router_mapping = self._resolve_router_mapping(batch)
+        prompts = self._resolve_prompts(batch)
+
         for column_name in column_names:
+            task = router_mapping.get(column_name, None)
+            prompt = self._get_prompt_for_column(prompts, column_name)
             inputs = [row[column_name] for row in features]
-            tokenized = self.tokenize_fn(inputs)
-            for key, value in tokenized.items():
+
+            preprocessed = self.preprocess_fn(inputs, prompt=prompt, task=task)
+            for key, value in preprocessed.items():
                 batch[f"{column_name}_{key}"] = value
 
         return batch

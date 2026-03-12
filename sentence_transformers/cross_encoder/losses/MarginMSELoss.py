@@ -99,7 +99,13 @@ class MarginMSELoss(nn.Module):
                 f"but got a model with {self.model.num_labels} output labels."
             )
 
-    def forward(self, inputs: list[list[str]], labels: Tensor | list[Tensor]) -> Tensor:
+    def forward(
+        self,
+        inputs: list[list[str]],
+        labels: Tensor | list[Tensor],
+        prompt: str | None = None,
+        task: str | None = None,
+    ) -> Tensor:
         anchors = inputs[0]
         positives = inputs[1]
         negatives = inputs[2:]
@@ -128,34 +134,33 @@ class MarginMSELoss(nn.Module):
             )
 
         positive_pairs = list(zip(anchors, positives))
-        positive_logits = self.logits_from_pairs(positive_pairs)
+        positive_logits = self.logits_from_pairs(positive_pairs, prompt=prompt, task=task)
         negative_logits_list = []
         for negative in negatives:
             negative_pairs = list(zip(anchors, negative))
-            negative_logits_list.append(self.logits_from_pairs(negative_pairs))
+            negative_logits_list.append(self.logits_from_pairs(negative_pairs, prompt=prompt, task=task))
 
         margin_logits = positive_logits.unsqueeze(1) - torch.stack(negative_logits_list, dim=1)
         loss = self.loss_fct(margin_logits, labels.float())
         return loss
 
-    def logits_from_pairs(self, pairs: list[tuple[str, str]]) -> Tensor:
+    def logits_from_pairs(
+        self, pairs: list[tuple[str, str]], prompt: str | None = None, task: str | None = None
+    ) -> Tensor:
         """
         Computes the logits for a list of pairs using the model.
 
         Args:
             pairs (list[tuple[str, str]]): A list of pairs of strings (query, passage).
+            prompt (str | None): Optional prompt to pass to the model's preprocess method.
+            task (str | None): Optional task to pass to the model's preprocess method.
 
         Returns:
             Tensor: The logits for the pairs.
         """
-        tokens = self.model.tokenizer(
-            pairs,
-            padding=True,
-            truncation=True,
-            return_tensors="pt",
-        )
+        tokens = self.model.preprocess(pairs, prompt=prompt, task=task)
         tokens.to(self.model.device)
-        logits = self.model(**tokens)[0].view(-1)
+        logits = self.model(tokens)["scores"].view(-1)
         return self.activation_fn(logits)
 
     def get_config_dict(self):

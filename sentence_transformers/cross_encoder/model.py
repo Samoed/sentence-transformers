@@ -40,6 +40,8 @@ class CrossEncoder(BaseModel, FitMixin):
 
     It does not yield a sentence embedding and does not work for individual sentences.
 
+    TODO: Reorder this
+
     Args:
         model_name_or_path (str): A model name from Hugging Face Hub that can be loaded with AutoModel, or a path to a local
             model. We provide several pre-trained CrossEncoder models that can be used for common tasks.
@@ -111,9 +113,9 @@ class CrossEncoder(BaseModel, FitMixin):
     @cross_encoder_init_args_decorator
     def __init__(
         self,
-        model_name_or_path: str,
+        model_name_or_path: str | None = None,
         *,
-        modules: list[nn.Module] | None = None,
+        modules: list[nn.Module] | OrderedDict[str, nn.Module] | None = None,
         device: str | None = None,
         prompts: dict[str, str] | None = None,
         default_prompt_name: str | None = None,

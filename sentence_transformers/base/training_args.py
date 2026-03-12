@@ -23,19 +23,39 @@ logger = logging.getLogger(__name__)
 @dataclass
 class BaseTrainingArguments(TransformersTrainingArguments):
     r"""
-    SentenceTransformerTrainingArguments extends :class:`~transformers.TrainingArguments` with additional arguments
+    BaseTrainingArguments extends :class:`~transformers.TrainingArguments` with additional arguments
     specific to Sentence Transformers. See :class:`~transformers.TrainingArguments` for the complete list of
     available arguments.
 
     Args:
         output_dir (`str`):
             The output directory where the model checkpoints will be written.
+        prompts (`Union[Dict[str, Dict[str, str]], Dict[str, str], str]`, *optional*):
+            The prompts to use for each column in the training, evaluation and test datasets. Four formats are accepted:
+
+            1. `str`: A single prompt to use for all columns in the datasets, regardless of whether the training/evaluation/test
+               datasets are :class:`datasets.Dataset` or a :class:`datasets.DatasetDict`.
+            2. `Dict[str, str]`: A dictionary mapping column names to prompts, regardless of whether the training/evaluation/test
+               datasets are :class:`datasets.Dataset` or a :class:`datasets.DatasetDict`.
+            3. `Dict[str, str]`: A dictionary mapping dataset names to prompts. This should only be used if your training/evaluation/test
+               datasets are a :class:`datasets.DatasetDict` or a dictionary of :class:`datasets.Dataset`.
+            4. `Dict[str, Dict[str, str]]`: A dictionary mapping dataset names to dictionaries mapping column names to
+               prompts. This should only be used if your training/evaluation/test datasets are a
+               :class:`datasets.DatasetDict` or a dictionary of :class:`datasets.Dataset`.
+
         batch_sampler (Union[:class:`~sentence_transformers.sentence_transformer.training_args.BatchSamplers`, `str`, :class:`~sentence_transformers.base.sampler.DefaultBatchSampler`, Callable[[...], :class:`~sentence_transformers.base.sampler.DefaultBatchSampler`]], *optional*):
             The batch sampler to use. See :class:`~sentence_transformers.sentence_transformer.training_args.BatchSamplers` for valid options.
             Defaults to ``BatchSamplers.BATCH_SAMPLER``.
         multi_dataset_batch_sampler (Union[:class:`~sentence_transformers.sentence_transformer.training_args.MultiDatasetBatchSamplers`, `str`, :class:`~sentence_transformers.base.sampler.MultiDatasetDefaultBatchSampler`, Callable[[...], :class:`~sentence_transformers.base.sampler.MultiDatasetDefaultBatchSampler`]], *optional*):
             The multi-dataset batch sampler to use. See :class:`~sentence_transformers.sentence_transformer.training_args.MultiDatasetBatchSamplers`
             for valid options. Defaults to ``MultiDatasetBatchSamplers.PROPORTIONAL``.
+        router_mapping (`Dict[str, str] | Dict[str, Dict[str, str]]`, *optional*):
+            A mapping of dataset column names to Router routes, like "query" or "document". This is used to specify
+            which Router submodule to use for each dataset. Two formats are accepted:
+
+            1. `Dict[str, str]`: A mapping of column names to routes.
+            2. `Dict[str, Dict[str, str]]`: A mapping of dataset names to a mapping of column names to routes for
+               multi-dataset training/evaluation.
         learning_rate_mapping (`Dict[str, float] | None`, *optional*):
             A mapping of parameter name regular expressions to learning rates. This allows you to set different
             learning rates for different parts of the model, e.g., `{'SparseStaticEmbedding\.*': 1e-3}` for the
@@ -54,8 +74,18 @@ class BaseTrainingArguments(TransformersTrainingArguments):
         "gradient_checkpointing_kwargs",
         "lr_scheduler_kwargs",
         "learning_rate_mapping",
+        "prompts",
+        "router_mapping",
     ]
 
+    prompts: Union[str, None, dict[str, str], dict[str, dict[str, str]]] = field(  # noqa: UP007
+        default=None,
+        metadata={
+            "help": "The prompts to use for each column in the datasets. "
+            "Either 1) a single string prompt, 2) a mapping of column names to prompts, 3) a mapping of dataset names "
+            "to prompts, or 4) a mapping of dataset names to a mapping of column names to prompts."
+        },
+    )
     batch_sampler: Union[BatchSamplers, str, DefaultBatchSampler, Callable[..., DefaultBatchSampler]] = field(  # noqa: UP007
         default=BatchSamplers.BATCH_SAMPLER, metadata={"help": "The batch sampler to use."}
     )
@@ -63,6 +93,14 @@ class BaseTrainingArguments(TransformersTrainingArguments):
         MultiDatasetBatchSamplers, str, MultiDatasetDefaultBatchSampler, Callable[..., MultiDatasetDefaultBatchSampler]
     ] = field(
         default=MultiDatasetBatchSamplers.PROPORTIONAL, metadata={"help": "The multi-dataset batch sampler to use."}
+    )
+    router_mapping: Union[str, None, dict[str, str], dict[str, dict[str, str]]] = field(  # noqa: UP007
+        default_factory=dict,
+        metadata={
+            "help": 'A mapping of dataset column names to Router routes, like "query" or "document". '
+            "Either 1) a mapping of column names to routes or 2) a mapping of dataset names to a mapping "
+            "of column names to routes for multi-dataset training/evaluation. "
+        },
     )
     learning_rate_mapping: Union[str, None, dict[str, float]] = field(  # noqa: UP007
         default_factory=dict,
@@ -127,6 +165,15 @@ class BaseTrainingArguments(TransformersTrainingArguments):
             raise ValueError(
                 "The `learning_rate_mapping` argument must be a dictionary mapping parameter name regular expressions "
                 "to learning rates. A stringified dictionary also works."
+            )
+
+        self.router_mapping = self.router_mapping if self.router_mapping is not None else {}
+        if isinstance(self.router_mapping, str):
+            # Note that we allow a stringified dictionary for router_mapping, but then it should have been
+            # parsed by the superclass's `__post_init__` method already
+            raise ValueError(
+                "The `router_mapping` argument must be a dictionary mapping dataset column names to Router routes, "
+                "like 'query' or 'document'. A stringified dictionary also works."
             )
 
         # The `compute_loss` method in `SentenceTransformerTrainer` is overridden to only compute the prediction loss,

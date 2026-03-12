@@ -36,18 +36,25 @@ class RandContext:
         self._fork = None
 
 
-def _backward_hook(grad_output: Tensor, pairs: list[list[str]], loss_obj: CachedMultipleNegativesRankingLoss) -> None:
+def _backward_hook(
+    grad_output: Tensor,
+    pairs: list[list[str]],
+    loss_obj: CachedMultipleNegativesRankingLoss,
+    prompt: str | None = None,
+    task: str | None = None,
+) -> None:
     """A backward hook to backpropagate the cached gradients mini-batch by mini-batch."""
     assert loss_obj.cache is not None
     assert loss_obj.random_states is not None
     with torch.enable_grad():
-        # for sentence_feature, grad, random_states in zip(pairs, loss_obj.cache, loss_obj.random_states):
         for (minibatch_logits, _), minibatch_grad in zip(
             loss_obj.predict_minibatch_iter(
                 pairs=pairs,
                 with_grad=True,
                 copy_random_state=False,
                 random_states=loss_obj.random_states,
+                prompt=prompt,
+                task=task,
             ),
             loss_obj.cache,
         ):
@@ -185,6 +192,8 @@ class CachedMultipleNegativesRankingLoss(MultipleNegativesRankingLoss):
         with_grad: bool,
         copy_random_state: bool,
         random_state: RandContext | None = None,
+        prompt: str | None = None,
+        task: str | None = None,
     ) -> tuple[Tensor, RandContext | None]:
         """Do forward pass on a minibatch of the input features and return corresponding embeddings."""
         grad_context = nullcontext if with_grad else torch.no_grad
@@ -192,7 +201,7 @@ class CachedMultipleNegativesRankingLoss(MultipleNegativesRankingLoss):
         with random_state_context:
             with grad_context():
                 random_state = RandContext(pairs) if copy_random_state else None
-                logits = self.call_model_with_pairs(pairs)
+                logits = self.call_model_with_pairs(pairs, prompt=prompt, task=task)
         return logits, random_state
 
     def predict_minibatch_iter(
@@ -201,6 +210,8 @@ class CachedMultipleNegativesRankingLoss(MultipleNegativesRankingLoss):
         with_grad: bool,
         copy_random_state: bool,
         random_states: list[RandContext] | None = None,
+        prompt: str | None = None,
+        task: str | None = None,
     ) -> Iterator[tuple[Tensor, RandContext | None]]:
         """Do forward pass on all the minibatches of the input features and yield corresponding embeddings."""
         for i, b in enumerate(
@@ -220,6 +231,8 @@ class CachedMultipleNegativesRankingLoss(MultipleNegativesRankingLoss):
                 with_grad=with_grad,
                 copy_random_state=copy_random_state,
                 random_state=None if random_states is None else random_states[i],
+                prompt=prompt,
+                task=task,
             )
             yield logits, random_state  # reps: (mbsz, hdim)
 
@@ -233,7 +246,9 @@ class CachedMultipleNegativesRankingLoss(MultipleNegativesRankingLoss):
 
         return loss
 
-    def forward(self, inputs: list[list[str]], labels: Tensor) -> Tensor:
+    def forward(
+        self, inputs: list[list[str]], labels: Tensor, prompt: str | None = None, task: str | None = None
+    ) -> Tensor:
         # Step (1): A quick embedding step without gradients/computation graphs to get all the embeddings
         anchors = inputs[0][::]
         candidates = inputs[1][::]
@@ -257,6 +272,8 @@ class CachedMultipleNegativesRankingLoss(MultipleNegativesRankingLoss):
             pairs=pairs,
             with_grad=False,
             copy_random_state=True,
+            prompt=prompt,
+            task=task,
         ):
             logits.append(minibatch_logits.detach().requires_grad_())
             self.random_states.append(random_state)
@@ -266,7 +283,7 @@ class CachedMultipleNegativesRankingLoss(MultipleNegativesRankingLoss):
             loss = self.calculate_loss_and_cache_gradients(logits, batch_size)
 
             # Step (3): A 2nd embedding step with gradients/computation graphs and connect the cached gradients into the backward chain
-            loss.register_hook(partial(_backward_hook, pairs=pairs, loss_obj=self))
+            loss.register_hook(partial(_backward_hook, pairs=pairs, loss_obj=self, prompt=prompt, task=task))
         else:
             # If grad is not enabled (e.g. in evaluation), then we don't have to worry about the gradients or backward hook
             loss = self.calculate_loss(logits, batch_size)

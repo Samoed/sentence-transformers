@@ -14,22 +14,21 @@ from transformers import (
     ProcessorMixin,
     TrainerCallback,
 )
-from transformers.utils.deprecation import deprecate_kwarg
 
 from sentence_transformers.base.evaluation import SentenceEvaluator
-from sentence_transformers.base.modules import Router
 from sentence_transformers.base.trainer import BaseTrainer
 from sentence_transformers.sentence_transformer.data_collator import SentenceTransformerDataCollator
-from sentence_transformers.sentence_transformer.model import Pooling, SentenceTransformer
+from sentence_transformers.sentence_transformer.model import SentenceTransformer
 from sentence_transformers.sentence_transformer.model_card import (
     SentenceTransformerModelCardCallback,
     SentenceTransformerModelCardData,
 )
 from sentence_transformers.sentence_transformer.training_args import SentenceTransformerTrainingArguments
 from sentence_transformers.util import is_datasets_available
+from sentence_transformers.util.decorators import deprecated_kwargs
 
 if is_datasets_available():
-    from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
+    from datasets import Dataset, DatasetDict, IterableDataset
 
 logger = logging.getLogger(__name__)
 
@@ -41,8 +40,7 @@ class SentenceTransformerTrainer(BaseTrainer):
     data_collator_class = SentenceTransformerDataCollator
     training_args_class = SentenceTransformerTrainingArguments
 
-    # TODO: I think we might be able to only put deprecate_kwarg on the base?
-    @deprecate_kwarg("tokenizer", new_name="processing_class", version="6.0.0", raise_if_both_names=True)
+    @deprecated_kwargs(tokenizer="processing_class")
     def __init__(
         self,
         model: SentenceTransformer | None = None,
@@ -88,76 +86,9 @@ class SentenceTransformerTrainer(BaseTrainer):
         self.args: SentenceTransformerTrainingArguments
         self.data_collator: SentenceTransformerDataCollator
 
-        # Notify the data collator whether to include prompt lengths during batch preparation
-        if hasattr(self.data_collator, "include_prompt_lengths"):
-            self.data_collator.include_prompt_lengths = self._include_prompt_length()
-
     def get_default_loss(self, model: SentenceTransformer) -> torch.nn.Module:
         from sentence_transformers.sentence_transformer.losses import CoSENTLoss
 
         loss = CoSENTLoss(model)
         logger.info(f"No `loss` passed, using `{loss.__class__.__name__}` as a default option.")
         return loss
-
-    def load_data_collator(
-        self,
-        model: SentenceTransformer,
-        args: SentenceTransformerTrainingArguments,
-        processing_class: PreTrainedTokenizerBase
-        | BaseImageProcessor
-        | FeatureExtractionMixin
-        | ProcessorMixin
-        | None = None,
-    ) -> SentenceTransformerDataCollator:
-        if Router in [module.__class__ for module in model.children()] and not args.router_mapping:
-            raise ValueError(
-                "You are using a Router module in your model, but you did not provide a `router_mapping` in the "
-                "training arguments. This means that the Router module will not be able to route the inputs to "
-                "the correct submodules. Please provide a `router_mapping` that maps column names to routes, "
-                "e.g. {'column_one': 'query', 'column_two': 'document', 'column_three': 'document'}."
-            )
-
-        all_special_ids = set()
-        if processing_class is not None and hasattr(processing_class, "all_special_ids"):
-            all_special_ids = set(processing_class.all_special_ids)
-        return self.data_collator_class(
-            tokenize_fn=model.preprocess,
-            router_mapping=args.router_mapping,
-            prompts=args.prompts,
-            all_special_ids=all_special_ids,
-        )
-
-    def should_dataset_name_column_be_added(
-        self,
-        dataset: DatasetDict | Dataset | None,
-        args: SentenceTransformerTrainingArguments,
-        loss: nn.Module | dict[str, nn.Module],
-    ) -> bool:
-        """
-        We should add a dataset name column to the dataset, if the dataset is a DatasetDict, *and* one of:
-
-        a. The loss is a dictionary, or
-        b. The prompts contain a mapping of dataset names, or
-        c. The router_mapping contains a mapping of dataset names.
-        """
-        return isinstance(dataset, (DatasetDict, IterableDatasetDict)) and (
-            isinstance(loss, dict)
-            or (args.prompts and isinstance(args.prompts, dict))
-            or (
-                args.router_mapping
-                and isinstance(args.router_mapping, dict)
-                and isinstance(next(iter(args.router_mapping.values())), dict)
-            )
-        )
-
-    def _include_prompt_length(self) -> bool:
-        """
-        Return whether the prompt length should be passed to the model's forward method.
-
-        True if the model does not include the prompt in the pooling layer. Can be
-        overridden by the user if it's useful to include the prompt length.
-        """
-        for module in self.model:
-            if isinstance(module, Pooling):
-                return not module.include_prompt
-        return False

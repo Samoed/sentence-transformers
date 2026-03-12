@@ -543,15 +543,16 @@ class BaseModel(nn.Sequential, PeftAdapterMixin, ABC):
             self._create_model_card(path, model_name, train_datasets)
 
     def _get_model_config(self) -> dict[str, Any]:
+        # TODO: Consider sorting alphabetically
         return {
             "model_type": self.model_type,
-            "prompts": self.prompts,
-            "default_prompt_name": self.default_prompt_name,
             "__version__": {
                 "sentence_transformers": __version__,
                 "transformers": transformers.__version__,
                 "pytorch": torch.__version__,
             },
+            "prompts": self.prompts,
+            "default_prompt_name": self.default_prompt_name,
         }
 
     def save_pretrained(

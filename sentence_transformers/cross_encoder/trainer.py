@@ -14,7 +14,6 @@ from transformers import (
     ProcessorMixin,
     TrainerCallback,
 )
-from transformers.utils.deprecation import deprecate_kwarg
 
 from sentence_transformers.base.evaluation import SentenceEvaluator
 from sentence_transformers.base.trainer import BaseTrainer
@@ -24,6 +23,7 @@ from sentence_transformers.cross_encoder.losses import BinaryCrossEntropyLoss, C
 from sentence_transformers.cross_encoder.model_card import CrossEncoderModelCardCallback, CrossEncoderModelCardData
 from sentence_transformers.cross_encoder.training_args import CrossEncoderTrainingArguments
 from sentence_transformers.util import fullname, is_datasets_available
+from sentence_transformers.util.decorators import deprecated_kwargs
 
 if is_datasets_available():
     from datasets import Dataset, DatasetDict, IterableDataset
@@ -107,7 +107,7 @@ class CrossEncoderTrainer(BaseTrainer):
     data_collator_class = CrossEncoderDataCollator
     training_args_class = CrossEncoderTrainingArguments
 
-    @deprecate_kwarg("tokenizer", new_name="processing_class", version="6.0.0", raise_if_both_names=True)
+    @deprecated_kwargs(tokenizer="processing_class")
     def __init__(
         self,
         model: CrossEncoder | None = None,
@@ -178,8 +178,40 @@ class CrossEncoderTrainer(BaseTrainer):
         self, inputs: dict[str, torch.Tensor | Any]
     ) -> tuple[list[dict[str, torch.Tensor]], torch.Tensor | None]:
         """Turn the inputs from the dataloader into the separate model inputs & the labels."""
-        # All inputs ending with `_input_ids` (Transformers), `_sentence_embedding` (BoW), `_pixel_values` (CLIPModel)
-        # are considered to correspond to a feature
         labels = inputs.pop("label", None)
         features = list(inputs.values())
         return features, labels
+
+    def compute_loss(
+        self,
+        model: CrossEncoder,
+        inputs: dict[str, torch.Tensor | Any],
+        return_outputs: bool = False,
+        num_items_in_batch=None,
+    ) -> torch.Tensor | tuple[torch.Tensor, dict[str, Any]]:
+        dataset_name = inputs.pop("dataset_name", None)
+        prompt = inputs.pop("prompt", None)
+        task = inputs.pop("task", None)
+        features, labels = self.collect_features(inputs)
+        loss_fn = self.loss
+
+        if isinstance(loss_fn, dict) and dataset_name:
+            loss_fn = loss_fn[dataset_name]
+
+        if model == self.model_wrapped and hasattr(loss_fn, "model") and loss_fn.model != model:
+            loss_fn = self.override_model_in_loss(loss_fn, model)
+        try:
+            loss = loss_fn(features, labels, prompt=prompt, task=task)
+        except TypeError:
+            loss = loss_fn(features, labels)
+            logger.warning_once(
+                f"The `prompt` and `task` parameters could not be passed to {type(loss_fn).__name__}. "
+                "These parameters are required for advanced preprocessing in losses. "
+                "Please update your loss function to accept `prompt` and `task` keyword arguments."
+            )
+        if isinstance(loss, dict):
+            self.track_loss_components(loss)
+            loss = torch.stack(list(loss.values())).sum()
+        if return_outputs:
+            return loss, {}
+        return loss

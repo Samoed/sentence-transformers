@@ -157,7 +157,13 @@ class PListMLELoss(nn.Module):
                 f"but got a model with {self.model.num_labels} output labels."
             )
 
-    def forward(self, inputs: list[list[str], list[list[str]]], labels: list[Tensor]) -> Tensor:
+    def forward(
+        self,
+        inputs: list[list[str], list[list[str]]],
+        labels: list[Tensor],
+        prompt: str | None = None,
+        task: str | None = None,
+    ) -> Tensor:
         """
         Compute PListMLE loss for a batch of queries and their documents.
 
@@ -202,15 +208,10 @@ class PListMLELoss(nn.Module):
         for i in range(0, len(pairs), mini_batch_size):
             mini_batch_pairs = pairs[i : i + mini_batch_size]
 
-            tokens = self.model.tokenizer(
-                mini_batch_pairs,
-                padding=True,
-                truncation=True,
-                return_tensors="pt",
-            )
+            tokens = self.model.preprocess(mini_batch_pairs, prompt=prompt, task=task)
             tokens = tokens.to(self.model.device)
 
-            logits = self.model(**tokens)[0].view(-1)
+            logits = self.model(tokens)["scores"].view(-1)
             logits_list.append(logits)
 
         logits = torch.cat(logits_list, dim=0)

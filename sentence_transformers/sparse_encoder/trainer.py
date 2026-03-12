@@ -14,12 +14,9 @@ from transformers import (
     ProcessorMixin,
     TrainerCallback,
 )
-from transformers.utils.deprecation import deprecate_kwarg
 
-from sentence_transformers.base.modules import Router
 from sentence_transformers.base.trainer import BaseTrainer
 from sentence_transformers.sentence_transformer.evaluation import SentenceEvaluator
-from sentence_transformers.sentence_transformer.modules import Pooling
 from sentence_transformers.sparse_encoder.callbacks.splade_callbacks import SpladeRegularizerWeightSchedulerCallback
 from sentence_transformers.sparse_encoder.data_collator import SparseEncoderDataCollator
 from sentence_transformers.sparse_encoder.losses import SparseMultipleNegativesRankingLoss, SpladeLoss
@@ -27,9 +24,10 @@ from sentence_transformers.sparse_encoder.model import SparseEncoder
 from sentence_transformers.sparse_encoder.model_card import SparseEncoderModelCardCallback, SparseEncoderModelCardData
 from sentence_transformers.sparse_encoder.training_args import SparseEncoderTrainingArguments
 from sentence_transformers.util import is_datasets_available
+from sentence_transformers.util.decorators import deprecated_kwargs
 
 if is_datasets_available():
-    from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
+    from datasets import Dataset, DatasetDict, IterableDataset
 
 logger = logging.getLogger(__name__)
 
@@ -109,7 +107,7 @@ class SparseEncoderTrainer(BaseTrainer):
     data_collator_class = SparseEncoderDataCollator
     training_args_class = SparseEncoderTrainingArguments
 
-    @deprecate_kwarg("tokenizer", new_name="processing_class", version="6.0.0", raise_if_both_names=True)
+    @deprecated_kwargs(tokenizer="processing_class")
     def __init__(
         self,
         model: SparseEncoder | None = None,
@@ -155,10 +153,6 @@ class SparseEncoderTrainer(BaseTrainer):
         self.args: SparseEncoderTrainingArguments
         self.data_collator: SparseEncoderDataCollator
 
-        # Notify the data collator whether to include prompt lengths during batch preparation
-        if hasattr(self.data_collator, "include_prompt_lengths"):
-            self.data_collator.include_prompt_lengths = self._include_prompt_length()
-
     def get_default_loss(self, model: SparseEncoder) -> torch.nn.Module:
         logger.info(
             "No `loss` passed, using `sentence_transformers.sparse_encoder.losses.SpladeLoss` as a default option. with "
@@ -172,87 +166,6 @@ class SparseEncoderTrainer(BaseTrainer):
             query_regularizer_weight=5e-5,  # Weight for query loss
             document_regularizer_weight=3e-5,  # Weight for document loss
         )
-
-    def load_data_collator(
-        self,
-        model: SparseEncoder,
-        args: SparseEncoderTrainingArguments,
-        processing_class: PreTrainedTokenizerBase
-        | BaseImageProcessor
-        | FeatureExtractionMixin
-        | ProcessorMixin
-        | None = None,
-    ) -> SparseEncoderDataCollator:
-        """
-        Load the data collator for the trainer.
-
-        Args:
-            model (:class:`~sentence_transformers.sentence_transformer.model.SentenceTransformer`):
-                The model to train, evaluate or use for predictions.
-            args (:class:`~sentence_transformers.sentence_transformer.training_args.BaseTrainingArguments`):
-                The arguments to tweak for training.
-            processing_class (Union[:class:`transformers.PreTrainedTokenizerBase`, :class:`transformers.BaseImageProcessor`, :class:`transformers.FeatureExtractionMixin`, :class:`transformers.ProcessorMixin`], *optional*):
-                The processing class to use for tokenization or image processing.
-        Returns:
-            :class:`BaseDataCollator`: The data collator to use for the trainer
-
-        .. note::
-
-            This method can be overridden by subclassing the trainer to use a custom data collator.
-        """
-        if Router in [module.__class__ for module in model.children()] and not args.router_mapping:
-            raise ValueError(
-                "You are using a Router module in your model, but you did not provide a `router_mapping` in the "
-                "training arguments. This means that the Router module will not be able to route the inputs to "
-                "the correct submodules. Please provide a `router_mapping` that maps column names to routes, "
-                "e.g. {'column_one': 'query', 'column_two': 'document', 'column_three': 'document'}."
-            )
-
-        all_special_ids = set()
-        if processing_class is not None and hasattr(processing_class, "all_special_ids"):
-            all_special_ids = set(processing_class.all_special_ids)
-        return self.data_collator_class(
-            tokenize_fn=model.preprocess,
-            router_mapping=args.router_mapping,
-            prompts=args.prompts,
-            all_special_ids=all_special_ids,
-        )
-
-    def should_dataset_name_column_be_added(
-        self,
-        dataset: DatasetDict | Dataset | None,
-        args: SparseEncoderTrainingArguments,
-        loss: nn.Module | dict[str, nn.Module],
-    ) -> bool:
-        """
-        We should add a dataset name column to the dataset, if the dataset is a DatasetDict, *and* one of:
-
-        a. The loss is a dictionary, or
-        b. The prompts contain a mapping of dataset names, or
-        c. The router_mapping contains a mapping of dataset names.
-        """
-
-        return isinstance(dataset, (DatasetDict, IterableDatasetDict)) and (
-            isinstance(loss, dict)
-            or (args.prompts and isinstance(args.prompts, dict))
-            or (
-                args.router_mapping
-                and isinstance(args.router_mapping, dict)
-                and isinstance(next(iter(args.router_mapping.values())), dict)
-            )
-        )
-
-    def _include_prompt_length(self) -> bool:
-        """
-        Return whether the prompt length should be passed to the model's forward method.
-
-        True if the model does not include the prompt in the pooling layer. Can be
-        overridden by the user if it's useful to include the prompt length.
-        """
-        for module in self.model:
-            if isinstance(module, Pooling):
-                return not module.include_prompt
-        return False
 
     def prepare_loss(
         self,

@@ -90,30 +90,18 @@ class BinaryCrossEntropyLoss(nn.Module):
                 f"but got a model with {self.model.num_labels} output labels."
             )
 
-    def forward(self, inputs: list[list[str]], labels: Tensor) -> Tensor:
-        # inputs being a list of lists might be a problem - we might need to update that to a dictionary like ST/SE
+    def forward(
+        self, inputs: list[list[str]], labels: Tensor, prompt: str | None = None, task: str | None = None
+    ) -> Tensor:
         if len(inputs) != 2:
             raise ValueError(
                 f"BinaryCrossEntropyLoss expects a dataset with two non-label columns, but got a dataset with {len(inputs)} columns."
             )
 
         pairs = list(zip(inputs[0], inputs[1]))
-        """
-        tokens = self.model.tokenizer(
-            pairs,
-            padding=True,
-            truncation=True,
-            return_tensors="pt",
-        )
-        tokens.to(self.model.device)
-        breakpoint()
-        logits = self.model(**tokens)[0].view(-1)
-        """
-        # TODO: I don't think I can preserve backwards compatibility: the `self.model` call just has different
-        # tokenizer (manageable), inputs (manageable), and outputs (not manageable) now.
-        tokens = self.model.preprocess(pairs)
-        tokens.to(self.model.device)
-        outputs = self.model(tokens)
+        inputs = self.model.preprocess(pairs, prompt=prompt, task=task)
+        inputs.to(self.model.device)
+        outputs = self.model(inputs)
         logits = outputs["scores"].view(-1)
         logits = self.activation_fn(logits)
         loss = self.bce_with_logits_loss(logits, labels.float())

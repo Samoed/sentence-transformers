@@ -85,21 +85,18 @@ class MSELoss(nn.Module):
                 f"but got a model with {self.model.num_labels} output labels."
             )
 
-    def forward(self, inputs: list[list[str]], labels: Tensor) -> Tensor:
+    def forward(
+        self, inputs: list[list[str]], labels: Tensor, prompt: str | None = None, task: str | None = None
+    ) -> Tensor:
         if len(inputs) != 2:
             raise ValueError(
                 f"MSELoss expects a dataset with two non-label columns, but got a dataset with {len(inputs)} columns."
             )
 
         pairs = list(zip(inputs[0], inputs[1]))
-        tokens = self.model.tokenizer(
-            pairs,
-            padding=True,
-            truncation=True,
-            return_tensors="pt",
-        )
+        tokens = self.model.preprocess(pairs, prompt=prompt, task=task)
         tokens.to(self.model.device)
-        logits = self.model(**tokens)[0].view(-1)
+        logits = self.model(tokens)["scores"].view(-1)
         logits = self.activation_fn(logits)
         loss = self.loss_fct(logits, labels.float())
         return loss

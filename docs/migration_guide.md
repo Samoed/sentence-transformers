@@ -13,6 +13,7 @@ TODO: Notes to self:
 - Renamed `get_word_embedding_dimension` to `get_embedding_dimension` on Transformer, LSTM, CNN, WordEmbeddings, WeightedLayerPooling (with backwards compatibility)
 - Renamed `word_embedding_dimension` constructor parameter to `embedding_dimension` on Pooling, LSTM, WeightedLayerPooling, SpladePooling (with backwards compatibility)
 - Renamed `in_word_embedding_dimension` constructor parameter to `in_embedding_dimension` on CNN (with backwards compatibility)
+- Add `prompt` and `task` kwargs to CrossEncoder losses, which can be forwarded to the `CrossEncoder.preprocess` method in the loss `forward` method (with backwards compatibility)
 
 ## Migrating from v4.x to v5.x
 

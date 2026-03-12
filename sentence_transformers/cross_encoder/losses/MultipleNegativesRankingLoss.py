@@ -111,19 +111,18 @@ class MultipleNegativesRankingLoss(nn.Module):
                 f"but got a model with {self.model.num_labels} output labels."
             )
 
-    def call_model_with_columns(self, anchors: list[str], candidates: list[str]) -> Tensor:
+    def call_model_with_columns(
+        self, anchors: list[str], candidates: list[str], prompt: str | None = None, task: str | None = None
+    ) -> Tensor:
         pairs = list(zip(anchors, candidates))
-        return self.call_model_with_pairs(pairs)
+        return self.call_model_with_pairs(pairs, prompt=prompt, task=task)
 
-    def call_model_with_pairs(self, pairs: list[list[str]]) -> Tensor:
-        tokens = self.model.tokenizer(
-            pairs,
-            padding=True,
-            truncation=True,
-            return_tensors="pt",
-        )
+    def call_model_with_pairs(
+        self, pairs: list[list[str]], prompt: str | None = None, task: str | None = None
+    ) -> Tensor:
+        tokens = self.model.preprocess(pairs, prompt=prompt, task=task)
         tokens.to(self.model.device)
-        logits = self.model(**tokens)[0]
+        logits = self.model(tokens)["scores"]
         return logits.squeeze(1)
 
     def get_in_batch_negatives(
@@ -171,20 +170,22 @@ class MultipleNegativesRankingLoss(nn.Module):
         loss = self.cross_entropy_loss(logits, labels)
         return loss
 
-    def forward(self, inputs: list[list[str]], labels: Tensor) -> Tensor:
+    def forward(
+        self, inputs: list[list[str]], labels: Tensor, prompt: str | None = None, task: str | None = None
+    ) -> Tensor:
         anchors = inputs[0]
         positives = inputs[1]
         batch_size = len(anchors)
 
-        scores = [self.call_model_with_columns(anchors, positives)]
+        scores = [self.call_model_with_columns(anchors, positives, prompt=prompt, task=task)]
 
         # In-batch negatives:
         for negatives in self.get_in_batch_negatives(anchors, inputs[1:]):
-            scores.append(self.call_model_with_columns(anchors, negatives))
+            scores.append(self.call_model_with_columns(anchors, negatives, prompt=prompt, task=task))
 
         # Hard negatives:
         for negatives in inputs[2:]:
-            scores.append(self.call_model_with_columns(anchors, negatives))
+            scores.append(self.call_model_with_columns(anchors, negatives, prompt=prompt, task=task))
 
         return self.calculate_loss(scores, batch_size)
 
