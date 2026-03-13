@@ -19,9 +19,9 @@ from tqdm.autonotebook import trange
 from transformers.utils import logging as transformers_logging
 from typing_extensions import deprecated
 
+from sentence_transformers.base.modality_types import SingleInput
 from sentence_transformers.base.model import BaseModel
 from sentence_transformers.base.modules import Transformer
-from sentence_transformers.base.modules.modality_utils import SingleInput
 from sentence_transformers.sentence_transformer.modules import Pooling
 from sentence_transformers.util import batch_to_device, truncate_embeddings
 from sentence_transformers.util.decorators import deprecated_kwargs

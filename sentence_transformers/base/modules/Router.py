@@ -12,14 +12,9 @@ except ImportError:
 from torch import Tensor, nn
 from transformers.utils import logging
 
+from sentence_transformers.base.modality import infer_batch_modality
+from sentence_transformers.base.modality_types import MODALITY_TO_PROCESSOR_ARG, Modality, PairInput, SingleInput
 from sentence_transformers.base.modules.InputModule import InputModule
-from sentence_transformers.base.modules.modality_utils import (
-    MODALITY_TO_PROCESSOR_ARG,
-    Modality,
-    PairInput,
-    SingleInput,
-    infer_batch_modality,
-)
 from sentence_transformers.base.modules.Module import Module
 from sentence_transformers.util import import_from_string, load_dir_path
 

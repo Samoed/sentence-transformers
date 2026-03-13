@@ -18,8 +18,8 @@ from transformers.utils import logging as transformers_logging
 from typing_extensions import deprecated
 
 from sentence_transformers.base import BaseModel
+from sentence_transformers.base.modality_types import TextInput
 from sentence_transformers.base.modules import Transformer
-from sentence_transformers.base.modules.modality_utils import TextInput
 from sentence_transformers.sentence_transformer.modules import Pooling
 from sentence_transformers.sparse_encoder.model_card import SparseEncoderModelCardData
 from sentence_transformers.sparse_encoder.modules import SparseAutoEncoder, SpladePooling

@@ -16,9 +16,9 @@ from transformers import AutoConfig, PretrainedConfig, PreTrainedModel, is_datas
 from transformers.utils import logging as transformers_logging
 from typing_extensions import deprecated
 
+from sentence_transformers.base.modality_types import PairableInput, PairInput
 from sentence_transformers.base.model import BaseModel
 from sentence_transformers.base.modules import Transformer
-from sentence_transformers.base.modules.modality_utils import PairableInput, PairInput
 from sentence_transformers.cross_encoder.fit_mixin import FitMixin
 from sentence_transformers.cross_encoder.model_card import CrossEncoderModelCardData
 from sentence_transformers.cross_encoder.modules.CausalScoreHead import CausalScoreHead

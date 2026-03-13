@@ -46,16 +46,16 @@ from transformers.utils.import_utils import is_peft_available
 from transformers.utils.peft_utils import find_adapter_config_file
 
 from sentence_transformers.backend import load_onnx_model, load_openvino_model
-from sentence_transformers.base.modules.InputModule import InputModule
-from sentence_transformers.base.modules.modality_utils import (
+from sentence_transformers.base.modality import InputFormatter
+from sentence_transformers.base.modality_types import (
     MODALITY_TO_PROCESSOR_ARG,
-    InputFormatter,
     MessageFormat,
     MessageInput,
     Modality,
     PairInput,
     SingleInput,
 )
+from sentence_transformers.base.modules.InputModule import InputModule
 from sentence_transformers.util.decorators import transformer_kwargs_decorator
 
 try:

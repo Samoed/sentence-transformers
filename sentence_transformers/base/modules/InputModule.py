@@ -6,11 +6,7 @@ import torch
 from tokenizers import Tokenizer
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 
-from sentence_transformers.base.modules.modality_utils import (
-    Modality,
-    PairInput,
-    SingleInput,
-)
+from sentence_transformers.base.modality_types import Modality, PairInput, SingleInput
 from sentence_transformers.base.modules.Module import Module
 
 

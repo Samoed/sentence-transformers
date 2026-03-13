@@ -5,8 +5,7 @@ import pytest
 import torch
 from PIL import Image
 
-from sentence_transformers.base.modules.modality_utils import (
-    MODALITY_TO_PROCESSOR_ARG,
+from sentence_transformers.base.modality import (
     InputFormatter,
     _is_non_text_pair,
     infer_batch_modality,
@@ -15,6 +14,7 @@ from sentence_transformers.base.modules.modality_utils import (
     is_image_url_or_path,
     is_video_url_or_path,
 )
+from sentence_transformers.base.modality_types import MODALITY_TO_PROCESSOR_ARG
 
 
 class TestIsImageUrlOrPath:
@@ -227,11 +227,11 @@ class TestModalityToProcessorArg:
 
 class TestInferModalityPilUnavailable:
     def test_pil_unavailable_text_still_works(self, monkeypatch):
-        monkeypatch.setattr("sentence_transformers.base.modules.modality_utils.Image", None)
+        monkeypatch.setattr("sentence_transformers.base.modality.Image", None)
         assert infer_modality("hello world") == "text"
 
     def test_pil_unavailable_image_url_still_works(self, monkeypatch):
-        monkeypatch.setattr("sentence_transformers.base.modules.modality_utils.Image", None)
+        monkeypatch.setattr("sentence_transformers.base.modality.Image", None)
         assert infer_modality("https://example.com/photo.jpg") == "image"
 
 

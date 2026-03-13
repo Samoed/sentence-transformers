@@ -1,15 +1,22 @@
-"""Utilities for handling modality detection and parsing across different input types."""
+"""Modality detection, input parsing, and message format conversion."""
 
 from __future__ import annotations
 
 import logging
 import os
 from collections import defaultdict
-from typing import Any, Literal, TypeAlias, TypedDict
+from typing import Any, Literal
 from urllib.parse import urlparse
 
 import numpy as np
 import torch
+
+from sentence_transformers.base.modality_types import (
+    MessageFormat,
+    Modality,
+    PairInput,
+    SingleInput,
+)
 
 try:
     from PIL.Image import Image
@@ -18,48 +25,6 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-
-class AudioDict(TypedDict):
-    array: np.ndarray | torch.Tensor
-    sampling_rate: int
-
-
-class VideoDict(TypedDict):
-    array: np.ndarray | torch.Tensor
-    video_metadata: dict[str, Any]
-
-
-class MessageDict(TypedDict):
-    role: str
-    content: str | list[dict[str, Any]]
-
-
-TextInput: TypeAlias = str
-ImageInput: TypeAlias = str | Image | np.ndarray | torch.Tensor
-AudioInput: TypeAlias = str | np.ndarray | torch.Tensor | AudioDict
-VideoInput: TypeAlias = str | np.ndarray | torch.Tensor | VideoDict
-MessageInput: TypeAlias = MessageDict | list[MessageDict]
-MultimodalInput: TypeAlias = dict[
-    Literal["text", "image", "audio", "video"], TextInput | ImageInput | AudioInput | VideoInput
-]
-SingleInput: TypeAlias = TextInput | ImageInput | AudioInput | VideoInput | MessageInput | MultimodalInput
-
-PairableInput: TypeAlias = TextInput | ImageInput | AudioInput | VideoInput
-PairInput: TypeAlias = tuple[PairableInput, PairableInput] | list[PairableInput]
-
-Modality: TypeAlias = (
-    Literal["text", "image", "audio", "video", "message"] | tuple[Literal["text", "image", "audio", "video"], ...]
-)
-ProcessorArgName: TypeAlias = Literal["text", "images", "audio", "videos", "message"]
-MessageFormat: TypeAlias = Literal["auto", "structured", "flat"]
-
-MODALITY_TO_PROCESSOR_ARG: dict[Modality, ProcessorArgName] = {
-    "text": "text",
-    "image": "images",
-    "audio": "audio",
-    "video": "videos",
-    "message": "message",
-}
 
 # TODO: Should we just enforce 'flat' if modalities is text only?
 KNOWN_MODEL_TYPES_MESSAGE_FORMATS = {

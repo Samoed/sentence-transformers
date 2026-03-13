@@ -27,14 +27,10 @@ from transformers.dynamic_module_utils import get_class_from_dynamic_module, get
 
 from sentence_transformers import __version__
 from sentence_transformers.base.evaluation import SentenceEvaluator
+from sentence_transformers.base.modality import infer_batch_modality
+from sentence_transformers.base.modality_types import Modality, PairInput, SingleInput
 from sentence_transformers.base.model_card import BaseModelCardData, generate_model_card
 from sentence_transformers.base.modules import Module, Router, Transformer
-from sentence_transformers.base.modules.modality_utils import (
-    Modality,
-    PairInput,
-    SingleInput,
-    infer_batch_modality,
-)
 from sentence_transformers.base.peft_mixin import PeftAdapterMixin
 from sentence_transformers.util import (
     get_device_name,
