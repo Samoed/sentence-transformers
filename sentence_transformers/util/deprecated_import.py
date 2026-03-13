@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 import importlib
+import importlib.abc
+import importlib.util
 import sys
+import types
+import warnings
 
 # Map old to new module paths for deprecated imports
 DEPRECATED_MODULE_PATHS = {
@@ -100,12 +104,6 @@ DEPRECATED_MODULE_PATHS = {
     "sentence_transformers.sparse_encoder.models.SparseStaticEmbedding": "sentence_transformers.sparse_encoder.modules.sparse_static_embedding",
     "sentence_transformers.sparse_encoder.models.SpladePooling": "sentence_transformers.sparse_encoder.modules.splade_pooling",
     # Renamed in Sentence Transformers v5.4.0 (approximately TitleCase -> snake_case)
-    "sentence_transformers.base.evaluation.SentenceEvaluator": "sentence_transformers.base.evaluation.sentence_evaluator",
-    "sentence_transformers.base.evaluation.SequentialEvaluator": "sentence_transformers.base.evaluation.sequential",
-    "sentence_transformers.base.modules.InputModule": "sentence_transformers.base.modules.input_module",
-    "sentence_transformers.base.modules.Module": "sentence_transformers.base.modules.module",
-    "sentence_transformers.base.modules.Router": "sentence_transformers.base.modules.router",
-    "sentence_transformers.base.modules.Transformer": "sentence_transformers.base.modules.transformer",
     "sentence_transformers.cross_encoder.losses.BinaryCrossEntropyLoss": "sentence_transformers.cross_encoder.losses.binary_cross_entropy",
     "sentence_transformers.cross_encoder.losses.CachedMultipleNegativesRankingLoss": "sentence_transformers.cross_encoder.losses.cached_multiple_negatives_ranking",
     "sentence_transformers.cross_encoder.losses.CrossEntropyLoss": "sentence_transformers.cross_encoder.losses.cross_entropy",
@@ -117,73 +115,6 @@ DEPRECATED_MODULE_PATHS = {
     "sentence_transformers.cross_encoder.losses.MultipleNegativesRankingLoss": "sentence_transformers.cross_encoder.losses.multiple_negatives_ranking",
     "sentence_transformers.cross_encoder.losses.PListMLELoss": "sentence_transformers.cross_encoder.losses.plist_mle",
     "sentence_transformers.cross_encoder.losses.RankNetLoss": "sentence_transformers.cross_encoder.losses.rank_net",
-    "sentence_transformers.cross_encoder.modules.CausalScoreHead": "sentence_transformers.cross_encoder.modules.causal_score_head",
-    "sentence_transformers.sentence_transformer.datasets.DenoisingAutoEncoderDataset": "sentence_transformers.sentence_transformer.datasets.denoising_auto_encoder",
-    "sentence_transformers.sentence_transformer.datasets.NoDuplicatesDataLoader": "sentence_transformers.sentence_transformer.datasets.no_duplicates_dataloader",
-    "sentence_transformers.sentence_transformer.datasets.ParallelSentencesDataset": "sentence_transformers.sentence_transformer.datasets.parallel_sentences",
-    "sentence_transformers.sentence_transformer.datasets.SentenceLabelDataset": "sentence_transformers.sentence_transformer.datasets.sentence_label",
-    "sentence_transformers.sentence_transformer.datasets.SentencesDataset": "sentence_transformers.sentence_transformer.datasets.sentences",
-    "sentence_transformers.sentence_transformer.evaluation.BinaryClassificationEvaluator": "sentence_transformers.sentence_transformer.evaluation.binary_classification",
-    "sentence_transformers.sentence_transformer.evaluation.EmbeddingSimilarityEvaluator": "sentence_transformers.sentence_transformer.evaluation.embedding_similarity",
-    "sentence_transformers.sentence_transformer.evaluation.InformationRetrievalEvaluator": "sentence_transformers.sentence_transformer.evaluation.information_retrieval",
-    "sentence_transformers.sentence_transformer.evaluation.LabelAccuracyEvaluator": "sentence_transformers.sentence_transformer.evaluation.label_accuracy",
-    "sentence_transformers.sentence_transformer.evaluation.MSEEvaluator": "sentence_transformers.sentence_transformer.evaluation.mse",
-    "sentence_transformers.sentence_transformer.evaluation.MSEEvaluatorFromDataFrame": "sentence_transformers.sentence_transformer.evaluation.mse_from_dataframe",
-    "sentence_transformers.sentence_transformer.evaluation.NanoBEIREvaluator": "sentence_transformers.sentence_transformer.evaluation.nano_beir",
-    "sentence_transformers.sentence_transformer.evaluation.ParaphraseMiningEvaluator": "sentence_transformers.sentence_transformer.evaluation.paraphrase_mining",
-    "sentence_transformers.sentence_transformer.evaluation.RerankingEvaluator": "sentence_transformers.sentence_transformer.evaluation.reranking",
-    "sentence_transformers.sentence_transformer.evaluation.SimilarityFunction": "sentence_transformers.sentence_transformer.evaluation.similarity_function",
-    "sentence_transformers.sentence_transformer.evaluation.TranslationEvaluator": "sentence_transformers.sentence_transformer.evaluation.translation",
-    "sentence_transformers.sentence_transformer.evaluation.TripletEvaluator": "sentence_transformers.sentence_transformer.evaluation.triplet",
-    "sentence_transformers.sentence_transformer.losses.AdaptiveLayerLoss": "sentence_transformers.sentence_transformer.losses.adaptive_layer",
-    "sentence_transformers.sentence_transformer.losses.AnglELoss": "sentence_transformers.sentence_transformer.losses.angle",
-    "sentence_transformers.sentence_transformer.losses.BatchAllTripletLoss": "sentence_transformers.sentence_transformer.losses.batch_all_triplet",
-    "sentence_transformers.sentence_transformer.losses.BatchHardSoftMarginTripletLoss": "sentence_transformers.sentence_transformer.losses.batch_hard_soft_margin_triplet",
-    "sentence_transformers.sentence_transformer.losses.BatchHardTripletLoss": "sentence_transformers.sentence_transformer.losses.batch_hard_triplet",
-    "sentence_transformers.sentence_transformer.losses.BatchSemiHardTripletLoss": "sentence_transformers.sentence_transformer.losses.batch_semi_hard_triplet",
-    "sentence_transformers.sentence_transformer.losses.CachedGISTEmbedLoss": "sentence_transformers.sentence_transformer.losses.cached_gist_embed",
-    "sentence_transformers.sentence_transformer.losses.CachedMultipleNegativesRankingLoss": "sentence_transformers.sentence_transformer.losses.cached_multiple_negatives_ranking",
-    "sentence_transformers.sentence_transformer.losses.CachedMultipleNegativesSymmetricRankingLoss": "sentence_transformers.sentence_transformer.losses.cached_multiple_negatives_symmetric_ranking",
-    "sentence_transformers.sentence_transformer.losses.CoSENTLoss": "sentence_transformers.sentence_transformer.losses.cosent",
-    "sentence_transformers.sentence_transformer.losses.ContrastiveLoss": "sentence_transformers.sentence_transformer.losses.contrastive",
-    "sentence_transformers.sentence_transformer.losses.ContrastiveTensionLoss": "sentence_transformers.sentence_transformer.losses.contrastive_tension",
-    "sentence_transformers.sentence_transformer.losses.CosineSimilarityLoss": "sentence_transformers.sentence_transformer.losses.cosine_similarity",
-    "sentence_transformers.sentence_transformer.losses.DenoisingAutoEncoderLoss": "sentence_transformers.sentence_transformer.losses.denoising_auto_encoder",
-    "sentence_transformers.sentence_transformer.losses.DistillKLDivLoss": "sentence_transformers.sentence_transformer.losses.distill_kl_div",
-    "sentence_transformers.sentence_transformer.losses.GISTEmbedLoss": "sentence_transformers.sentence_transformer.losses.gist_embed",
-    "sentence_transformers.sentence_transformer.losses.GlobalOrthogonalRegularizationLoss": "sentence_transformers.sentence_transformer.losses.global_orthogonal_regularization",
-    "sentence_transformers.sentence_transformer.losses.MSELoss": "sentence_transformers.sentence_transformer.losses.mse",
-    "sentence_transformers.sentence_transformer.losses.MarginMSELoss": "sentence_transformers.sentence_transformer.losses.margin_mse",
-    "sentence_transformers.sentence_transformer.losses.Matryoshka2dLoss": "sentence_transformers.sentence_transformer.losses.matryoshka_2d",
-    "sentence_transformers.sentence_transformer.losses.MatryoshkaLoss": "sentence_transformers.sentence_transformer.losses.matryoshka",
-    "sentence_transformers.sentence_transformer.losses.MegaBatchMarginLoss": "sentence_transformers.sentence_transformer.losses.mega_batch_margin",
-    "sentence_transformers.sentence_transformer.losses.MultipleNegativesRankingLoss": "sentence_transformers.sentence_transformer.losses.multiple_negatives_ranking",
-    "sentence_transformers.sentence_transformer.losses.MultipleNegativesSymmetricRankingLoss": "sentence_transformers.sentence_transformer.losses.multiple_negatives_symmetric_ranking",
-    "sentence_transformers.sentence_transformer.losses.OnlineContrastiveLoss": "sentence_transformers.sentence_transformer.losses.online_contrastive",
-    "sentence_transformers.sentence_transformer.losses.SoftmaxLoss": "sentence_transformers.sentence_transformer.losses.softmax",
-    "sentence_transformers.sentence_transformer.losses.TripletLoss": "sentence_transformers.sentence_transformer.losses.triplet",
-    "sentence_transformers.sentence_transformer.modules.BoW": "sentence_transformers.sentence_transformer.modules.bow",
-    "sentence_transformers.sentence_transformer.modules.CLIPModel": "sentence_transformers.sentence_transformer.modules.clip_model",
-    "sentence_transformers.sentence_transformer.modules.CNN": "sentence_transformers.sentence_transformer.modules.cnn",
-    "sentence_transformers.sentence_transformer.modules.Dense": "sentence_transformers.sentence_transformer.modules.dense",
-    "sentence_transformers.sentence_transformer.modules.Dropout": "sentence_transformers.sentence_transformer.modules.dropout",
-    "sentence_transformers.sentence_transformer.modules.LSTM": "sentence_transformers.sentence_transformer.modules.lstm",
-    "sentence_transformers.sentence_transformer.modules.LayerNorm": "sentence_transformers.sentence_transformer.modules.layer_norm",
-    "sentence_transformers.sentence_transformer.modules.Normalize": "sentence_transformers.sentence_transformer.modules.normalize",
-    "sentence_transformers.sentence_transformer.modules.Pooling": "sentence_transformers.sentence_transformer.modules.pooling",
-    "sentence_transformers.sentence_transformer.modules.StaticEmbedding": "sentence_transformers.sentence_transformer.modules.static_embedding",
-    "sentence_transformers.sentence_transformer.modules.WeightedLayerPooling": "sentence_transformers.sentence_transformer.modules.weighted_layer_pooling",
-    "sentence_transformers.sentence_transformer.modules.WordEmbeddings": "sentence_transformers.sentence_transformer.modules.word_embeddings",
-    "sentence_transformers.sentence_transformer.modules.WordWeights": "sentence_transformers.sentence_transformer.modules.word_weights",
-    "sentence_transformers.sentence_transformer.modules.tokenizer.PhraseTokenizer": "sentence_transformers.sentence_transformer.modules.tokenizer.phrase",
-    "sentence_transformers.sentence_transformer.modules.tokenizer.WhitespaceTokenizer": "sentence_transformers.sentence_transformer.modules.tokenizer.whitespace",
-    "sentence_transformers.sentence_transformer.modules.tokenizer.WordTokenizer": "sentence_transformers.sentence_transformer.modules.tokenizer.word",
-    "sentence_transformers.sentence_transformer.readers.InputExample": "sentence_transformers.sentence_transformer.readers.input_example",
-    "sentence_transformers.sentence_transformer.readers.LabelSentenceReader": "sentence_transformers.sentence_transformer.readers.label_sentence",
-    "sentence_transformers.sentence_transformer.readers.NLIDataReader": "sentence_transformers.sentence_transformer.readers.nli_data",
-    "sentence_transformers.sentence_transformer.readers.PairedFilesReader": "sentence_transformers.sentence_transformer.readers.paired_files",
-    "sentence_transformers.sentence_transformer.readers.STSDataReader": "sentence_transformers.sentence_transformer.readers.sts_data",
-    "sentence_transformers.sentence_transformer.readers.TripletReader": "sentence_transformers.sentence_transformer.readers.triplet",
     "sentence_transformers.sparse_encoder.evaluation.ReciprocalRankFusionEvaluator": "sentence_transformers.sparse_encoder.evaluation.reciprocal_rank_fusion",
     "sentence_transformers.sparse_encoder.evaluation.SparseBinaryClassificationEvaluator": "sentence_transformers.sparse_encoder.evaluation.sparse_binary_classification",
     "sentence_transformers.sparse_encoder.evaluation.SparseEmbeddingSimilarityEvaluator": "sentence_transformers.sparse_encoder.evaluation.sparse_embedding_similarity",
@@ -205,10 +136,6 @@ DEPRECATED_MODULE_PATHS = {
     "sentence_transformers.sparse_encoder.losses.SparseMultipleNegativesRankingLoss": "sentence_transformers.sparse_encoder.losses.sparse_multiple_negatives_ranking",
     "sentence_transformers.sparse_encoder.losses.SparseTripletLoss": "sentence_transformers.sparse_encoder.losses.sparse_triplet",
     "sentence_transformers.sparse_encoder.losses.SpladeLoss": "sentence_transformers.sparse_encoder.losses.splade",
-    "sentence_transformers.sparse_encoder.modules.MLMTransformer": "sentence_transformers.sparse_encoder.modules.mlm_transformer",
-    "sentence_transformers.sparse_encoder.modules.SparseAutoEncoder": "sentence_transformers.sparse_encoder.modules.sparse_auto_encoder",
-    "sentence_transformers.sparse_encoder.modules.SparseStaticEmbedding": "sentence_transformers.sparse_encoder.modules.sparse_static_embedding",
-    "sentence_transformers.sparse_encoder.modules.SpladePooling": "sentence_transformers.sparse_encoder.modules.splade_pooling",
     # Deprecated in Sentence Transformers v4.0.0
     "sentence_transformers.cross_encoder.evaluation.CEBinaryAccuracyEvaluator": "sentence_transformers.cross_encoder.evaluation.deprecated",
     "sentence_transformers.cross_encoder.evaluation.CEBinaryClassificationEvaluator": "sentence_transformers.cross_encoder.evaluation.deprecated",
@@ -219,14 +146,119 @@ DEPRECATED_MODULE_PATHS = {
 }
 
 
+_SENTINEL = object()
+_PROTECTED_ATTRS: dict[int, dict[str, object]] = {}
+_ORIGINAL_MODULE_CLASSES: dict[int, type] = {}
+
+
+class _ProtectedModule(types.ModuleType):
+    """Module subclass that prevents the import machinery from overwriting class attributes with modules.
+
+    When Python imports a submodule ``parent.Child``, it does ``setattr(parent, 'Child', child_module)``.
+    For deprecated paths where ``Child`` is both a deprecated submodule path AND a class exported by
+    the parent's ``__init__.py``, this would overwrite the class. This subclass intercepts that
+    ``setattr`` and restores the original class attribute, then reverts the module to its original class.
+    """
+
+    def __setattr__(self, name: str, value: object) -> None:
+        protected = _PROTECTED_ATTRS.get(id(self))
+        if protected is not None and name in protected:
+            original = protected.pop(name)
+            try:
+                # Restore the original attribute before reverting the class, since super() needs
+                # self to still be an instance of _ProtectedModule.
+                super().__setattr__(name, original)
+            finally:
+                if not protected:
+                    del _PROTECTED_ATTRS[id(self)]
+                    self.__class__ = _ORIGINAL_MODULE_CLASSES.pop(id(self), types.ModuleType)
+            return
+        super().__setattr__(name, value)
+
+
+class _DeprecatedModuleLoader(importlib.abc.Loader):
+    """Loader that returns an already-loaded module without re-executing it.
+
+    We save the original ``__spec__`` and restore it in ``exec_module`` as a safety measure,
+    ensuring the module's spec always points to its canonical name regardless of how
+    ``_init_module_attrs`` handles it.
+    """
+
+    def __init__(self, module: types.ModuleType) -> None:
+        self._module = module
+        self._original_spec = getattr(module, "__spec__", None)
+
+    def create_module(self, spec):
+        return self._module
+
+    def exec_module(self, module):
+        if self._original_spec is not None:
+            module.__spec__ = self._original_spec
+
+
+class _DeprecatedModuleFinder(importlib.abc.MetaPathFinder):
+    """Meta path finder that intercepts imports of deprecated module paths.
+
+    Issues a DeprecationWarning on first import and returns a spec whose loader provides the
+    real module. Protects parent packages from having their class attributes overwritten by
+    the import machinery's ``setattr(parent, child, module)`` call.
+    After the first import, ``sys.modules`` has the alias, so the finder is never called again
+    for that path. No overhead after the first import.
+    """
+
+    def find_spec(self, fullname, path=None, target=None):
+        new_path = DEPRECATED_MODULE_PATHS.get(fullname)
+        if new_path is None:
+            return None
+
+        # Walk the stack to find the caller outside of importlib internals and this module,
+        # so the warning points to the user's code.
+        frame = sys._getframe(1)
+        current_file = __file__
+        while frame is not None:
+            filename = frame.f_code.co_filename
+            if "importlib" not in filename and filename != current_file:
+                break
+            frame = frame.f_back
+
+        msg = (
+            f"Importing from '{fullname}' is deprecated and will be removed in a future version. "
+            f"Please use '{new_path}' instead."
+        )
+        if frame is not None:
+            warnings.warn_explicit(
+                msg,
+                DeprecationWarning,
+                filename=frame.f_code.co_filename,
+                lineno=frame.f_lineno,
+                module=frame.f_globals.get("__name__") or frame.f_code.co_filename,
+            )
+        else:
+            warnings.warn(msg, DeprecationWarning, stacklevel=2)
+
+        # Import the new module and alias the deprecated path to it
+        new_module = importlib.import_module(new_path)
+
+        # Protect parent's class/function attributes from being overwritten by the import
+        # machinery's ``setattr(parent, child_name, module)`` after loading.
+        parent_name, _, child_name = fullname.rpartition(".")
+        if parent_name:
+            parent = sys.modules.get(parent_name)
+            if parent is not None:
+                original = getattr(parent, child_name, _SENTINEL)
+                if original is not _SENTINEL and not isinstance(original, types.ModuleType):
+                    module_id = id(parent)
+                    if module_id not in _PROTECTED_ATTRS:
+                        _PROTECTED_ATTRS[module_id] = {}
+                        _ORIGINAL_MODULE_CLASSES[module_id] = type(parent)
+                        parent.__class__ = _ProtectedModule
+                    _PROTECTED_ATTRS[module_id][child_name] = original
+
+        return importlib.util.spec_from_loader(fullname, _DeprecatedModuleLoader(new_module))
+
+
 def setup_deprecated_module_imports() -> None:
+    """Install a meta path finder that issues deprecation warnings for deprecated import paths
+    and aliases them to their new locations in ``sys.modules``.
     """
-    Set up deprecated module imports by directly aliasing sys.modules entries.
-    """
-
-    for old_path, new_path in DEPRECATED_MODULE_PATHS.items():
-        # Import the new module if not already imported
-        if new_path not in sys.modules:
-            importlib.import_module(new_path)
-
-        sys.modules[old_path] = sys.modules[new_path]
+    sys.meta_path.insert(0, _DeprecatedModuleFinder())

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+import sys
 import warnings
 
 import pytest
@@ -11,24 +12,26 @@ from sentence_transformers.util.deprecated_import import DEPRECATED_MODULE_PATHS
 @pytest.mark.parametrize(("deprecated_path", "new_path"), DEPRECATED_MODULE_PATHS.items())
 def test_deprecated_import_paths(deprecated_path: str, new_path: str):
     """Test that deprecated import paths point to the correct new paths."""
+    # Remove from sys.modules so the meta path finder is triggered fresh
+    sys.modules.pop(deprecated_path, None)
+
     with warnings.catch_warnings(record=True) as warnings_list:
         warnings.simplefilter("always", DeprecationWarning)
 
         # Import the deprecated module
         deprecated_module = importlib.import_module(deprecated_path)
-        # TODO: We really should introduce deprecation warnings somehow when importing deprecated modules.
-        # deprecation_warnings = [
-        #     warning for warning in warnings_list if issubclass(warning.category, DeprecationWarning)
-        # ]
-        # assert len(deprecation_warnings) > 0
-        # assert any(
-        #     (
-        #         f"Importing from '{deprecated_path}' is deprecated and will be removed in a future version. "
-        #         f"Please use '{new_path}' instead."
-        #     )
-        #     in str(warning.message)
-        #     for warning in deprecation_warnings
-        # )
+        deprecation_warnings = [
+            warning for warning in warnings_list if issubclass(warning.category, DeprecationWarning)
+        ]
+        assert len(deprecation_warnings) > 0
+        assert any(
+            (
+                f"Importing from '{deprecated_path}' is deprecated and will be removed in a future version. "
+                f"Please use '{new_path}' instead."
+            )
+            in str(warning.message)
+            for warning in deprecation_warnings
+        )
         assert deprecated_module is not None
 
     with warnings.catch_warnings(record=True) as warnings_list:

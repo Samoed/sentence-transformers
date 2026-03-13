@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import importlib
 import logging
+import warnings
 from contextlib import contextmanager
 from inspect import isclass
 
@@ -59,10 +60,13 @@ def import_from_string(dotted_path: str) -> type:
         msg = f"{dotted_path} doesn't look like a module path"
         raise ImportError(msg)
 
-    try:
-        module = importlib.import_module(dotted_path)
-    except Exception:
-        module = importlib.import_module(module_path)
+    # Suppress deprecation warnings: these imports come from model configs, not user code
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        try:
+            module = importlib.import_module(dotted_path)
+        except Exception:
+            module = importlib.import_module(module_path)
 
     try:
         return getattr(module, class_name)

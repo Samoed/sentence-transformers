@@ -65,7 +65,7 @@ class GlobalOrthogonalRegularizationLoss(nn.Module):
                 from datasets import Dataset
                 from torch import Tensor
                 from sentence_transformers import SentenceTransformer, SentenceTransformerTrainer
-                from sentence_transformers.losses import GlobalOrthogonalRegularizationLoss, MultipleNegativesRankingLoss
+                from sentence_transformers.sentence_transformer.losses import GlobalOrthogonalRegularizationLoss, MultipleNegativesRankingLoss
                 from sentence_transformers.util import cos_sim
 
                 model = SentenceTransformer("microsoft/mpnet-base")
@@ -101,7 +101,7 @@ class GlobalOrthogonalRegularizationLoss(nn.Module):
             ::
 
                 from sentence_transformers import SentenceTransformer, SentenceTransformerTrainer
-                from sentence_transformers.losses import GlobalOrthogonalRegularizationLoss, MultipleNegativesRankingLoss
+                from sentence_transformers.sentence_transformer.losses import GlobalOrthogonalRegularizationLoss, MultipleNegativesRankingLoss
                 from datasets import Dataset
 
                 model = SentenceTransformer("microsoft/mpnet-base")

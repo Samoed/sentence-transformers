@@ -685,7 +685,7 @@ def test_encode_truncate(
 
     # Test context manager
     final_truncate_dim = int(original_output_dim / 8)
-    with model.truncate_sentence_embeddings(final_truncate_dim):
+    with model.truncate_embeddings(final_truncate_dim):
         test(model, expected_dim=final_truncate_dim)
     test(model, expected_dim=new_truncate_dim)  # b/c we've exited the context
 
