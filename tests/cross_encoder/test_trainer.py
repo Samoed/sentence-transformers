@@ -296,11 +296,13 @@ def test_trainer_prompts(
     elif prompts == "Prompt: ":
         assert all(p == "Prompt: " for p in tracked_prompts)
     elif prompts == {"stsb-1": "Prompt 1: ", "stsb-2": "Prompt 2: "}:
-        if train_dict:
+        if train_dict or eval_dict:
+            # Per-dataset prompts resolve when dataset_name is present, which happens
+            # for DatasetDict datasets (either train or eval)
             assert any(p == "Prompt 1: " for p in tracked_prompts)
             assert any(p == "Prompt 2: " for p in tracked_prompts)
         else:
-            # Per-dataset prompts with a plain dataset: no dataset_name matches, so no prompt
+            # Per-dataset prompts with plain datasets: no dataset_name matches, so no prompt
             assert all(p is None for p in tracked_prompts)
 
 
@@ -310,4 +312,13 @@ def test_trainer_prompts_per_column_rejected(reranker_bert_tiny_model: CrossEnco
         CrossEncoderDataCollator(
             preprocess_fn=reranker_bert_tiny_model.preprocess,
             prompts={"stsb-1": {"sentence1": "Prompt 1: ", "sentence2": "Prompt 2: "}},
+        )
+
+
+def test_trainer_router_mapping_per_column_rejected(reranker_bert_tiny_model: CrossEncoder):
+    """Test that per-column router_mapping is rejected for CrossEncoder."""
+    with pytest.raises(ValueError, match="CrossEncoder router_mapping cannot be per-column"):
+        CrossEncoderDataCollator(
+            preprocess_fn=reranker_bert_tiny_model.preprocess,
+            router_mapping={"stsb-1": {"sentence1": "rerank", "sentence2": "rerank"}},
         )

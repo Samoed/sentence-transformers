@@ -758,11 +758,11 @@ def test_data_collator(
     )
     trainer.train()
 
-    # Check that the data collator correctly recognizes the prompt length
+    # Check that the transformer module correctly recognizes the prompt length
     only_prompt_length = len(model.tokenizer(["Prompt: "], add_special_tokens=False)["input_ids"][0])
     if has_bos_token:
         only_prompt_length += 1
-    assert trainer.data_collator._prompt_length_mapping == {("Prompt: ", None): only_prompt_length}
+    assert model[0]._prompt_length_mapping == {("Prompt: ", ("task", None)): only_prompt_length}
 
 
 def test_trainer_get_batch_sampler_class(
