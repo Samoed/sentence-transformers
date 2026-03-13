@@ -9,7 +9,7 @@ from torch import nn
 from sentence_transformers.base.sampler import BatchSamplers
 from sentence_transformers.cross_encoder import CrossEncoder
 from sentence_transformers.cross_encoder.evaluation import CrossEncoderNanoBEIREvaluator
-from sentence_transformers.cross_encoder.losses.CachedMultipleNegativesRankingLoss import (
+from sentence_transformers.cross_encoder.losses.cached_multiple_negatives_ranking import (
     CachedMultipleNegativesRankingLoss,
 )
 from sentence_transformers.cross_encoder.trainer import CrossEncoderTrainer

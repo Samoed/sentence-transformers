@@ -37,7 +37,7 @@ if is_datasets_available():
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from sentence_transformers.base.evaluation.SentenceEvaluator import SentenceEvaluator
+    from sentence_transformers.base.evaluation.sentence_evaluator import SentenceEvaluator
     from sentence_transformers.base.model import BaseModel
     from sentence_transformers.base.trainer import BaseTrainer
 

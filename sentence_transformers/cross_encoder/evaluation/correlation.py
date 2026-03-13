@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from scipy.stats import pearsonr, spearmanr
 
 from sentence_transformers import InputExample
-from sentence_transformers.base.evaluation.SentenceEvaluator import SentenceEvaluator
+from sentence_transformers.base.evaluation.sentence_evaluator import SentenceEvaluator
 
 if TYPE_CHECKING:
     from sentence_transformers.cross_encoder.model import CrossEncoder

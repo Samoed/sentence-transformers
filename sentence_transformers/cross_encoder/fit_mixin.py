@@ -16,11 +16,11 @@ from tqdm.autonotebook import tqdm, trange
 from transformers import TrainerCallback, TrainerControl, TrainerState, is_torch_npu_available
 from transformers.tokenization_utils_base import BatchEncoding
 
-from sentence_transformers.base.evaluation.SentenceEvaluator import SentenceEvaluator
+from sentence_transformers.base.evaluation.sentence_evaluator import SentenceEvaluator
 from sentence_transformers.base.sampler import BatchSamplers
 from sentence_transformers.cross_encoder.training_args import CrossEncoderTrainingArguments
-from sentence_transformers.sentence_transformer.datasets.NoDuplicatesDataLoader import NoDuplicatesDataLoader
-from sentence_transformers.sentence_transformer.datasets.SentenceLabelDataset import SentenceLabelDataset
+from sentence_transformers.sentence_transformer.datasets.no_duplicates_dataloader import NoDuplicatesDataLoader
+from sentence_transformers.sentence_transformer.datasets.sentence_label import SentenceLabelDataset
 from sentence_transformers.sentence_transformer.model import SentenceTransformer
 from sentence_transformers.sentence_transformer.readers import InputExample
 from sentence_transformers.util import is_datasets_available
@@ -30,7 +30,7 @@ if is_datasets_available():
 
 if TYPE_CHECKING:
     from sentence_transformers.cross_encoder.model import CrossEncoder
-    from sentence_transformers.sentence_transformer.readers.InputExample import InputExample
+    from sentence_transformers.sentence_transformer.readers.input_example import InputExample
 
 
 logger = logging.getLogger(__name__)
@@ -252,8 +252,8 @@ class FitMixin:
             raise ImportError("Please install `datasets` to use this function: `pip install datasets`.")
 
         # Delayed import to counter the CrossEncoder -> FitMixin -> CrossEncoderTrainer -> CrossEncoder circular import
-        from sentence_transformers.cross_encoder.losses.BinaryCrossEntropyLoss import BinaryCrossEntropyLoss
-        from sentence_transformers.cross_encoder.losses.CrossEntropyLoss import CrossEntropyLoss
+        from sentence_transformers.cross_encoder.losses.binary_cross_entropy import BinaryCrossEntropyLoss
+        from sentence_transformers.cross_encoder.losses.cross_entropy import CrossEntropyLoss
         from sentence_transformers.cross_encoder.trainer import CrossEncoderTrainer
 
         # Clear the dataloaders from collate functions as we just want raw InputExamples

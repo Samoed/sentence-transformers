@@ -9,7 +9,7 @@ from tokenizers import Tokenizer
 from transformers import __version__ as transformers_version
 
 from sentence_transformers import SentenceTransformer
-from sentence_transformers.sentence_transformer.modules.StaticEmbedding import StaticEmbedding
+from sentence_transformers.sentence_transformer.modules.static_embedding import StaticEmbedding
 
 try:
     import model2vec

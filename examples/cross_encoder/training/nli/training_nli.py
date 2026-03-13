@@ -16,7 +16,7 @@ from datasets import load_dataset
 
 from sentence_transformers.cross_encoder import CrossEncoder
 from sentence_transformers.cross_encoder.evaluation import CrossEncoderClassificationEvaluator
-from sentence_transformers.cross_encoder.losses.CrossEntropyLoss import CrossEntropyLoss
+from sentence_transformers.cross_encoder.losses.cross_entropy import CrossEntropyLoss
 from sentence_transformers.cross_encoder.trainer import CrossEncoderTrainer
 from sentence_transformers.cross_encoder.training_args import CrossEncoderTrainingArguments
 

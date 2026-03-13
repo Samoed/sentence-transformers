@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from .SentenceEvaluator import SentenceEvaluator
-from .SequentialEvaluator import SequentialEvaluator
+from .sentence_evaluator import SentenceEvaluator
+from .sequential import SequentialEvaluator
 
 __all__ = [
     "SentenceEvaluator",

@@ -8,12 +8,12 @@ See https://www.sbert.net/docs/sentence_transformer/training_overview.html for m
 
 from __future__ import annotations
 
-from .InputExample import InputExample
-from .LabelSentenceReader import LabelSentenceReader
-from .NLIDataReader import NLIDataReader
-from .PairedFilesReader import PairedFilesReader
-from .STSDataReader import STSBenchmarkDataReader, STSDataReader
-from .TripletReader import TripletReader
+from .input_example import InputExample
+from .label_sentence import LabelSentenceReader
+from .nli_data import NLIDataReader
+from .paired_files import PairedFilesReader
+from .sts_data import STSBenchmarkDataReader, STSDataReader
+from .triplet import TripletReader
 
 __all__ = [
     "InputExample",

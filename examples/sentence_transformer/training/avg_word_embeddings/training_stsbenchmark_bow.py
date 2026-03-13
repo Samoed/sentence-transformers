@@ -17,7 +17,7 @@ from sentence_transformers import SentenceTransformer
 from sentence_transformers.modules import BoW, Dense
 from sentence_transformers.sentence_transformer.evaluation import EmbeddingSimilarityEvaluator
 from sentence_transformers.sentence_transformer.losses import CosineSimilarityLoss
-from sentence_transformers.sentence_transformer.modules.tokenizer.WordTokenizer import ENGLISH_STOP_WORDS
+from sentence_transformers.sentence_transformer.modules.tokenizer.word import ENGLISH_STOP_WORDS
 from sentence_transformers.sentence_transformer.trainer import SentenceTransformerTrainer
 from sentence_transformers.sentence_transformer.training_args import SentenceTransformerTrainingArguments
 from sentence_transformers.util import http_get

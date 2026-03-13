@@ -21,8 +21,8 @@ from transformers import TrainerCallback, TrainerControl, TrainerState
 
 from sentence_transformers.base.evaluation import SentenceEvaluator
 from sentence_transformers.base.training_args import BatchSamplers, MultiDatasetBatchSamplers
-from sentence_transformers.sentence_transformer.datasets.NoDuplicatesDataLoader import NoDuplicatesDataLoader
-from sentence_transformers.sentence_transformer.datasets.SentenceLabelDataset import SentenceLabelDataset
+from sentence_transformers.sentence_transformer.datasets.no_duplicates_dataloader import NoDuplicatesDataLoader
+from sentence_transformers.sentence_transformer.datasets.sentence_label import SentenceLabelDataset
 from sentence_transformers.sentence_transformer.deprecated_model_card_templates import ModelCardTemplate
 from sentence_transformers.sentence_transformer.training_args import SentenceTransformerTrainingArguments
 from sentence_transformers.util import batch_to_device, fullname, is_datasets_available
@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from sentence_transformers.sentence_transformer.model import SentenceTransformer
-    from sentence_transformers.sentence_transformer.readers.InputExample import InputExample
+    from sentence_transformers.sentence_transformer.readers.input_example import InputExample
 
 
 class SaveModelCallback(TrainerCallback):

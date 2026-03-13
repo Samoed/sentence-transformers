@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 from sklearn.metrics import average_precision_score, f1_score
 
-from sentence_transformers.base.evaluation.SentenceEvaluator import SentenceEvaluator
+from sentence_transformers.base.evaluation.sentence_evaluator import SentenceEvaluator
 from sentence_transformers.sentence_transformer.evaluation import BinaryClassificationEvaluator
 
 if TYPE_CHECKING:

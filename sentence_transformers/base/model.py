@@ -505,7 +505,6 @@ class BaseModel(nn.Sequential, PeftAdapterMixin, ABC):
             except TypeError:
                 module.save(model_path)
 
-            # "module" only works for Sentence Transformers as the modules have the same names as the classes
             class_ref = type(module).__module__
             # For remote modules, we want to remove "transformers_modules.{repo_name}":
             if class_ref.startswith("transformers_modules."):
@@ -523,8 +522,7 @@ class BaseModel(nn.Sequential, PeftAdapterMixin, ABC):
                 # For remote modules, we want to ignore the "transformers_modules.{repo_id}" part,
                 # i.e. we only want the filename
                 class_ref = f"{class_ref.split('.')[-1]}.{type(module).__name__}"
-            # For other cases, we want to add the class name:
-            elif not class_ref.startswith("sentence_transformers."):
+            else:
                 class_ref = f"{class_ref}.{type(module).__name__}"
 
             module_config = {"idx": idx, "name": name, "path": os.path.basename(model_path), "type": class_ref}

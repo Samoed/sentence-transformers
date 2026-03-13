@@ -21,7 +21,7 @@ from sentence_transformers.base.model import BaseModel
 from sentence_transformers.base.modules import Transformer
 from sentence_transformers.cross_encoder.fit_mixin import FitMixin
 from sentence_transformers.cross_encoder.model_card import CrossEncoderModelCardData
-from sentence_transformers.cross_encoder.modules.CausalScoreHead import CausalScoreHead
+from sentence_transformers.cross_encoder.modules.causal_score_head import CausalScoreHead
 from sentence_transformers.util import batch_to_device, fullname, import_from_string
 from sentence_transformers.util.decorators import (
     cross_encoder_init_args_decorator,

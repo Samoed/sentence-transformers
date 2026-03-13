@@ -8,11 +8,11 @@ See https://www.sbert.net/docs/sentence_transformer/training_overview.html for m
 
 from __future__ import annotations
 
-from .DenoisingAutoEncoderDataset import DenoisingAutoEncoderDataset
-from .NoDuplicatesDataLoader import NoDuplicatesDataLoader
-from .ParallelSentencesDataset import ParallelSentencesDataset
-from .SentenceLabelDataset import SentenceLabelDataset
-from .SentencesDataset import SentencesDataset
+from .denoising_auto_encoder import DenoisingAutoEncoderDataset
+from .no_duplicates_dataloader import NoDuplicatesDataLoader
+from .parallel_sentences import ParallelSentencesDataset
+from .sentence_label import SentenceLabelDataset
+from .sentences import SentencesDataset
 
 __all__ = [
     "DenoisingAutoEncoderDataset",

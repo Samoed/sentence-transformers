@@ -1,5 +1,5 @@
 from __future__ import annotations
 
-from .CausalScoreHead import CausalScoreHead
+from .causal_score_head import CausalScoreHead
 
 __all__ = ["CausalScoreHead"]

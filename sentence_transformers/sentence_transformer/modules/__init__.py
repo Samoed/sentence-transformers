@@ -1,22 +1,22 @@
 from __future__ import annotations
 
-from ...base.modules.InputModule import InputModule
-from ...base.modules.Module import Module
-from ...base.modules.Router import Asym, Router
-from ...base.modules.Transformer import Transformer
-from .BoW import BoW
-from .CLIPModel import CLIPModel
-from .CNN import CNN
-from .Dense import Dense
-from .Dropout import Dropout
-from .LayerNorm import LayerNorm
-from .LSTM import LSTM
-from .Normalize import Normalize
-from .Pooling import Pooling
-from .StaticEmbedding import StaticEmbedding
-from .WeightedLayerPooling import WeightedLayerPooling
-from .WordEmbeddings import WordEmbeddings
-from .WordWeights import WordWeights
+from ...base.modules.input_module import InputModule
+from ...base.modules.module import Module
+from ...base.modules.router import Asym, Router
+from ...base.modules.transformer import Transformer
+from .bow import BoW
+from .clip_model import CLIPModel
+from .cnn import CNN
+from .dense import Dense
+from .dropout import Dropout
+from .layer_norm import LayerNorm
+from .lstm import LSTM
+from .normalize import Normalize
+from .pooling import Pooling
+from .static_embedding import StaticEmbedding
+from .weighted_layer_pooling import WeightedLayerPooling
+from .word_embeddings import WordEmbeddings
+from .word_weights import WordWeights
 
 __all__ = [
     "Transformer",

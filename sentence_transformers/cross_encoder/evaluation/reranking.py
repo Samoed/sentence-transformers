@@ -9,7 +9,7 @@ import numpy as np
 from sklearn.metrics import average_precision_score, ndcg_score
 from tqdm import tqdm
 
-from sentence_transformers.base.evaluation.SentenceEvaluator import SentenceEvaluator
+from sentence_transformers.base.evaluation.sentence_evaluator import SentenceEvaluator
 
 if TYPE_CHECKING:
     from sentence_transformers.cross_encoder.model import CrossEncoder

@@ -97,7 +97,7 @@ This allows our network to be fine-tuned to recognize the similarity of sentence
 ## GlobalOrthogonalRegularizationLoss
 
 ```{eval-rst}
-.. autoclass:: sentence_transformers.losses.GlobalOrthogonalRegularizationLoss
+.. autoclass:: sentence_transformers.sentence_transformer.losses.GlobalOrthogonalRegularizationLoss
 ```
 
 ## MSELoss

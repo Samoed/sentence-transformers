@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from .PhraseTokenizer import PhraseTokenizer
-from .WhitespaceTokenizer import WhitespaceTokenizer
-from .WordTokenizer import ENGLISH_STOP_WORDS, TransformersTokenizerWrapper, WordTokenizer
+from .phrase import PhraseTokenizer
+from .whitespace import WhitespaceTokenizer
+from .word import ENGLISH_STOP_WORDS, TransformersTokenizerWrapper, WordTokenizer
 
 __all__ = [
     "WordTokenizer",

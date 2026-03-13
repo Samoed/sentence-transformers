@@ -13,7 +13,7 @@ from tokenizers.normalizers import NFC, Lowercase, Sequence
 from transformers import AutoModel, AutoProcessor
 from transformers import __version__ as transformers_version
 
-from sentence_transformers.base.modules.Transformer import TRANSFORMER_TASK_DEFAULTS, set_temporary_class_attrs
+from sentence_transformers.base.modules.transformer import TRANSFORMER_TASK_DEFAULTS, set_temporary_class_attrs
 from sentence_transformers.modules import Transformer
 from sentence_transformers.util import batch_to_device
 

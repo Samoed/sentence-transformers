@@ -9,7 +9,7 @@ from sentence_transformers.cross_encoder.evaluation import CrossEncoderReranking
 from sentence_transformers.modules import SpladePooling, Transformer
 from sentence_transformers.sentence_transformer.evaluation import InformationRetrievalEvaluator
 from sentence_transformers.sparse_encoder.evaluation import SparseInformationRetrievalEvaluator
-from sentence_transformers.sparse_encoder.evaluation.ReciprocalRankFusionEvaluator import ReciprocalRankFusionEvaluator
+from sentence_transformers.sparse_encoder.evaluation.reciprocal_rank_fusion import ReciprocalRankFusionEvaluator
 
 # Configure logging
 logging.basicConfig(format="%(message)s", level=logging.INFO)

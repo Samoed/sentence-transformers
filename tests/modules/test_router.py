@@ -13,7 +13,7 @@ from torch import nn
 
 from sentence_transformers import SentenceTransformer, SentenceTransformerTrainer, SentenceTransformerTrainingArguments
 from sentence_transformers.base.modality_types import Modality
-from sentence_transformers.base.modules.InputModule import InputModule
+from sentence_transformers.base.modules.input_module import InputModule
 from sentence_transformers.models import Asym  # Softly deprecated import
 from sentence_transformers.modules import Dense, Normalize, Router, StaticEmbedding
 from sentence_transformers.sentence_transformer.losses import MultipleNegativesRankingLoss

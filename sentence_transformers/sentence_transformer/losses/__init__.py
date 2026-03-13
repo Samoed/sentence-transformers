@@ -1,38 +1,38 @@
 # CoSENTLoss must be imported before AnglELoss
 from __future__ import annotations
 
-from .CoSENTLoss import CoSENTLoss  # isort: skip
+from .cosent import CoSENTLoss  # isort: skip
 
-from .AdaptiveLayerLoss import AdaptiveLayerLoss
-from .AnglELoss import AnglELoss
-from .BatchAllTripletLoss import BatchAllTripletLoss
-from .BatchHardSoftMarginTripletLoss import BatchHardSoftMarginTripletLoss
-from .BatchHardTripletLoss import BatchHardTripletLoss, BatchHardTripletLossDistanceFunction
-from .BatchSemiHardTripletLoss import BatchSemiHardTripletLoss
-from .CachedGISTEmbedLoss import CachedGISTEmbedLoss
-from .CachedMultipleNegativesRankingLoss import CachedMultipleNegativesRankingLoss
-from .CachedMultipleNegativesSymmetricRankingLoss import CachedMultipleNegativesSymmetricRankingLoss
-from .ContrastiveLoss import ContrastiveLoss, SiameseDistanceMetric
-from .ContrastiveTensionLoss import (
+from .adaptive_layer import AdaptiveLayerLoss
+from .angle import AnglELoss
+from .batch_all_triplet import BatchAllTripletLoss
+from .batch_hard_soft_margin_triplet import BatchHardSoftMarginTripletLoss
+from .batch_hard_triplet import BatchHardTripletLoss, BatchHardTripletLossDistanceFunction
+from .batch_semi_hard_triplet import BatchSemiHardTripletLoss
+from .cached_gist_embed import CachedGISTEmbedLoss
+from .cached_multiple_negatives_ranking import CachedMultipleNegativesRankingLoss
+from .cached_multiple_negatives_symmetric_ranking import CachedMultipleNegativesSymmetricRankingLoss
+from .contrastive import ContrastiveLoss, SiameseDistanceMetric
+from .contrastive_tension import (
     ContrastiveTensionDataLoader,
     ContrastiveTensionLoss,
     ContrastiveTensionLossInBatchNegatives,
 )
-from .CosineSimilarityLoss import CosineSimilarityLoss
-from .DenoisingAutoEncoderLoss import DenoisingAutoEncoderLoss
-from .DistillKLDivLoss import DistillKLDivLoss
-from .GISTEmbedLoss import GISTEmbedLoss
-from .GlobalOrthogonalRegularizationLoss import GlobalOrthogonalRegularizationLoss
-from .MarginMSELoss import MarginMSELoss
-from .Matryoshka2dLoss import Matryoshka2dLoss
-from .MatryoshkaLoss import MatryoshkaLoss
-from .MegaBatchMarginLoss import MegaBatchMarginLoss
-from .MSELoss import MSELoss
-from .MultipleNegativesRankingLoss import MultipleNegativesRankingLoss
-from .MultipleNegativesSymmetricRankingLoss import MultipleNegativesSymmetricRankingLoss
-from .OnlineContrastiveLoss import OnlineContrastiveLoss
-from .SoftmaxLoss import SoftmaxLoss
-from .TripletLoss import TripletDistanceMetric, TripletLoss
+from .cosine_similarity import CosineSimilarityLoss
+from .denoising_auto_encoder import DenoisingAutoEncoderLoss
+from .distill_kl_div import DistillKLDivLoss
+from .gist_embed import GISTEmbedLoss
+from .global_orthogonal_regularization import GlobalOrthogonalRegularizationLoss
+from .margin_mse import MarginMSELoss
+from .matryoshka import MatryoshkaLoss
+from .matryoshka_2d import Matryoshka2dLoss
+from .mega_batch_margin import MegaBatchMarginLoss
+from .mse import MSELoss
+from .multiple_negatives_ranking import MultipleNegativesRankingLoss
+from .multiple_negatives_symmetric_ranking import MultipleNegativesSymmetricRankingLoss
+from .online_contrastive import OnlineContrastiveLoss
+from .softmax import SoftmaxLoss
+from .triplet import TripletDistanceMetric, TripletLoss
 
 __all__ = [
     "AdaptiveLayerLoss",

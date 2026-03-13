@@ -69,19 +69,19 @@ This contains a ``modules.json`` with these contents:
        "idx": 0,
        "name": "0",
        "path": "",
-       "type": "sentence_transformers.sentence_transformer.modules.Transformer"
+       "type": "sentence_transformers.base.modules.transformer.Transformer"
      },
      {
        "idx": 1,
        "name": "1",
        "path": "1_Pooling",
-       "type": "sentence_transformers.sentence_transformer.modules.Pooling"
+       "type": "sentence_transformers.sentence_transformer.modules.pooling.Pooling"
      },
      {
        "idx": 2,
        "name": "2",
        "path": "2_Normalize",
-       "type": "sentence_transformers.sentence_transformer.modules.Normalize"
+       "type": "sentence_transformers.sentence_transformer.modules.normalize.Normalize"
      }
    ]
 
@@ -252,7 +252,7 @@ You can save this model with :meth:`SentenceTransformer.save_pretrained <sentenc
        "idx": 0,
        "name": "0",
        "path": "",
-       "type": "sentence_transformers.sentence_transformer.modules.Transformer"
+       "type": "sentence_transformers.base.modules.transformer.Transformer"
      },
      {
        "idx": 1,
@@ -264,7 +264,7 @@ You can save this model with :meth:`SentenceTransformer.save_pretrained <sentenc
        "idx": 2,
        "name": "2",
        "path": "2_Normalize",
-       "type": "sentence_transformers.sentence_transformer.modules.Normalize"
+       "type": "sentence_transformers.sentence_transformer.modules.normalize.Normalize"
      }
    ]
 
@@ -281,7 +281,7 @@ If you have your models and custom modelling code on the Hugging Face Hub, then 
        "idx": 0,
        "name": "0",
        "path": "",
-       "type": "sentence_transformers.sentence_transformer.modules.Transformer"
+       "type": "sentence_transformers.base.modules.transformer.Transformer"
      },
      {
        "idx": 1,
@@ -293,7 +293,7 @@ If you have your models and custom modelling code on the Hugging Face Hub, then 
        "idx": 2,
        "name": "2",
        "path": "2_Normalize",
-       "type": "sentence_transformers.sentence_transformer.modules.Normalize"
+       "type": "sentence_transformers.sentence_transformer.modules.normalize.Normalize"
      }
    ]
 
@@ -314,13 +314,13 @@ If you want your users to be able to specify custom keyword arguments via the :m
        "idx": 1,
        "name": "1",
        "path": "1_Pooling",
-       "type": "sentence_transformers.sentence_transformer.modules.Pooling"
+       "type": "sentence_transformers.sentence_transformer.modules.pooling.Pooling"
      },
      {
        "idx": 2,
        "name": "2",
        "path": "2_Normalize",
-       "type": "sentence_transformers.sentence_transformer.modules.Normalize"
+       "type": "sentence_transformers.sentence_transformer.modules.normalize.Normalize"
      }
    ]
 

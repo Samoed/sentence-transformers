@@ -6,7 +6,7 @@ from datasets import load_dataset, load_from_disk
 
 from sentence_transformers.cross_encoder import CrossEncoder
 from sentence_transformers.cross_encoder.evaluation import CrossEncoderNanoBEIREvaluator
-from sentence_transformers.cross_encoder.losses.BinaryCrossEntropyLoss import BinaryCrossEntropyLoss
+from sentence_transformers.cross_encoder.losses.binary_cross_entropy import BinaryCrossEntropyLoss
 from sentence_transformers.cross_encoder.trainer import CrossEncoderTrainer
 from sentence_transformers.cross_encoder.training_args import CrossEncoderTrainingArguments
 

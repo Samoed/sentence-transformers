@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from .InputModule import InputModule
-from .Module import Module
-from .Router import Router
-from .Transformer import Transformer
+from .input_module import InputModule
+from .module import Module
+from .router import Router
+from .transformer import Transformer
 
 __all__ = [
     "InputModule",

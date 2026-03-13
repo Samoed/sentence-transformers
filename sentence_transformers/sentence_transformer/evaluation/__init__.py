@@ -1,20 +1,20 @@
 from __future__ import annotations
 
 # TODO: Is it okay to import from ... here? Or should we just require users to import from their full paths?
-from ...base.evaluation.SentenceEvaluator import SentenceEvaluator
-from ...base.evaluation.SequentialEvaluator import SequentialEvaluator
-from .BinaryClassificationEvaluator import BinaryClassificationEvaluator
-from .EmbeddingSimilarityEvaluator import EmbeddingSimilarityEvaluator
-from .InformationRetrievalEvaluator import InformationRetrievalEvaluator
-from .LabelAccuracyEvaluator import LabelAccuracyEvaluator
-from .MSEEvaluator import MSEEvaluator
-from .MSEEvaluatorFromDataFrame import MSEEvaluatorFromDataFrame
-from .NanoBEIREvaluator import NanoBEIREvaluator
-from .ParaphraseMiningEvaluator import ParaphraseMiningEvaluator
-from .RerankingEvaluator import RerankingEvaluator
-from .SimilarityFunction import SimilarityFunction
-from .TranslationEvaluator import TranslationEvaluator
-from .TripletEvaluator import TripletEvaluator
+from ...base.evaluation.sentence_evaluator import SentenceEvaluator
+from ...base.evaluation.sequential import SequentialEvaluator
+from .binary_classification import BinaryClassificationEvaluator
+from .embedding_similarity import EmbeddingSimilarityEvaluator
+from .information_retrieval import InformationRetrievalEvaluator
+from .label_accuracy import LabelAccuracyEvaluator
+from .mse import MSEEvaluator
+from .mse_from_dataframe import MSEEvaluatorFromDataFrame
+from .nano_beir import NanoBEIREvaluator
+from .paraphrase_mining import ParaphraseMiningEvaluator
+from .reranking import RerankingEvaluator
+from .similarity_function import SimilarityFunction
+from .translation import TranslationEvaluator
+from .triplet import TripletEvaluator
 
 __all__ = [
     "SentenceEvaluator",
