@@ -23,8 +23,7 @@ from sentence_transformers.sentence_transformer.evaluation import (
     ParaphraseMiningEvaluator,
     SequentialEvaluator,
 )
-from sentence_transformers.sentence_transformer.losses import OnlineContrastiveLoss
-from sentence_transformers.sentence_transformer.losses.contrastive import SiameseDistanceMetric
+from sentence_transformers.sentence_transformer.losses import OnlineContrastiveLoss, SiameseDistanceMetric
 from sentence_transformers.sentence_transformer.trainer import SentenceTransformerTrainer
 from sentence_transformers.sentence_transformer.training_args import (
     BatchSamplers,

@@ -4,7 +4,7 @@ import traceback
 from datasets import load_dataset
 
 from sentence_transformers import SentenceTransformer
-from sentence_transformers.base.evaluation.sequential import SequentialEvaluator
+from sentence_transformers.base.evaluation import SequentialEvaluator
 from sentence_transformers.cross_encoder import CrossEncoder, CrossEncoderModelCardData
 from sentence_transformers.cross_encoder.evaluation import (
     CrossEncoderNanoBEIREvaluator,

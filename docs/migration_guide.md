@@ -228,7 +228,7 @@ The :meth:`~sentence_transformers.sentence_transformer.model.SentenceTransformer
            :emphasize-lines: 8-11, 22-23
 
            from sentence_transformers import SentenceTransformer
-           from sentence_transformers.base.modules import Router, Normalize
+           from sentence_transformers.modules import Router, Normalize
 
            # Use a regular SentenceTransformer for the document embeddings,
            # and a static embedding model for the query embeddings
@@ -255,7 +255,7 @@ The :meth:`~sentence_transformers.sentence_transformer.model.SentenceTransformer
            :emphasize-lines: 8-11, 22-23
 
            from sentence_transformers import SentenceTransformer
-           from sentence_transformers.base.modules import Router, Normalize
+           from sentence_transformers.modules import Router, Normalize
 
            # Use a regular SentenceTransformer for the document embeddings,
            # and a static embedding model for the query embeddings

@@ -8,8 +8,10 @@ from sentence_transformers import CrossEncoder, SentenceTransformer, SparseEncod
 from sentence_transformers.cross_encoder.evaluation import CrossEncoderRerankingEvaluator
 from sentence_transformers.modules import SpladePooling, Transformer
 from sentence_transformers.sentence_transformer.evaluation import InformationRetrievalEvaluator
-from sentence_transformers.sparse_encoder.evaluation import SparseInformationRetrievalEvaluator
-from sentence_transformers.sparse_encoder.evaluation.reciprocal_rank_fusion import ReciprocalRankFusionEvaluator
+from sentence_transformers.sparse_encoder.evaluation import (
+    ReciprocalRankFusionEvaluator,
+    SparseInformationRetrievalEvaluator,
+)
 
 # Configure logging
 logging.basicConfig(format="%(message)s", level=logging.INFO)

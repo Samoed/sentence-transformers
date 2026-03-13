@@ -27,10 +27,10 @@ from sentence_transformers.sentence_transformer import (
     SentenceTransformerTrainingArguments,
 )
 from sentence_transformers.sentence_transformer.evaluation import InformationRetrievalEvaluator
-from sentence_transformers.sentence_transformer.losses.global_orthogonal_regularization import (
+from sentence_transformers.sentence_transformer.losses import (
     GlobalOrthogonalRegularizationLoss,
+    MultipleNegativesRankingLoss,
 )
-from sentence_transformers.sentence_transformer.losses.multiple_negatives_ranking import MultipleNegativesRankingLoss
 from sentence_transformers.sentence_transformer.training_args import BatchSamplers
 from sentence_transformers.util import cos_sim
 
