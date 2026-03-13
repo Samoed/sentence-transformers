@@ -78,15 +78,24 @@ def test_unsupported_modality(static_embedding_model: StaticEmbedding) -> None:
     dummy_image = Image.new("RGB", (10, 10))
 
     # Image-only input
-    with pytest.raises(ValueError, match="Modality 'image' is not supported by StaticEmbedding"):
+    with pytest.raises(
+        ValueError,
+        match="Modality 'image' is not supported by this SentenceTransformer model. Supported modalities: text",
+    ):
         model.encode([dummy_image])
 
     # Mixed text+image input via multimodal dict
-    with pytest.raises(ValueError, match="is not supported by StaticEmbedding"):
+    with pytest.raises(
+        ValueError,
+        match="Modality 'image\\+text' is not supported by this SentenceTransformer model. Supported modalities: text",
+    ):
         model.encode([{"text": "a cat", "image": dummy_image}])
 
     # Mixed text+image input via multimodal dict
-    with pytest.raises(ValueError, match="is not supported by StaticEmbedding"):
+    with pytest.raises(
+        ValueError,
+        match="Modality 'message' is not supported by this SentenceTransformer model. Supported modalities: text",
+    ):
         model.encode([{"text": "a cat", "image": dummy_image}, {"text": "a dog"}])
 
 

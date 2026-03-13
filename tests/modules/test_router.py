@@ -295,7 +295,7 @@ def test_router_backwards_compatibility(static_embedding_model):
         "sentence_transformers.models.Asym",
         "sentence_transformers.models.Router",
         "sentence_transformers.models",
-        "sentence_transformers.base.modules.Router",
+        "sentence_transformers.base.modules.router",
     ],
 )
 def test_asym_import(module_name: str) -> None:
