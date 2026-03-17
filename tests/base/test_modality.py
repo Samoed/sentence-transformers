@@ -174,6 +174,14 @@ class TestInferModality:
         video = {"array": np.zeros((8, 3, 224, 224)), "video_metadata": {"fps": 30}}
         assert infer_modality(video) == "video"
 
+    def test_dict_array_without_sampling_rate_raises(self):
+        with pytest.raises(ValueError, match="must also include 'sampling_rate'.*or 'video_metadata'"):
+            infer_modality({"array": np.zeros(16000)})
+
+    def test_dict_array_without_video_metadata_raises(self):
+        with pytest.raises(ValueError, match="must also include 'sampling_rate'.*or 'video_metadata'"):
+            infer_modality({"array": np.zeros((8, 3, 224, 224))})
+
     def test_multimodal_dict_returns_sorted_tuple(self):
         # Keys in insertion order: image before text — must still return sorted tuple
         sample = {"image": "cat.jpg", "text": "a photo"}
