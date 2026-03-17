@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import importlib
 import inspect
-import logging
 from collections.abc import Callable
 from contextlib import contextmanager
 from dataclasses import fields
@@ -41,6 +40,7 @@ from transformers import (
     WhisperConfig,
 )
 from transformers.utils import ModelOutput
+from transformers.utils import logging as transformers_logging
 from transformers.utils.import_utils import is_peft_available
 from transformers.utils.peft_utils import find_adapter_config_file
 
@@ -89,7 +89,7 @@ except ImportError:
         pass
 
 
-logger = logging.getLogger(__name__)
+logger = transformers_logging.get_logger(__name__)
 
 
 if TYPE_CHECKING and is_peft_available():
@@ -612,9 +612,9 @@ class Transformer(InputModule):
             from transformers.modeling_flash_attention_utils import lazy_import_flash_attention
             from transformers.utils.generic import is_flash_attention_requested
         except ImportError:
-            logger.warning(
-                "Upgrading to transformers >= 5.0.0 allows for avoiding padding during inference, "
-                "resulting in faster processing."
+            logger.warning_once(
+                "Consider upgrading to transformers >= 5.0.0 to skip padding, "
+                "which can significantly speed up processing."
             )
             return False
 
