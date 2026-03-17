@@ -576,7 +576,7 @@ class BaseModel(nn.Sequential, PeftAdapterMixin, ABC):
         # Save model-level configuration options
         config = self._get_model_config()
         with open(os.path.join(path, "config_sentence_transformers.json"), "w", encoding="utf8") as fOut:
-            json.dump(config, fOut, indent=2)
+            json.dump(config, fOut, indent=2, sort_keys=True)
 
         # Save modules
         for idx, name in enumerate(self._modules):
@@ -627,7 +627,6 @@ class BaseModel(nn.Sequential, PeftAdapterMixin, ABC):
             self._create_model_card(path, model_name, train_datasets)
 
     def _get_model_config(self) -> dict[str, Any]:
-        # TODO: Consider sorting alphabetically
         return {
             "model_type": self.model_type,
             "__version__": {
