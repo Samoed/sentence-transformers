@@ -1274,7 +1274,7 @@ model = {class_name}(
 
 # Verify that everything works as expected
 embeddings = model.encode(["The weather is lovely today.", "It's so sunny outside!", "He drove to the stadium."])
-print(type(embeddings))
+print(embeddings.shape)
 
 similarities = model.similarity(embeddings, embeddings)
 print(similarities)

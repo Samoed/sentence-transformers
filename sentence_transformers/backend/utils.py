@@ -199,15 +199,15 @@ def save_or_push_to_hub_model(
                     commit_description = f"""\
 Hello!
 
-*This pull request has been automatically generated from the [`{export_function_name}`](https://sbert.net/docs/package_reference/util.html#sentence_transformers.backend.{export_function_name}) function from the Sentence Transformers library.*
+This pull request adds an exported {backend} model (`{file_name}`).
 
 ## Config
 ```python
 {opt_config_string}
 ```
 
-## Tip:
-Consider testing this pull request before merging by loading the model from this PR with the `revision` argument:
+## Testing this pull request
+You can test this pull request before merging by loading the model from this PR with the `revision` argument:
 ```python
 from sentence_transformers import SparseEncoder
 
@@ -227,20 +227,23 @@ print(embeddings.shape)
 similarities = model.similarity(embeddings, embeddings)
 print(similarities)
 ```
+
+---
+*This PR was auto-generated with [`{export_function_name}`](https://sbert.net/docs/package_reference/util.html#sentence_transformers.backend.{export_function_name}).*
 """
                 elif model is None or isinstance(model, SentenceTransformer):
                     commit_description = f"""\
 Hello!
 
-*This pull request has been automatically generated from the [`{export_function_name}`](https://sbert.net/docs/package_reference/util.html#sentence_transformers.backend.{export_function_name}) function from the Sentence Transformers library.*
+This pull request adds an exported {backend} model (`{file_name}`).
 
 ## Config
 ```python
 {opt_config_string}
 ```
 
-## Tip:
-Consider testing this pull request before merging by loading the model from this PR with the `revision` argument:
+## Testing this pull request
+You can test this pull request before merging by loading the model from this PR with the `revision` argument:
 ```python
 from sentence_transformers import SentenceTransformer
 
@@ -260,20 +263,23 @@ print(embeddings.shape)
 similarities = model.similarity(embeddings, embeddings)
 print(similarities)
 ```
+
+---
+*This PR was auto-generated with [`{export_function_name}`](https://sbert.net/docs/package_reference/util.html#sentence_transformers.backend.{export_function_name}).*
 """
                 elif isinstance(model, CrossEncoder):
                     commit_description = f"""\
 Hello!
 
-*This pull request has been automatically generated from the [`{export_function_name}`](https://sbert.net/docs/package_reference/util.html#sentence_transformers.backend.{export_function_name}) function from the Sentence Transformers library.*
+This pull request adds an exported {backend} model (`{file_name}`).
 
 ## Config
 ```python
 {opt_config_string}
 ```
 
-## Tip:
-Consider testing this pull request before merging by loading the model from this PR with the `revision` argument:
+## Testing this pull request
+You can test this pull request before merging by loading the model from this PR with the `revision` argument:
 ```python
 from sentence_transformers import CrossEncoder
 
@@ -298,6 +304,9 @@ passages = [
 scores = model.predict([(query, passage) for passage in passages])
 print(scores)
 ```
+
+---
+*This PR was auto-generated with [`{export_function_name}`](https://sbert.net/docs/package_reference/util.html#sentence_transformers.backend.{export_function_name}).*
 """
 
             huggingface_hub.upload_folder(
