@@ -6,10 +6,17 @@ from typing import Any, cast
 
 import pytest
 import torch
+from packaging.version import parse as parse_version
+from transformers import __version__ as transformers_version
 
 from sentence_transformers import SentenceTransformer
 from sentence_transformers.modules import Pooling
 from sentence_transformers.sentence_transformer.modules.pooling import _convert_legacy_pooling_kwargs
+
+requires_transformers_v5 = pytest.mark.skipif(
+    parse_version(transformers_version) < parse_version("5.0.0"),
+    reason="Flattened inputs require transformers >= 5.0",
+)
 
 
 @pytest.mark.parametrize("padding_side", ["right", "left"])
@@ -107,7 +114,11 @@ def test_pooling_forward_all_strategies(pooling_mode: str) -> None:
 
 
 @pytest.mark.parametrize("pooling_mode", Pooling.POOLING_MODES)
-@pytest.mark.parametrize("flattened", [False, True], ids=["padded", "flattened"])
+@pytest.mark.parametrize(
+    "flattened",
+    [False, pytest.param(True, marks=requires_transformers_v5)],
+    ids=["padded", "flattened"],
+)
 def test_pooling_gradient_flow(pooling_mode: str, flattened: bool) -> None:
     """Verify that gradients flow through every pooling mode in both padded and flattened paths."""
     embedding_dimension = 8
@@ -154,6 +165,7 @@ def test_pooling_cls_uses_cls_token_embeddings() -> None:
     assert torch.allclose(sentence_embedding, cls_token_embeddings)
 
 
+@requires_transformers_v5
 def test_pooling_flattened_cls_uses_cls_token_embeddings() -> None:
     dim = 4
     pooling = Pooling(embedding_dimension=dim, pooling_mode="cls")
@@ -415,7 +427,11 @@ def _build_flattened_features(token_embeddings: torch.Tensor, attention_mask: to
 
 
 @pytest.mark.parametrize("pooling_mode", Pooling.POOLING_MODES)
-@pytest.mark.parametrize("flattened", [False, True], ids=["padded", "flattened"])
+@pytest.mark.parametrize(
+    "flattened",
+    [False, pytest.param(True, marks=requires_transformers_v5)],
+    ids=["padded", "flattened"],
+)
 def test_pooling_exact_values(pooling_mode: str, flattened: bool) -> None:
     """Verify each pooling mode produces the expected exact values."""
     pooling = Pooling(embedding_dimension=_DIM, pooling_mode=pooling_mode)
@@ -437,7 +453,11 @@ def test_pooling_exact_values(pooling_mode: str, flattened: bool) -> None:
         ("cls", "max", "mean", "mean_sqrt_len_tokens", "weightedmean", "lasttoken"),
     ],
 )
-@pytest.mark.parametrize("flattened", [False, True], ids=["padded", "flattened"])
+@pytest.mark.parametrize(
+    "flattened",
+    [False, pytest.param(True, marks=requires_transformers_v5)],
+    ids=["padded", "flattened"],
+)
 def test_pooling_multi_mode(modes: tuple[str, ...], flattened: bool) -> None:
     """Verify multiple pooling modes are concatenated in the correct order."""
     pooling = Pooling(embedding_dimension=_DIM, pooling_mode=modes)
@@ -455,7 +475,11 @@ def test_pooling_multi_mode(modes: tuple[str, ...], flattened: bool) -> None:
     "pooling_mode",
     ["max", "mean", "mean_sqrt_len_tokens", "weightedmean", "lasttoken"],
 )
-@pytest.mark.parametrize("flattened", [False, True], ids=["padded", "flattened"])
+@pytest.mark.parametrize(
+    "flattened",
+    [False, pytest.param(True, marks=requires_transformers_v5)],
+    ids=["padded", "flattened"],
+)
 def test_pooling_excludes_prompt_tokens_for_padded_and_flattened_inputs(pooling_mode: str, flattened: bool) -> None:
     pooling = Pooling(embedding_dimension=_DIM, pooling_mode=pooling_mode, include_prompt=False)
 
@@ -474,9 +498,6 @@ def test_pooling_excludes_prompt_tokens_for_padded_and_flattened_inputs(pooling_
 
     assert output.shape == expected.shape
     assert torch.allclose(output, expected, atol=1e-5)
-
-
-# Legacy kwargs / config compatibility
 
 
 def test_pooling_legacy_bool_kwargs_with_deprecation_warning() -> None:
@@ -551,6 +572,7 @@ def test_pooling_invalid_mode_raises() -> None:
         Pooling(embedding_dimension=8, pooling_mode="nonexistent")
 
 
+@requires_transformers_v5
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 @pytest.mark.parametrize("pooling_mode", Pooling.POOLING_MODES)
 def test_pooling_flattened_live_flash_attention(pooling_mode: str) -> None:
