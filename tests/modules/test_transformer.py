@@ -1020,6 +1020,41 @@ class TestCanFlattenInputs:
         assert transformer.use_flattened_inputs is True
         assert transformer.data_collator is not None
 
+    def test_unpad_inputs_false_forces_padding(self):
+        """Setting unpad_inputs=False should disable flattening regardless of prerequisites."""
+        transformer = Transformer(TINY_BERT, unpad_inputs=False)
+        assert transformer.unpad_inputs is False
+        assert transformer.use_flattened_inputs is False
+
+    def test_unpad_inputs_true_warns_when_prerequisites_not_met(self, caplog):
+        """Setting unpad_inputs=True should warn if prerequisites are not met."""
+        with caplog.at_level(logging.WARNING):
+            transformer = Transformer(TINY_BERT, unpad_inputs=True)
+        assert transformer.use_flattened_inputs is False
+        assert "unpad_inputs=True was set" in caplog.text
+
+    def test_unpad_inputs_none_auto_detects(self):
+        """Setting unpad_inputs=None (default) should auto-detect."""
+        transformer = Transformer(TINY_BERT)
+        assert transformer.unpad_inputs is None
+        # Without flash attention, auto-detect should disable flattening
+        assert transformer.use_flattened_inputs is False
+
+    def test_unpad_inputs_setter_re_evaluates(self):
+        """Setting unpad_inputs after init should re-evaluate use_flattened_inputs."""
+        transformer = Transformer(TINY_BERT)
+        assert transformer.use_flattened_inputs is False
+
+        # Setting to False explicitly should keep it disabled
+        transformer.unpad_inputs = False
+        assert transformer.unpad_inputs is False
+        assert transformer.use_flattened_inputs is False
+
+        # Setting back to None should re-evaluate (still False without flash attention)
+        transformer.unpad_inputs = None
+        assert transformer.unpad_inputs is None
+        assert transformer.use_flattened_inputs is False
+
 
 @pytest.mark.skipif(
     Version(transformers_version) >= Version("5.0.0"),

@@ -526,7 +526,6 @@ class Transformer(InputModule):
         self.processing_kwargs: dict[str, dict[str, Any]] = processing_kwargs or {}
         self.backend = backend
         self.message_format = message_format
-        self.unpad_inputs = unpad_inputs
         self.do_lower_case = do_lower_case
         self._prompt_length_mapping = {}
         self._method_signature_cache: dict[str, set[str]] = {}
@@ -632,12 +631,29 @@ class Transformer(InputModule):
             )
             self.model.config.tokenizer_class = self.processor.__class__.__name__
 
-        # Check if we can flatten (concatenate) inputs to avoid padding, which heavily speeds up inference.
-        if unpad_inputs is False:
+        # Evaluate whether we can skip padding — driven by the unpad_inputs property.
+        self.unpad_inputs = unpad_inputs
+
+    @property
+    def unpad_inputs(self) -> bool | None:
+        """Whether inputs are concatenated without padding for faster inference.
+
+        ``None`` auto-detects, ``False`` forces padding, ``True`` requests unpadding.
+        Re-evaluates on every assignment, so it can be changed after loading::
+
+            model = SentenceTransformer("my-model", model_kwargs={"attn_implementation": "flash_attention_2"})
+            model[0].unpad_inputs = False  # Force padding for models that need it
+        """
+        return self._unpad_inputs
+
+    @unpad_inputs.setter
+    def unpad_inputs(self, value: bool | None) -> None:
+        self._unpad_inputs = value
+        if value is False:
             self.use_flattened_inputs = False
         else:
             self.use_flattened_inputs = self._can_flatten_inputs()
-            if unpad_inputs is True and not self.use_flattened_inputs:
+            if value is True and not self.use_flattened_inputs:
                 logger.warning(
                     "unpad_inputs=True was set, but the prerequisites for skipping padding are not met. "
                     "Falling back to padded inputs."
