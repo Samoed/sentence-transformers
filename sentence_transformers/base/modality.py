@@ -212,6 +212,8 @@ class InputFormatter:
 
         for item in inputs:
             # Detect non-text pairs before calling infer_modality (which would raise for them)
+            # For text pairs we're fine letting them be classified as "text" modality and handled by tokenizers,
+            # but non-text pairs require special handling to convert to messages with query/document roles.
             if _is_non_text_pair(item):
                 typed_inputs.append(("pair", item))
                 has_pairs = True
@@ -237,11 +239,15 @@ class InputFormatter:
 
             typed_inputs.append((modality, value))
 
-        # Non-text pairs require conversion to message format
+        # Non-text pairs require conversion to message format. When the batch contains any
+        # non-text pairs, ALL items must be converted to messages for consistency. Text pairs
+        # (str, str) must also go through pair_to_messages so they get query/document roles.
         if has_pairs:
             messages = []
             for mod, value in typed_inputs:
                 if mod == "pair":
+                    messages.append(self.pair_to_messages(value))
+                elif mod == "text" and isinstance(value, (tuple, list)) and len(value) == 2:
                     messages.append(self.pair_to_messages(value))
                 else:
                     typed = value if isinstance(mod, tuple) else {mod: value}
@@ -292,9 +298,17 @@ class InputFormatter:
                 {"role": "query", "content": query_item},
                 {"role": "document", "content": doc_item},
             ]
+
+        def _to_content(modality, item):
+            # Expand compound modalities (e.g. ("image", "text")) into separate content items,
+            # matching the behavior of to_message() for multi-modal inputs.
+            if isinstance(modality, tuple) and isinstance(item, dict):
+                return [{"type": mod, mod: item[mod]} for mod in modality if mod in item]
+            return [{"type": modality, modality: item}]
+
         return [
-            {"role": "query", "content": [{"type": query_modality, query_modality: query_item}]},
-            {"role": "document", "content": [{"type": doc_modality, doc_modality: doc_item}]},
+            {"role": "query", "content": _to_content(query_modality, query_item)},
+            {"role": "document", "content": _to_content(doc_modality, doc_item)},
         ]
 
     def to_message(self, typed_input: dict[Modality, Any], role: str = "user") -> list[dict[str, Any]]:

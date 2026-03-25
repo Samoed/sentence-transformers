@@ -791,6 +791,25 @@ class TestPairToMessages:
         assert result[1]["content"][0]["type"] == "text"
         assert result[1]["content"][0]["text"] == "document text"
 
+    def test_compound_modality_expanded(self):
+        """A dict with multiple modalities (e.g. text+image) should be expanded into
+        separate content items, not wrapped as a single compound-typed item."""
+        fmt = InputFormatter(model_type="test", message_format="structured")
+        doc = {"image": "https://example.com/photo.jpg", "text": "a photo"}
+        result = fmt.pair_to_messages(("query text", doc))
+        assert len(result) == 2
+        assert result[0]["role"] == "query"
+        assert result[1]["role"] == "document"
+
+        # Document should have two separate content items, not one compound item
+        doc_content = result[1]["content"]
+        assert len(doc_content) == 2
+        content_types = {item["type"] for item in doc_content}
+        assert content_types == {"image", "text"}
+        # Each item should have its modality as the key (not a tuple key)
+        for item in doc_content:
+            assert isinstance(item["type"], str)
+
 
 class TestParseInputsPairs:
     def test_text_pairs_stay_as_text(self):
@@ -837,3 +856,30 @@ class TestParseInputsPairs:
         messages = inputs["message"][0]
         assert messages[0]["content"][0]["type"] == "audio"
         assert messages[1]["content"][0]["type"] == "text"
+
+    def test_mixed_text_and_non_text_pairs_all_get_query_document_roles(self):
+        """When a batch mixes text pairs and non-text pairs, text pairs must also
+        go through pair_to_messages so they get query/document roles, not user role."""
+        fmt = InputFormatter(model_type="test", message_format="structured")
+        img = Image.new("RGB", (32, 32))
+        inputs = [
+            ("query text", "document text"),  # text pair
+            (img, "caption"),  # non-text pair
+        ]
+        modality, result, _ = fmt.parse_inputs(inputs)
+        assert modality == "message"
+        assert len(result["message"]) == 2
+
+        # Text pair must have query/document roles (not a single "user" message)
+        text_pair_msgs = result["message"][0]
+        assert len(text_pair_msgs) == 2
+        assert text_pair_msgs[0]["role"] == "query"
+        assert text_pair_msgs[1]["role"] == "document"
+        assert text_pair_msgs[0]["content"][0]["text"] == "query text"
+        assert text_pair_msgs[1]["content"][0]["text"] == "document text"
+
+        # Non-text pair should also have query/document roles
+        img_pair_msgs = result["message"][1]
+        assert len(img_pair_msgs) == 2
+        assert img_pair_msgs[0]["role"] == "query"
+        assert img_pair_msgs[1]["role"] == "document"
