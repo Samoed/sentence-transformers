@@ -307,11 +307,11 @@ class TestModalityToProcessorArg:
 
 class TestInferModalityPilUnavailable:
     def test_pil_unavailable_text_still_works(self, monkeypatch):
-        monkeypatch.setattr("sentence_transformers.base.modality.Image", None)
+        monkeypatch.setattr("sentence_transformers.base.modality.PILImage", None)
         assert infer_modality("hello world") == "text"
 
     def test_pil_unavailable_image_url_still_works(self, monkeypatch):
-        monkeypatch.setattr("sentence_transformers.base.modality.Image", None)
+        monkeypatch.setattr("sentence_transformers.base.modality.PILImage", None)
         assert infer_modality("https://example.com/photo.jpg") == "image"
 
 
