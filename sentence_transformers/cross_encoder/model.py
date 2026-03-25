@@ -803,6 +803,7 @@ class CrossEncoder(BaseModel, FitMixin):
 
         results = []
         for i, score in enumerate(scores):
+            # TODO v6: convert score to float(score) for cleaner output
             results.append({"corpus_id": i, "score": score})
             if return_documents:
                 results[-1].update({"text": documents[i]})
