@@ -14,22 +14,23 @@ from sentence_transformers.util import fullname, import_from_string
 
 
 class Dense(Module):
-    """
-    Feed-forward function with activation function.
+    """Applies a linear transformation with an optional activation function.
 
-    This layer takes a fixed-sized sentence embedding and passes it through a feed-forward layer. Can be used to generate deep averaging networks (DAN).
+    Passes the embedding through a feed-forward layer (``nn.Linear`` + activation), useful for
+    dimensionality reduction or projecting embeddings into a different space.
 
     Args:
-        in_features: Size of the input dimension
-        out_features: Output size
-        bias: Add a bias vector
-        activation_function: Pytorch activation function applied on output
-        init_weight: Initial value for the matrix of the linear layer
-        init_bias: Initial value for the bias of the linear layer
-        module_input_name: The key in the features dictionary to apply the dense layer to.
-            Defaults to "sentence_embedding". Can be set to "token_embeddings" or any other key.
-        module_output_name: The key in the features dictionary to store the output.
-            If None, uses the same key as module_input_name. Defaults to None.
+        in_features: Size of the input dimension.
+        out_features: Size of the output dimension.
+        bias: Whether to include a bias vector in the linear layer.
+        activation_function: Activation function applied after the linear layer.
+            If ``None``, uses ``nn.Identity()``. Defaults to ``nn.Tanh()``.
+        init_weight: Initial value for the weight matrix of the linear layer.
+        init_bias: Initial value for the bias vector of the linear layer.
+        module_input_name: The key in the features dictionary to read the input from.
+            Defaults to ``"sentence_embedding"``.
+        module_output_name: The key in the features dictionary to store the output in.
+            If ``None``, uses the same key as ``module_input_name``.
     """
 
     config_keys: list[str] = [
@@ -77,21 +78,13 @@ class Dense(Module):
         return self.out_features
 
     def get_config_dict(self):
-        return {
-            "in_features": self.in_features,
-            "out_features": self.out_features,
-            "bias": self.bias,
-            "activation_function": fullname(self.activation_function),
-            "module_input_name": self.module_input_name,
-            "module_output_name": self.module_output_name,
-        }
+        config = super().get_config_dict()
+        config["activation_function"] = fullname(self.activation_function)
+        return config
 
     def save(self, output_path: str, *args, safe_serialization: bool = True, **kwargs) -> None:
         self.save_config(output_path)
         self.save_torch_weights(output_path, safe_serialization=safe_serialization)
-
-    def __repr__(self):
-        return f"Dense({self.get_config_dict()})"
 
     @classmethod
     def load(
