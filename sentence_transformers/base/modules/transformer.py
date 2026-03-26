@@ -390,6 +390,22 @@ def set_temporary_class_attrs(cls, **overrides):
             setattr(cls, name, value)
 
 
+class ProcessingKwargs(TypedDict, total=False):
+    """Keyword arguments applied when *calling* the processor during preprocessing.
+
+    Valid keys: ``"common"``, ``"text"``, ``"audio"``, ``"image"``, ``"video"``, ``"chat_template"``.
+    Modality and ``"common"`` kwargs override built-in defaults. ``"chat_template"`` kwargs are
+    forwarded to ``apply_chat_template``.
+    """
+
+    common: dict[str, Any]
+    text: dict[str, Any]
+    audio: dict[str, Any]
+    image: dict[str, Any]
+    video: dict[str, Any]
+    chat_template: dict[str, Any]
+
+
 class Transformer(InputModule):
     """Hugging Face AutoModel wrapper that handles loading, preprocessing, and inference.
 
@@ -496,7 +512,7 @@ class Transformer(InputModule):
         model_kwargs: dict[str, Any] | None = None,
         processor_kwargs: dict[str, Any] | None = None,
         config_kwargs: dict[str, Any] | None = None,
-        processing_kwargs: dict[str, dict[str, Any]] | None = None,  # TODO: Warn if unused kwargs provided
+        processing_kwargs: ProcessingKwargs | None = None,
         backend: Literal["torch", "onnx", "openvino"] = "torch",
         modality_config: ModalityConfig | None = None,
         module_output_name: str | None = None,
@@ -523,7 +539,16 @@ class Transformer(InputModule):
             processor_kwargs = {}
         if config_kwargs is None:
             config_kwargs = {}
-        self.processing_kwargs: dict[str, dict[str, Any]] = processing_kwargs or {}
+        self.processing_kwargs: ProcessingKwargs = processing_kwargs or {}
+        valid_keys = {"common", "text", "audio", "image", "video", "chat_template"}
+        unknown_keys = set(self.processing_kwargs) - valid_keys
+        if unknown_keys:
+            logger.warning(
+                f"Unknown keys in `processing_kwargs`: {unknown_keys}. "
+                f"Valid keys are: {sorted(valid_keys)}. "
+                "Unknown keys will be ignored. Did you mean to nest them under "
+                "'common' or a modality key ('text', 'audio', 'image', 'video')?"
+            )
         self.backend = backend
         self.message_format = message_format
         self.do_lower_case = do_lower_case
@@ -808,8 +833,8 @@ class Transformer(InputModule):
         if "common" in self.processing_kwargs:
             common_kwargs.update(self.processing_kwargs["common"])
         for modality_key in modality_kwargs:
-            if modality_key in self.processing_kwargs:
-                modality_kwargs[modality_key].update(self.processing_kwargs[modality_key])
+            if overrides := self.processing_kwargs.get(modality_key):  # type: ignore[arg-type]
+                modality_kwargs[modality_key].update(overrides)
 
         # Flatten inputs to avoid padding overhead when using flash attention variable-length functions.
         if self.use_flattened_inputs:

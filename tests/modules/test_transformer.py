@@ -192,6 +192,20 @@ class TestTransformerInit:
         transformer = Transformer(TINY_BERT, processing_kwargs=kwargs)
         assert transformer.processing_kwargs == kwargs
 
+    def test_processing_kwargs_unknown_keys_warning(self, caplog):
+        """Unknown top-level keys in processing_kwargs should emit a warning."""
+        with caplog.at_level(logging.WARNING):
+            Transformer(TINY_BERT, processing_kwargs={"padding_side": {"value": "left"}, "text": {"truncation": True}})
+        assert any("Unknown keys" in record.message and "padding_side" in record.message for record in caplog.records)
+
+    def test_processing_kwargs_valid_keys_no_warning(self, caplog):
+        """Valid processing_kwargs keys should not emit a warning."""
+        with caplog.at_level(logging.WARNING):
+            Transformer(
+                TINY_BERT, processing_kwargs={"common": {"return_tensors": "pt"}, "text": {"truncation": True}}
+            )
+        assert not any("Unknown keys" in record.message for record in caplog.records)
+
     def test_tokenizer_name_or_path_warning(self, caplog):
         """tokenizer_name_or_path should emit a deprecation warning."""
         with caplog.at_level(logging.WARNING):
