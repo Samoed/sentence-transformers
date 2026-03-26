@@ -106,7 +106,7 @@ class CrossEncoderRerankingEvaluator(BaseEvaluator):
         self,
         samples: list[dict[str, str | list[str]]],
         at_k: int = 10,
-        always_rerank_positives: bool = True,  # TODO: This is also confusing, perhaps setting=""
+        always_rerank_positives: bool = True,
         name: str = "",
         prompt_name: str | None = None,
         batch_size: int = 64,
