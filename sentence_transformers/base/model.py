@@ -1091,11 +1091,6 @@ This pull request has been automatically generated to add {self.__class__.__name
                 # Old custom modules (e.g. jinaai/jina-embeddings-v3) use model_args/config_args;
                 # new-style modules use model_kwargs/config_kwargs.
                 init_params = set(signature.parameters)
-                _NEW_TO_OLD = {
-                    "model_kwargs": "model_args",
-                    "processor_kwargs": "tokenizer_args",
-                    "config_kwargs": "config_args",
-                }
                 uses_old_names = {"model_args", "config_args"} <= init_params
                 uses_new_names = {"model_kwargs", "config_kwargs"} <= init_params
                 if uses_new_names or uses_old_names:
@@ -1116,10 +1111,21 @@ This pull request has been automatically generated to add {self.__class__.__name
                     )
 
                     # Remap new-style keys back to old-style for old custom modules.
+                    new_to_old_name_mapping = {
+                        "model_kwargs": "model_args",
+                        "processor_kwargs": "tokenizer_args",
+                        "config_kwargs": "config_args",
+                    }
                     if uses_old_names and not uses_new_names:
-                        for new_name, old_name in _NEW_TO_OLD.items():
+                        for new_name, old_name in new_to_old_name_mapping.items():
                             if new_name in init_kwargs:
                                 init_kwargs[old_name] = init_kwargs.pop(new_name)
+
+                    # Some new config value (defaults) might not be supported by old modules, so we can drop them
+                    optional_params = {"modality_config", "module_output_name"}
+                    for new_name in optional_params:
+                        if new_name in init_kwargs and new_name not in init_params:
+                            init_kwargs.pop(new_name)
 
                     module = module_class(model_name_or_path, **init_kwargs)
 
