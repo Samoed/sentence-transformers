@@ -162,7 +162,7 @@ But if instead you want to train from another checkpoint, or from scratch, then 
 
         model = SentenceTransformer("Qwen/Qwen3-VL-2B")
 
-    In both cases, the ``Transformer`` module inspects the processor to determine which modalities are available, and ``Pooling`` is added automatically if needed. You can verify the supported modalities::
+    In both cases, the :class:`~sentence_transformers.base.modules.Transformer` module inspects the processor to determine which modalities are available, and :class:`~sentence_transformers.sentence_transformer.modules.Pooling` is added automatically if needed. You can verify the supported modalities::
 
         print(model.modalities)
         # ['text', 'image', 'video', 'message']

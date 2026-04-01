@@ -127,8 +127,6 @@ The two elements in a pair can have different modalities (e.g. a text query with
    -2.4375 (document 1)
    """
 
-.. TODO: Identify more places with e.g. ``Transformer`` where we should link to its docs directly.
-
 In this example, the multimodal CrossEncoder uses the same modular architecture as a text-only CausalLM CrossEncoder (:class:`~sentence_transformers.base.modules.Transformer` + :class:`~sentence_transformers.cross_encoder.modules.LogitScore`), but the :class:`~sentence_transformers.base.modules.Transformer` module is backed by a vision-language model that can process both images and text through its chat template.
 
 .. toctree::

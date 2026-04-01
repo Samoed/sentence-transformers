@@ -53,10 +53,10 @@ For generative rerankers (e.g. Qwen, Llama), the modules are generally:
 * :class:`~sentence_transformers.cross_encoder.modules.LogitScore`: Extracts the logits at the last token position and computes a score. If both ``true_token_id`` and ``false_token_id`` are set, the score is the log-odds: ``logit[true] - logit[false]``. If only ``true_token_id`` is set, the score is simply the logit for that token.
 
 This is determined automatically in :meth:`CrossEncoder._load_default_modules() <sentence_transformers.cross_encoder.model.CrossEncoder._load_default_modules>`:
-when the model architecture ends with ``ForCausalLM``, the ``Transformer`` is loaded with ``transformer_task="text-generation"``
+when the model architecture ends with ``ForCausalLM``, the :class:`~sentence_transformers.base.modules.Transformer` is loaded with ``transformer_task="text-generation"``
 and a :class:`~sentence_transformers.cross_encoder.modules.LogitScore` module is appended with ``true_token_id`` and
 ``false_token_id`` based on the ``"yes"`` and ``"no"`` tokens, respectively. Otherwise, the
-``Transformer`` is loaded with ``transformer_task="sequence-classification"`` (the traditional encoder-based approach).
+:class:`~sentence_transformers.base.modules.Transformer` is loaded with ``transformer_task="sequence-classification"`` (the traditional encoder-based approach).
 
 **Feature Extraction + Pooling + Dense**
 
