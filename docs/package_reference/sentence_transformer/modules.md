@@ -24,9 +24,3 @@ See also the modules from `sentence_transformers.base.modules` in [Base > Module
 .. autoclass:: sentence_transformers.sentence_transformer.modules.WordWeights
 ```
 
-## Legacy Modules
-<!-- TODO: CLIP is under "Legacy Modules" while MLMTransformer is just removed, let's pick one -->
-
-```{eval-rst}
-.. autoclass:: sentence_transformers.sentence_transformer.modules.CLIPModel
-```

@@ -13,10 +13,20 @@ logger = logging.getLogger(__name__)
 
 
 class MLMTransformer(Transformer):
+    """Legacy module kept only for backward compatibility with older saved models.
+
+    New SPLADE models should use :class:`~sentence_transformers.base.modules.Transformer` with
+    ``transformer_task="fill-mask"`` instead.
+
+    .. deprecated:: 5.4
+        Use :class:`~sentence_transformers.base.modules.Transformer` with ``transformer_task="fill-mask"`` instead.
+    """
+
     def __init__(self, *args: Any, _from_auto_load: bool = False, **kwargs: Any) -> None:
         if not _from_auto_load:
             logger.warning(
-                'MLMTransformer is deprecated. Please use Transformer with `transformer_task="fill-mask"` instead.'
+                "The MLMTransformer module is deprecated. Please use the Transformer module with "
+                '`transformer_task="fill-mask"` instead.'
             )
         transformer_task = kwargs.pop("transformer_task", "fill-mask")
         super().__init__(*args, transformer_task=transformer_task, **kwargs)
