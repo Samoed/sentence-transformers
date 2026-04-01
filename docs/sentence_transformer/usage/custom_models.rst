@@ -1,8 +1,6 @@
 Creating Custom Models
 =======================
 
-.. TODO: Let's run the docs snippets and verify that they work as expected
-
 Modular Architecture
 --------------------
 
@@ -58,10 +56,8 @@ As a result, if I call :meth:`SentenceTransformer.save_pretrained("local-all-Min
    ├── model.safetensors
    ├── modules.json
    ├── sentence_bert_config.json
-   ├── special_tokens_map.json
    ├── tokenizer.json
-   ├── tokenizer_config.json
-   └── vocab.txt
+   └── tokenizer_config.json
 
 This contains a ``modules.json`` with these contents:
 
@@ -94,14 +90,17 @@ And a ``config_sentence_transformers.json`` with these contents:
 
    {
      "__version__": {
-       "sentence_transformers": "5.0.0",
-       "transformers": "4.52.0",
+       "sentence_transformers": "5.4.0",
+       "transformers": "5.5.0",
        "pytorch": "2.10.0"
      },
      "model_type": "SentenceTransformer",
-     "prompts": {},
+     "prompts": {
+       "document": "",
+       "query": ""
+     },
      "default_prompt_name": null,
-     "similarity_fn_name": null
+     "similarity_fn_name": "cosine"
    }
 
 Additionally, the ``1_Pooling`` directory contains the configuration file for the :class:`~sentence_transformers.sentence_transformer.modules.Pooling` module, while the ``2_Normalize`` directory is empty because the :class:`~sentence_transformers.sentence_transformer.modules.Normalize` module does not require any configuration. The ``sentence_bert_config.json`` file contains the configuration of the :class:`~sentence_transformers.base.modules.Transformer` module:
@@ -313,7 +312,7 @@ This can now be used as a module in a Sentence Transformer model::
    SentenceTransformer(
        (0): Transformer({'transformer_task': 'feature-extraction', 'modality_config': {'text': {'method': 'forward', 'method_output_name': 'last_hidden_state'}}, 'module_output_name': 'token_embeddings', 'architecture': 'BertModel'})
        (1): DecayMeanPooling({'dimension': 768, 'decay': 0.99})
-       (2): Normalize()
+       (2): Normalize({})
    )
    """
 

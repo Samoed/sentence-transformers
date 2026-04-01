@@ -135,12 +135,13 @@ For example, saving a CausalLM-based :class:`~sentence_transformers.cross_encode
    ├── 1_LogitScore
    │   └── config.json
    ├── README.md
+   ├── chat_template.jinja
    ├── config.json
    ├── config_sentence_transformers.json
+   ├── generation_config.json
    ├── model.safetensors
    ├── modules.json
    ├── sentence_bert_config.json
-   ├── special_tokens_map.json
    ├── tokenizer.json
    └── tokenizer_config.json
 
@@ -169,14 +170,16 @@ The ``config_sentence_transformers.json`` contains model-level configuration:
 
    {
      "__version__": {
-       "sentence_transformers": "5.0.0",
-       "transformers": "4.52.0",
+       "sentence_transformers": "5.4.0",
+       "transformers": "5.5.0",
        "pytorch": "2.10.0"
      },
-     "activation_fn": "torch.nn.modules.activation.Sigmoid",
-     "default_prompt_name": null,
+     "activation_fn": "torch.nn.modules.linear.Identity",
+     "default_prompt_name": "query",
      "model_type": "CrossEncoder",
-     "prompts": {}
+     "prompts": {
+       "query": "Given a web search query, retrieve relevant passages that answer the query"
+     }
    }
 
 And the ``1_LogitScore/config.json`` stores the LogitScore module's configuration:
@@ -236,7 +239,7 @@ The :class:`~sentence_transformers.base.modules.Transformer` module handles mult
    print(model)
    """
    CrossEncoder(
-     (0): Transformer({'transformer_task': 'any-to-any', 'modality_config': {'text': ..., 'image': ..., 'video': ..., 'message': {..., 'format': 'structured'}}, 'module_output_name': 'causal_logits', 'architecture': 'Qwen3VLForConditionalGeneration'})
+     (0): Transformer({'transformer_task': 'any-to-any', 'modality_config': {'text': ..., 'image': ..., 'video': ..., 'message': {..., 'format': 'structured'}}, 'module_output_name': 'causal_logits', 'processing_kwargs': {...}, 'unpad_inputs': False, 'architecture': 'Qwen3VLForConditionalGeneration'})
      (1): LogitScore({'true_token_id': 9693, 'false_token_id': 2152, 'module_input_name': 'causal_logits'})
    )
    """
