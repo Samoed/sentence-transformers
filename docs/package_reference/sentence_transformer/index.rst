@@ -4,7 +4,7 @@ Sentence Transformer
 
 .. toctree::
 
-   SentenceTransformer
+   model
    trainer
    training_args
    losses

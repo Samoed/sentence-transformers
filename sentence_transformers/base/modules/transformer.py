@@ -416,25 +416,25 @@ class Transformer(InputModule):
     Loads the appropriate model class (e.g. BERT, RoBERTa, CLIP, Whisper) based on the model configuration
     and the specified ``transformer_task``. Supports text, image, audio, and video modalities depending on
     the underlying model. This module is typically the first module in a
-    :class:`~sentence_transformers.SentenceTransformer`, :class:`~sentence_transformers.SparseEncoder`,
-    or :class:`~sentence_transformers.CrossEncoder` pipeline.
+    :class:`~sentence_transformers.sentence_transformer.model.SentenceTransformer`, :class:`~sentence_transformers.sparse_encoder.model.SparseEncoder`,
+    or :class:`~sentence_transformers.cross_encoder.model.CrossEncoder` pipeline.
 
     Args:
         model_name_or_path (str): Hugging Face model name or path to a local model directory.
         transformer_task (str, optional): The task determining which ``AutoModel``-like class to load.
             Supported values:
 
-            - ``"feature-extraction"`` (default): :class:`~transformers.AutoModel`, used by
-              :class:`~sentence_transformers.SentenceTransformer`.
+            - ``"feature-extraction"`` (default): :class:`~transformers.AutoModel`, e.g. used by
+              :class:`~sentence_transformers.sentence_transformer.model.SentenceTransformer`.
             - ``"sequence-classification"``: :class:`~transformers.AutoModelForSequenceClassification`,
-              used by :class:`~sentence_transformers.CrossEncoder`.
-            - ``"text-generation"``: :class:`~transformers.AutoModelForCausalLM`, used by generative
-              :class:`~sentence_transformers.CrossEncoder` models. Sets the ``tokenizer`` padding_side to "left".
-            - ``"any-to-any"``: ``AutoModelForMultimodalLM``, for multimodal generative
-              :class:`~sentence_transformers.CrossEncoder` models (requires transformers v5+). Sets the
+              e.g. used by :class:`~sentence_transformers.cross_encoder.model.CrossEncoder`.
+            - ``"text-generation"``: :class:`~transformers.AutoModelForCausalLM`, e.g. used by generative
+              :class:`~sentence_transformers.cross_encoder.model.CrossEncoder` models. Sets the ``tokenizer`` padding_side to "left".
+            - ``"any-to-any"``: :class:`~transformers.AutoModelForMultimodalLM`, e.g. used by multimodal generative
+              :class:`~sentence_transformers.cross_encoder.model.CrossEncoder` models (requires transformers v5+). Sets the
               ``tokenizer`` padding_side to "left".
-            - ``"fill-mask"``: :class:`~transformers.AutoModelForMaskedLM`, used by
-              :class:`~sentence_transformers.SparseEncoder`.
+            - ``"fill-mask"``: :class:`~transformers.AutoModelForMaskedLM`, e.g. used by
+              :class:`~sentence_transformers.sparse_encoder.model.SparseEncoder`.
 
             Defaults to ``"feature-extraction"``.
         model_kwargs (dict[str, Any], optional): Keyword arguments forwarded to

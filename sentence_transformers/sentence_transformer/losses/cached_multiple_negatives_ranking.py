@@ -75,6 +75,8 @@ def _create_minibatch(sentence_feature: dict[str, Any], begin: int, end: int) ->
     count per item.  When ``mm_token_type_ids`` is available, items are mapped to samples via
     contiguous-group detection; otherwise we fall back to assuming one grid row per sample
     when ``grid.shape[0] == batch_size``.
+
+    TODO: Let's see if we can move this per-sample images/video counting to before processing
     """
     if "cu_seq_lens_q" not in sentence_feature:
         batch_size = _get_batch_size(sentence_feature)

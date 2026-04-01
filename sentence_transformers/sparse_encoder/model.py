@@ -764,7 +764,7 @@ class SparseEncoder(BaseModel):
         """
         Returns the number of dimensions in the output of :meth:`SparseEncoder.encode`.
 
-        Unlike :class:`~sentence_transformers.SentenceTransformer`, sparse encoders do not support ``truncate_dim``,
+        Unlike :class:`~sentence_transformers.sentence_transformer.model.SentenceTransformer`, sparse encoders do not support ``truncate_dim``,
         so this returns the raw output dimension from the last module in the pipeline.
 
         Returns:

@@ -175,12 +175,12 @@ But if instead you want to train from another checkpoint, or from scratch, then 
 .. tab:: Contrastive Sparse Representation (CSR) 
 
     .. 
-        Contrastive Sparse Representation (CSR) models usually use a sequence of :class:`~sentence_transformers.sentence_transformer.modules.Transformer`, :class:`~sentence_transformers.sentence_transformer.modules.Pooling` and :class:`~sentence_transformers.sparse_encoder.modules.SparseAutoEncoder` modules to create sparse representations on top of an already trained dense Sentence Transformer model.
+        Contrastive Sparse Representation (CSR) models usually use a sequence of :class:`~sentence_transformers.base.modules.Transformer`, :class:`~sentence_transformers.sentence_transformer.modules.Pooling` and :class:`~sentence_transformers.sparse_encoder.modules.SparseAutoEncoder` modules to create sparse representations on top of an already trained dense Sentence Transformer model.
 
-    Contrastive Sparse Representation (CSR) models apply a :class:`~sentence_transformers.sparse_encoder.modules.SparseAutoEncoder` module on top of a dense Sentence Transformer model, which usually consist of a :class:`~sentence_transformers.sentence_transformer.modules.Transformer` followed by a :class:`~sentence_transformers.sentence_transformer.modules.Pooling` module. You can initialize one from scratch like so:
+    Contrastive Sparse Representation (CSR) models apply a :class:`~sentence_transformers.sparse_encoder.modules.SparseAutoEncoder` module on top of a dense Sentence Transformer model, which usually consist of a :class:`~sentence_transformers.base.modules.Transformer` followed by a :class:`~sentence_transformers.sentence_transformer.modules.Pooling` module. You can initialize one from scratch like so:
     
     .. 
-        usually use a sequence of :class:`~sentence_transformers.sentence_transformer.modules.Transformer`, :class:`~sentence_transformers.sentence_transformer.modules.Pooling` and :class:`~sentence_transformers.sparse_encoder.modules.SparseAutoEncoder` modules to create sparse representations on top of an already trained dense Sentence Transformer model.
+        usually use a sequence of :class:`~sentence_transformers.base.modules.Transformer`, :class:`~sentence_transformers.sentence_transformer.modules.Pooling` and :class:`~sentence_transformers.sparse_encoder.modules.SparseAutoEncoder` modules to create sparse representations on top of an already trained dense Sentence Transformer model.
 
     .. raw:: html
 

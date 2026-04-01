@@ -31,6 +31,47 @@ Note that it is often simple to transform a dataset from one format to another, 
 
 ```
 
+## Multimodal Datasets
+
+Dataset columns are not limited to text. When using a multimodal model (e.g. a vision-language model like [tomaarsen/Qwen3-VL-Embedding-2B](https://huggingface.co/tomaarsen/Qwen3-VL-Embedding-2B)), columns can contain images, audio, video, or combinations of these modalities. The same dataset format categories described above (Positive Pair, Triplets, etc.) apply. The only difference is that one or more columns hold non-text data instead of strings.
+
+### Accepted column types
+
+The following input types are supported:
+
+- **Text**: strings.
+- **Image**: PIL images, file paths, URLs, or numpy/torch arrays.
+- **Audio**: file paths, numpy/torch arrays, dicts with `"array"` and `"sampling_rate"` keys, or `torchcodec.AudioDecoder` instances.
+- **Video**: file paths, numpy/torch arrays, dicts with `"array"` and `"video_metadata"` keys, or `torchcodec.VideoDecoder` instances.
+- **Multimodal dicts**: a dict mapping modality names to values, e.g. `{"text": ..., "audio": ...}`. The keys must be `"text"`, `"image"`, `"audio"`, or `"video"`.
+
+### Cross-modal dataset example
+
+A common use case is matching text queries to document screenshots (images). This is simply a **Positive Pair** dataset where the first column contains text and the second column contains images:
+
+```python
+from datasets import load_dataset
+
+dataset = load_dataset("tomaarsen/llamaindex-vdr-en-train-preprocessed", "train", split="train")
+"""
+Dataset({
+    features: ['query', 'image', 'negative_0', 'negative_1', 'negative_2', 'negative_3'],
+    num_rows: 7972
+})
+"""
+print(dataset[0]["query"])
+# "What was the revenue in 2023?"
+
+print(dataset[0]["image"])
+# <PIL.Image.Image image mode=RGB size=...>
+```
+
+Here, `query` is a text column and `image` is an image column. The first column is the anchor and the second is the positive, just like a standard Positive Pair dataset. The negative columns (`negative_0` through `negative_3`) contain additional hard-negative images.
+
+### Automatic preprocessing
+
+You do not need to manually tokenize text or transform images before training. The data collator calls the model's ``preprocess`` method on each column, which automatically detects the modality (text, image, audio, or video) and applies the appropriate preprocessing (tokenization, pixel processing, audio feature extraction, etc.). This means you can pass raw `PIL.Image` objects, file paths, or URLs directly in your dataset and they will be handled correctly.
+
 ## Datasets on the Hugging Face Hub
 
 ```{eval-rst}

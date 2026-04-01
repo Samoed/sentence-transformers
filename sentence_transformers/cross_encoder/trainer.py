@@ -48,32 +48,32 @@ class CrossEncoderTrainer(BaseTrainer):
     documentation for more information on the integrated callbacks and how to write your own callbacks.
 
     Args:
-        model (:class:`~sentence_transformers.sentence_transformer.model.SentenceTransformer`, *optional*):
+        model (:class:`~sentence_transformers.cross_encoder.model.CrossEncoder`, *optional*):
             The model to train, evaluate or use for predictions. If not provided, a `model_init` must be passed.
-        args (:class:`~sentence_transformers.sentence_transformer.training_args.SentenceTransformerTrainingArguments`, *optional*):
+        args (:class:`~sentence_transformers.cross_encoder.training_args.CrossEncoderTrainingArguments`, *optional*):
             The arguments to tweak for training. Will default to a basic instance of
-            :class:`~sentence_transformers.sentence_transformer.training_args.SentenceTransformerTrainingArguments` with the
+            :class:`~sentence_transformers.cross_encoder.training_args.CrossEncoderTrainingArguments` with the
             `output_dir` set to a directory named *tmp_trainer* in the current directory if not provided.
         train_dataset (Union[:class:`datasets.Dataset`, :class:`datasets.DatasetDict`, Dict[str, :class:`datasets.Dataset`]], *optional*):
             The dataset to use for training. Must have a format accepted by your loss function, see
-            `Training Overview > Dataset Format <../../../docs/sentence_transformer/training_overview.html#dataset-format>`_.
+            `Training Overview > Dataset Format <../../../docs/cross_encoder/training_overview.html#dataset-format>`_.
         eval_dataset (Union[:class:`datasets.Dataset`, :class:`datasets.DatasetDict`, Dict[str, :class:`datasets.Dataset`]], *optional*):
             The dataset to use for evaluation. Must have a format accepted by your loss function, see
-            `Training Overview > Dataset Format <../../../docs/sentence_transformer/training_overview.html#dataset-format>`_.
+            `Training Overview > Dataset Format <../../../docs/cross_encoder/training_overview.html#dataset-format>`_.
         loss (Optional[Union[:class:`torch.nn.Module`, Dict[str, :class:`torch.nn.Module`],\
-            Callable[[:class:`~sentence_transformers.sentence_transformer.model.SentenceTransformer`], :class:`torch.nn.Module`],\
-            Dict[str, Callable[[:class:`~sentence_transformers.sentence_transformer.model.SentenceTransformer`]]]], *optional*):
+            Callable[[:class:`~sentence_transformers.cross_encoder.model.CrossEncoder`], :class:`torch.nn.Module`],\
+            Dict[str, Callable[[:class:`~sentence_transformers.cross_encoder.model.CrossEncoder`]]]], *optional*):
             The loss function to use for training. Can either be a loss class instance, a dictionary mapping
             dataset names to loss class instances, a function that returns a loss class instance given a model,
             or a dictionary mapping dataset names to functions that return a loss class instance given a model.
             In practice, the latter two are primarily used for hyper-parameter optimization. Will default to
-            :class:`~sentence_transformers.sentence_transformer.losses.CoSENTLoss` if no ``loss`` is provided.
-        evaluator (Union[:class:`~sentence_transformers.sentence_transformer.evaluation.BaseEvaluator`,\
-            List[:class:`~sentence_transformers.sentence_transformer.evaluation.BaseEvaluator`]], *optional*):
+            :class:`~sentence_transformers.cross_encoder.losses.BinaryCrossEntropyLoss` if no ``loss`` is provided.
+        evaluator (Union[:class:`~sentence_transformers.base.evaluation.BaseEvaluator`,\
+            List[:class:`~sentence_transformers.base.evaluation.BaseEvaluator`]], *optional*):
             The evaluator instance for useful evaluation metrics during training. You can use an ``evaluator`` with
             or without an ``eval_dataset``, and vice versa. Generally, the metrics that an ``evaluator`` returns
             are more useful than the loss value returned from the ``eval_dataset``. A list of evaluators will be
-            wrapped in a :class:`~sentence_transformers.sentence_transformer.evaluation.SequentialEvaluator` to run them sequentially.
+            wrapped in a :class:`~sentence_transformers.base.evaluation.SequentialEvaluator` to run them sequentially.
         callbacks (List of [:class:`transformers.TrainerCallback`], *optional*):
             A list of callbacks to customize the training loop. Will add those to the list of default callbacks
             detailed in [here](callback).

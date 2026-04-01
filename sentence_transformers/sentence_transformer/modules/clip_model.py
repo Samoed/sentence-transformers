@@ -5,8 +5,18 @@ from typing import Any
 from sentence_transformers.base.modules.transformer import ModalityConfig, Transformer
 
 
+# TODO: Deprecate similarly to MLMTransformer with a warning when using this class 'manually'
 # For backwards compatibility, we ensure that the legacy `CLIPModel` alias points to the updated `Transformer` class.
 class CLIPModel(Transformer):
+    """Legacy module kept only for backward compatibility with older saved models.
+
+    New multimodal models should use :class:`~sentence_transformers.base.modules.Transformer` directly,
+    which handles CLIP-style models and other multimodal architectures natively via modality auto-detection.
+
+    .. deprecated:: 5.4
+        Use :class:`~sentence_transformers.base.modules.Transformer` instead.
+    """
+
     def __init__(self, model_name_or_path: str = "openai/clip-vit-base-patch32", **kwargs) -> None:
         if "processor_name" in kwargs:
             kwargs["tokenizer_name_or_path"] = kwargs.pop("processor_name")

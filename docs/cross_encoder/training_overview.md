@@ -229,6 +229,40 @@ Be sure to re-order your dataset columns with :meth:`Dataset.select_columns <dat
 Additionally, if your dataset has extraneous columns (e.g. sample_id, metadata, source, type), you should remove these with :meth:`Dataset.remove_columns <datasets.Dataset.remove_columns>` as they will be used as inputs otherwise. You can also use :meth:`Dataset.select_columns <datasets.Dataset.select_columns>` to keep only the desired columns.
 ```
 
+### Multimodal Datasets
+
+```{eval-rst}
+CrossEncoder datasets are not limited to text columns. When using a multimodal backbone (e.g. a vision-language model), input columns can also contain images (as PIL images, file paths, or URLs), audio, video, or multimodal dictionaries combining multiple modalities. The dataset format rules from `Dataset Format <#dataset-format>`_ still apply: non-label columns are treated as inputs, and a ``"label"`` column provides the target score or class.
+
+For example, a dataset for image-to-text reranking might have an ``"image"`` column with PIL images, a ``"text"`` column with candidate captions, and a ``"label"`` column with binary relevance scores::
+
+    from datasets import Dataset
+    from PIL import Image
+
+    dataset = Dataset.from_dict({
+        "image": [Image.open("cat.jpg"), Image.open("cat.jpg"), Image.open("dog.jpg")],
+        "text": ["a photo of a cat", "a photo of a dog", "a photo of a dog"],
+        "label": [1, 0, 1],
+    })
+
+You can also train bidirectionally (e.g. image-to-text *and* text-to-image) by creating separate sub-datasets and passing them as a dictionary for `multi-dataset training <#multi-dataset-training>`_::
+
+    train_image_to_text = full_dataset.select_columns(["image", "text", "label"])
+    train_text_to_image = full_dataset.select_columns(["text", "image", "label"])
+
+    trainer = CrossEncoderTrainer(
+        model=model,
+        args=args,
+        train_dataset={
+            "image_to_text": train_image_to_text,
+            "text_to_image": train_text_to_image,
+        },
+        loss=loss,
+    )
+
+The data collator automatically handles multimodal preprocessing via the model's ``preprocess`` method, so no manual tokenization or image processing is needed. The dataset format is the same regardless of whether the underlying model is an encoder or a causal LM; only the model architecture differs. See `Training Examples > Multimodal <../../examples/cross_encoder/training/multimodal/README.html>`_ for complete training scripts.
+```
+
 ### Hard Negatives Mining
 
 The success of training CrossEncoder models often depends on the quality of the *negatives*, i.e. the passages for which the query-negative score should be low. Negatives can be divided into two types:

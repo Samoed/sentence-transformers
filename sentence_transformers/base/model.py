@@ -281,17 +281,18 @@ class BaseModel(nn.Sequential, PeftAdapterMixin, ABC):
 
     @property
     def modalities(self) -> list[Modality]:
-        """Return the list of modalities supported by this model."""
+        """Return the list of modalities supported by this model, e.g. ``["text"]`` or ``["text", "image", "message"]``."""
         return getattr(self[0], "modalities", ["text"])
 
     def supports(self, modality: Modality) -> bool:
         """Check if the model supports the given modality.
 
         A modality is supported if:
+
         1. It is directly listed in :attr:`modalities`, or
-        2. It is a tuple of modalities whose individual parts are all in :attr:`modalities`
-           **and** ``"message"`` is in :attr:`modalities` (since the model uses message format
-           to combine multiple modalities).
+        2. It is a tuple of modalities (e.g. ``("image", "text")``) where each part is
+           individually supported and the model also supports ``"message"`` format, which
+           is used to combine multiple modalities into a single input.
 
         Args:
             modality: A single modality string (e.g. ``"text"``, ``"image"``) or a tuple

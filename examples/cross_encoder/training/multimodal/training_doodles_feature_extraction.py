@@ -80,8 +80,8 @@ false_token_id = transformer.tokenizer.convert_tokens_to_ids("0")
 embeddings = transformer.model.get_input_embeddings().weight.data
 init_weight = (embeddings[true_token_id] - embeddings[false_token_id]).unsqueeze(0)
 dense = Dense(
-    transformer.get_embedding_dimension(),
-    1,
+    in_features=transformer.get_embedding_dimension(),
+    out_features=1,
     bias=False,
     activation_function=None,
     init_weight=init_weight,

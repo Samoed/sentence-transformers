@@ -61,7 +61,7 @@ But if instead you want to train from another checkpoint, or from scratch, then 
 
 .. tab:: Transformers
 
-    Most Sentence Transformer models use the :class:`~sentence_transformers.sentence_transformer.modules.Transformer` and :class:`~sentence_transformers.sentence_transformer.modules.Pooling` modules. The former loads a pretrained transformer model (e.g. `BERT <https://huggingface.co/google-bert/bert-base-uncased>`_, `RoBERTa <https://huggingface.co/FacebookAI/roberta-base>`_, `DistilBERT <https://huggingface.co/distilbert/distilbert-base-uncased>`_, `ModernBERT <https://huggingface.co/answerdotai/ModernBERT-base>`_, etc.) and the latter pools the output of the transformer to produce a single vector representation for each input sentence.
+    Most Sentence Transformer models use the :class:`~sentence_transformers.base.modules.Transformer` and :class:`~sentence_transformers.sentence_transformer.modules.Pooling` modules. The former loads a pretrained transformer model (e.g. `BERT <https://huggingface.co/google-bert/bert-base-uncased>`_, `RoBERTa <https://huggingface.co/FacebookAI/roberta-base>`_, `DistilBERT <https://huggingface.co/distilbert/distilbert-base-uncased>`_, `ModernBERT <https://huggingface.co/answerdotai/ModernBERT-base>`_, etc.) and the latter pools the output of the transformer to produce a single vector representation for each input sentence.
 
     .. raw:: html
 
@@ -130,12 +130,54 @@ But if instead you want to train from another checkpoint, or from scratch, then 
 
         model = SentenceTransformer(modules=[static_embedding])
 
+.. tab:: Multimodal / Vision-Language
+
+    You can also train multimodal Sentence Transformer models from Vision-Language Model (VLM) checkpoints. The :class:`~sentence_transformers.base.modules.Transformer` module automatically detects supported modalities (text, image, audio, video) from the model's processor. You can load an already-trained multimodal embedding model:
+
+    .. raw:: html
+
+        <div class="sidebar">
+            <p class="sidebar-title">Documentation</p>
+            <ul class="simple">
+                <li><a class="reference internal" href="../package_reference/base/modules.html#sentence_transformers.base.modules.transformer.Transformer"><code class="xref py py-class docutils literal notranslate"><span class="pre">sentence_transformers.base.modules.Transformer</span></code></a></li>
+                <li><a class="reference internal" href="../package_reference/base/modules.html#sentence_transformers.base.modules.transformer.Transformer.modalities"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Transformer.modalities</span></code></a></li>
+                <li><a class="reference internal" href="../package_reference/sentence_transformer/model.html#sentence_transformers.sentence_transformer.model.SentenceTransformer.supports"><code class="xref py py-meth docutils literal notranslate"><span class="pre">SentenceTransformer.supports()</span></code></a></li>
+                <li><a class="reference external" href="training/examples.html#multimodal">Multimodal Training Examples</a></li>
+            </ul>
+        </div>
+
+    ::
+
+        from sentence_transformers import SentenceTransformer
+
+        model = SentenceTransformer(
+            "tomaarsen/Qwen3-VL-Embedding-2B",
+            model_kwargs={"attn_implementation": "flash_attention_2", "torch_dtype": "bfloat16"},
+            processor_kwargs={"min_pixels": 28 * 28, "max_pixels": 600 * 600},
+        )
+
+    Or initialize from a fresh VLM checkpoint that hasn't been trained for embeddings yet::
+
+        from sentence_transformers import SentenceTransformer
+
+        model = SentenceTransformer("Qwen/Qwen3-VL-2B")
+
+    In both cases, the ``Transformer`` module inspects the processor to determine which modalities are available, and ``Pooling`` is added automatically if needed. You can verify the supported modalities::
+
+        print(model.modalities)
+        # ['text', 'image', 'video', 'message']
+
+        print(model.supports("image"))
+        # True
+
+    The ``"message"`` modality means the model can handle mixed-modality inputs (e.g. an image and text together) via the chat template format. Multimodal training data can include text strings, PIL images, image file paths or URLs, audio arrays, or multimodal dicts like ``{"image": <PIL.Image>, "text": "describe this"}``. See the `multimodal training examples <training/examples.html#multimodal>`_ for full training scripts.
+
 ```
 
 ## Dataset
 
 ```{eval-rst}
-The :class:`SentenceTransformerTrainer` trains and evaluates using :class:`datasets.Dataset` (one dataset) or :class:`datasets.DatasetDict` instances (multiple datasets, see also `Multi-dataset training <#multi-dataset-training>`_). 
+The :class:`SentenceTransformerTrainer` trains and evaluates using :class:`datasets.Dataset` (one dataset) or :class:`datasets.DatasetDict` instances (multiple datasets, see also `Multi-dataset training <#multi-dataset-training>`_).
 
 .. tab:: Data on 🤗 Hugging Face Hub
 
@@ -246,6 +288,26 @@ For example, given a dataset with columns ``["text1", "text2", "label"]`` where 
 Be sure to re-order your dataset columns with :meth:`Dataset.select_columns <datasets.Dataset.select_columns>` if your columns are not ordered correctly. For example, if your dataset has ``["good_answer", "bad_answer", "question"]`` as columns, then this dataset can technically be used with a loss that requires (anchor, positive, negative) triplets, but the ``good_answer`` column will be taken as the anchor, ``bad_answer`` as the positive, and ``question`` as the negative.
 
 Additionally, if your dataset has extraneous columns (e.g. sample_id, metadata, source, type), you should remove these with :meth:`Dataset.remove_columns <datasets.Dataset.remove_columns>` as they will be used as inputs otherwise. You can also use :meth:`Dataset.select_columns <datasets.Dataset.select_columns>` to keep only the desired columns.
+```
+
+### Multimodal Datasets
+
+```{eval-rst}
+SentenceTransformer datasets are not limited to text columns. When using a multimodal model (e.g. a vision-language model), input columns can also contain images (as PIL images, file paths, or URLs), audio, video, or multimodal dictionaries combining multiple modalities. The dataset format rules from `Dataset Format <#dataset-format>`_ still apply: non-label columns are treated as inputs, and a ``"label"`` column provides the target score or class.
+
+For example, a dataset for document screenshot retrieval might have a text ``"query"`` column and an ``"image"`` column containing PIL images::
+
+    from datasets import load_dataset
+
+    dataset = load_dataset("tomaarsen/llamaindex-vdr-en-train-preprocessed", "train", split="train")
+    """
+    Dataset({
+        features: ['query', 'image', 'negative_0', 'negative_1', 'negative_2', 'negative_3'],
+        num_rows: 7972
+    })
+    """
+
+The data collator automatically handles multimodal preprocessing via the model's ``preprocess`` method, so no manual tokenization or image processing is needed. See `Training Examples > Multimodal <../../examples/sentence_transformer/training/multimodal/README.html>`_ for complete training scripts.
 ```
 
 ## Loss Function

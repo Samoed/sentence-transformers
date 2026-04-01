@@ -47,7 +47,7 @@ MultimodalInput: TypeAlias = dict[
 SingleInput: TypeAlias = TextInput | ImageInput | AudioInput | VideoInput | MessageInput | MultimodalInput
 
 # Pair types for cross-encoder
-PairableInput: TypeAlias = TextInput | ImageInput | AudioInput | VideoInput
+PairableInput: TypeAlias = TextInput | ImageInput | AudioInput | VideoInput | MultimodalInput
 PairInput: TypeAlias = tuple[PairableInput, PairableInput] | list[PairableInput]
 
 # Modality identifier: a single modality string, or a tuple for multimodal dict inputs

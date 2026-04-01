@@ -3,7 +3,7 @@ Sparse Encoder
 
 .. toctree::
 
-   SparseEncoder
+   model
    trainer
    training_args
    losses

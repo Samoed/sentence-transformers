@@ -2,22 +2,246 @@
 
 ## Migrating from v5.x to v5.4+
 
-TODO: Notes to self:
-- Updating the import paths (although there's backwards compatibility)
-- Avoiding using Router keys as dictionary keys in the input, use task=... or encode_query/encode_document instead
-- Renamed tokenizer_kwargs to processor_kwargs (with backwards compatibility)
-- Renamed SentenceTransformer.get_sentence_embedding_dimension to SentenceTransformer.get_embedding_dimension (with backwards compatibility)
-- Renamed SparseEncoder.get_sentence_embedding_dimension to SparseEncoder.get_embedding_dimension (with backwards compatibility)
-- Renamed SentenceTransformer.truncate_sentence_embeddings to SentenceTransformer.truncate_embeddings (with backwards compatibility)
-- Renamed SoftmaxLoss `sentence_embedding_dimension` parameter to `embedding_dimension` (with backwards compatibility)
-- Renamed `get_word_embedding_dimension` to `get_embedding_dimension` on Transformer, LSTM, CNN, WordEmbeddings, WeightedLayerPooling (with backwards compatibility)
-- Renamed `word_embedding_dimension` constructor parameter to `embedding_dimension` on Pooling, LSTM, WeightedLayerPooling, SpladePooling (with backwards compatibility)
-- Renamed `in_word_embedding_dimension` constructor parameter to `in_embedding_dimension` on CNN (with backwards compatibility)
-- Add `prompt` and `task` kwargs to CrossEncoder losses, which can be forwarded to the `CrossEncoder.preprocess` method in the loss `forward` method (with backwards compatibility)
-- Passing `activation_fn` to `CrossEncoder.predict` no longer persists the activation function on the instance; it only applies for that call
-- `CrossEncoder.forward()` now returns `dict[str, Tensor]` with a `"scores"` key instead of a HF `SequenceClassifierOutput` (mostly relevant for custom losses, users should call `model.predict` instead)
-- `CrossEncoder.__init__` `num_labels`, `max_length`, `activation_fn`, and `device` are now keyword-only (with backwards compatibility)
-- Removed `tags` parameter from `push_to_hub`; use `model.model_card_data.tags.append("my-tag")` before calling `push_to_hub` instead
+```{eval-rst}
+The v5.4 release restructures the codebase into a shared ``base`` package and refactors :class:`~sentence_transformers.cross_encoder.model.CrossEncoder` to use the same modular architecture as :class:`~sentence_transformers.sentence_transformer.model.SentenceTransformer` and :class:`~sentence_transformers.sparse_encoder.model.SparseEncoder`. Almost all changes are backwards compatible; old code will continue to work but may emit deprecation warnings.
+
+.. warning::
+    If you only use :meth:`SentenceTransformer.encode <sentence_transformers.sentence_transformer.model.SentenceTransformer.encode>` or :meth:`CrossEncoder.predict <sentence_transformers.cross_encoder.model.CrossEncoder.predict>` with text inputs, you likely do not need to make any changes. The sections below cover the specific APIs that have changed.
+```
+
+### Updated import paths
+
+```{eval-rst}
+
+The codebase has been restructured so that :class:`~sentence_transformers.sentence_transformer.model.SentenceTransformer`, :class:`~sentence_transformers.sparse_encoder.model.SparseEncoder`, and :class:`~sentence_transformers.cross_encoder.model.CrossEncoder` share a common ``base`` package. As a result, many internal modules have moved to new locations. All old import paths continue to work but emit deprecation warnings.
+
+The top-level imports are unchanged. ``from sentence_transformers import SentenceTransformer, CrossEncoder, SparseEncoder`` works exactly as before. The changes only affect imports of internal modules, losses, evaluators, and utilities.
+
+.. collapse:: Key import path changes
+
+   .. list-table::
+      :widths: 50 50
+      :header-rows: 1
+
+      * - v5.x
+        - v5.4+ (recommended)
+      * - ``from sentence_transformers.models import ...``
+        - | ``from sentence_transformers.sentence_transformer.modules import ...``
+          | ``from sentence_transformers.cross_encoder.modules import ...``
+          | ``from sentence_transformers.sparse_encoder.modules import ...``
+          |
+          | Modules are available from each model type's ``modules`` package.
+      * - ``from sentence_transformers.losses import ...``
+        - ``from sentence_transformers.sentence_transformer.losses import ...``
+      * - ``from sentence_transformers.evaluation import ...``
+        - ``from sentence_transformers.sentence_transformer.evaluation import ...``
+      * - ``from sentence_transformers.training_args import ...``
+        - ``from sentence_transformers.sentence_transformer.training_args import ...``
+      * - ``from sentence_transformers.trainer import ...``
+        - ``from sentence_transformers.sentence_transformer.trainer import ...``
+      * - ``from sentence_transformers.data_collator import ...``
+        - ``from sentence_transformers.sentence_transformer.data_collator import ...``
+      * - ``from sentence_transformers.model_card import ...``
+        - ``from sentence_transformers.sentence_transformer.model_card import ...``
+      * - ``from sentence_transformers.sparse_encoder.models import ...``
+        - ``from sentence_transformers.sparse_encoder.modules import ...``
+      * - ``from sentence_transformers.sampler import ...``
+        - ``from sentence_transformers.base.sampler import ...``
+```
+
+<br>
+
+### Renamed methods and parameters
+
+```{eval-rst}
+
+Several methods and constructor parameters have been renamed to use more consistent terminology. All old names still work but emit deprecation warnings.
+
+.. list-table:: Model-level renames
+   :widths: 50 50
+   :header-rows: 1
+
+   * - v5.x
+     - v5.4+ (recommended)
+   * - ``SentenceTransformer.get_sentence_embedding_dimension()``
+     - ``SentenceTransformer.get_embedding_dimension()``
+   * - ``SparseEncoder.get_sentence_embedding_dimension()``
+     - ``SparseEncoder.get_embedding_dimension()``
+   * - ``SentenceTransformer.truncate_sentence_embeddings(dim)``
+     - ``SentenceTransformer.truncate_embeddings(dim)``
+
+.. list-table:: Module-level renames
+   :widths: 50 50
+   :header-rows: 1
+
+   * - v5.x
+     - v5.4+ (recommended)
+   * - ``Transformer.get_word_embedding_dimension()``
+     - ``Transformer.get_embedding_dimension()``
+   * - ``LSTM.get_word_embedding_dimension()``
+     - ``LSTM.get_embedding_dimension()``
+   * - ``CNN.get_word_embedding_dimension()``
+     - ``CNN.get_embedding_dimension()``
+   * - ``WordEmbeddings.get_word_embedding_dimension()``
+     - ``WordEmbeddings.get_embedding_dimension()``
+   * - ``WeightedLayerPooling.get_word_embedding_dimension()``
+     - ``WeightedLayerPooling.get_embedding_dimension()``
+
+.. list-table:: Constructor parameter renames
+   :widths: 50 50
+   :header-rows: 1
+
+   * - v5.x
+     - v5.4+ (recommended)
+   * - ``Pooling(word_embedding_dimension=...)``
+     - ``Pooling(embedding_dimension=...)``
+   * - ``LSTM(word_embedding_dimension=...)``
+     - ``LSTM(embedding_dimension=...)``
+   * - ``WeightedLayerPooling(word_embedding_dimension=...)``
+     - ``WeightedLayerPooling(embedding_dimension=...)``
+   * - ``SpladePooling(word_embedding_dimension=...)``
+     - ``SpladePooling(embedding_dimension=...)``
+   * - ``CNN(in_word_embedding_dimension=...)``
+     - ``CNN(in_embedding_dimension=...)``
+   * - ``SoftmaxLoss(sentence_embedding_dimension=...)``
+     - ``SoftmaxLoss(embedding_dimension=...)``
+```
+
+### ``tokenizer_kwargs`` renamed to ``processor_kwargs``
+
+```{eval-rst}
+
+The ``tokenizer_kwargs`` parameter on :class:`~sentence_transformers.sentence_transformer.model.SentenceTransformer`, :class:`~sentence_transformers.sparse_encoder.model.SparseEncoder`, and :class:`~sentence_transformers.cross_encoder.model.CrossEncoder` has been renamed to ``processor_kwargs`` to reflect that multimodal models use processors rather than tokenizers. The old name is accepted with a deprecation warning.
+
+.. list-table::
+   :widths: 50 50
+   :header-rows: 1
+
+   * - v5.x
+     - v5.4+ (recommended)
+   * - .. code-block:: python
+
+        model = SentenceTransformer(
+            "all-MiniLM-L6-v2",
+            tokenizer_kwargs={"model_max_length": 256},
+        )
+
+     - .. code-block:: python
+
+        model = SentenceTransformer(
+            "all-MiniLM-L6-v2",
+            processor_kwargs={"model_max_length": 256},
+        )
+```
+
+### Router task keys no longer used as input dictionary keys
+
+```{eval-rst}
+
+Models with a :class:`~sentence_transformers.base.modules.Router` module (e.g. asymmetric models with separate query/document encoders) previously accepted task types as dictionary keys in the input. This was softly deprecated in v5.0 (see :ref:`Migration for Asym to Router <migration-for-asym-to-router>`) and is now deprecated. Instead, pass the inputs directly and use the ``task`` parameter or the :meth:`~sentence_transformers.sentence_transformer.model.SentenceTransformer.encode_query` / :meth:`~sentence_transformers.sentence_transformer.model.SentenceTransformer.encode_document` convenience methods.
+
+.. list-table::
+   :widths: 50 50
+   :header-rows: 1
+
+   * - v5.x
+     - v5.4+ (recommended)
+   * - .. code-block:: python
+
+        model.encode({"query": "What is the capital?"})
+        model.encode({"document": "Paris is the capital."})
+
+     - .. code-block:: python
+
+        model.encode("What is the capital?", task="query")
+        model.encode("Paris is the capital.", task="document")
+
+        # Or equivalently:
+        model.encode_query("What is the capital?")
+        model.encode_document("Paris is the capital.")
+```
+
+### CrossEncoder API changes
+
+```{eval-rst}
+
+.. list-table:: CrossEncoder parameter changes
+   :widths: 50 50
+   :header-rows: 1
+
+   * - v5.x
+     - v5.4+ (recommended)
+   * - ``CrossEncoder("model", 1, 512, nn.Sigmoid(), "cuda")``
+     - ``CrossEncoder("model", num_labels=1, max_length=512, activation_fn=nn.Sigmoid(), device="cuda")``
+
+       ``num_labels``, ``max_length``, ``activation_fn``, and ``device`` are now keyword-only arguments.
+
+       Passing them positionally still works but emits a deprecation warning.
+
+.. list-table:: Other CrossEncoder changes
+   :widths: 50 50
+   :header-rows: 1
+
+   * - v5.x
+     - v5.4+
+   * - Passing ``activation_fn`` to :meth:`~sentence_transformers.cross_encoder.model.CrossEncoder.predict` would persist it on the model instance
+     - ``activation_fn`` passed to :meth:`~sentence_transformers.cross_encoder.model.CrossEncoder.predict` now only applies for that call and does not modify the instance.
+
+```
+
+### Removed ``tags`` parameter from ``push_to_hub``
+
+```{eval-rst}
+
+The ``tags`` parameter has been removed from :meth:`~sentence_transformers.base.model.BaseModel.push_to_hub` on all model types. Use ``model.model_card_data.tags.append("my-tag")`` before calling :meth:`~sentence_transformers.base.model.BaseModel.push_to_hub` instead.
+```
+
+### Changes for custom module and loss authors
+
+```{eval-rst}
+
+The following changes are only relevant if you write custom :class:`~sentence_transformers.base.modules.input_module.InputModule` subclasses or custom :class:`~sentence_transformers.cross_encoder.model.CrossEncoder` losses.
+
+**tokenize replaced by preprocess**
+
+The :meth:`tokenize` method on :class:`~sentence_transformers.base.modules.input_module.InputModule` subclasses (including :class:`~sentence_transformers.base.modules.transformer.Transformer`) has been replaced by :meth:`~sentence_transformers.base.modules.input_module.InputModule.preprocess`, which has a broader signature supporting prompts and multimodal inputs. The old ``tokenize`` method still works but is deprecated and will be removed in a future version. If you have custom :class:`~sentence_transformers.base.modules.input_module.InputModule` subclasses, implement :meth:`~sentence_transformers.base.modules.input_module.InputModule.preprocess` instead of ``tokenize``. If you're not calling ``tokenize`` directly (e.g. in a custom loss), then you are not affected.
+
+**CrossEncoder.forward() return type**
+
+``CrossEncoder.forward()`` now returns ``dict[str, Tensor]`` with a ``"scores"`` key instead of a :class:`~transformers.modeling_outputs.SequenceClassifierOutput`. If you only use :meth:`~sentence_transformers.cross_encoder.model.CrossEncoder.predict`, you are not affected.
+
+**CrossEncoder loss prompt and task kwargs**
+
+All CrossEncoder losses now accept optional ``prompt`` and ``task`` keyword arguments in their ``forward`` method. These are forwarded to :meth:`CrossEncoder.preprocess <sentence_transformers.cross_encoder.model.CrossEncoder.preprocess>` during training. Existing custom losses that do not accept these kwargs will continue to work, as the trainer handles backwards compatibility. If you're not using custom losses, you are not affected.
+
+.. list-table::
+   :widths: 50 50
+   :header-rows: 1
+
+   * - v5.x
+     - v5.4+ (recommended)
+   * - .. code-block:: python
+
+        class MyCustomLoss(nn.Module):
+            def forward(self, inputs, labels):
+                pairs = list(zip(inputs[0], inputs[1]))
+                tokens = self.model.tokenizer(pairs, ...)
+                tokens.to(self.model.device)
+                scores = self.model(tokens)[0]
+                return self.compute_loss(scores, labels)
+
+     - .. code-block:: python
+
+        class MyCustomLoss(nn.Module):
+            def forward(self, inputs, labels, prompt=None, task=None):
+                pairs = list(zip(inputs[0], inputs[1]))
+                tokens = self.model.preprocess(pairs, prompt=prompt, task=task)
+                tokens.to(self.model.device)
+                scores = self.model(tokens)["scores"]
+                return self.compute_loss(scores, labels)
+```
+
+<br>
 
 ## Migrating from v4.x to v5.x
 

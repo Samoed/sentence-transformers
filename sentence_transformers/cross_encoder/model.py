@@ -32,6 +32,7 @@ from sentence_transformers.util.decorators import (
 logger = transformers_logging.get_logger(__name__)
 
 
+# TODO: If I initialize this with modules, do I still have to specify num_labels?
 class CrossEncoder(BaseModel, FitMixin):
     """
     Loads or creates a CrossEncoder model that takes a sentence pair as input and outputs a score or label.
@@ -551,8 +552,8 @@ class CrossEncoder(BaseModel, FitMixin):
             data to find the best value.
 
         Args:
-            inputs (Union[List[Tuple[str, str]], Tuple[str, str]]): A list of input pairs [(Sent1, Sent2), (Sent3, Sent4)]
-                or one input pair (Sent1, Sent2).
+            inputs (Union[List[PairInput], PairInput]): A list of input pairs or one input pair, where each element
+                can be a string, image, or multimodal dict.
             prompt_name (Optional[str], optional): The name of the prompt to use for encoding.
             prompt (Optional[str], optional): The prompt to use for encoding.
             batch_size (int, optional): Batch size for encoding. Defaults to 32.
@@ -717,8 +718,8 @@ class CrossEncoder(BaseModel, FitMixin):
             data to find the best value.
 
         Args:
-            query (str): A single query.
-            documents (List[str]): A list of documents.
+            query (PairableInput): A single query, e.g. a string, image, or multimodal dict.
+            documents (List[PairableInput]): A list of documents, e.g. strings, images, or multimodal dicts.
             top_k (Optional[int], optional): Return the top-k documents. If None, all documents are returned. Defaults to None.
             return_documents (bool, optional): If True, also returns the documents. If False, only returns the indices and scores. Defaults to False.
             prompt_name (Optional[str], optional): The name of the prompt to use for encoding.

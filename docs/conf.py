@@ -63,6 +63,8 @@ include_patterns = [
     "index.rst",
 ]
 
+autodoc_inherit_docstrings = True
+
 intersphinx_mapping = {
     "datasets": ("https://huggingface.co/docs/datasets/main/en/", None),
     "transformers": ("https://huggingface.co/docs/transformers/main/en/", None),
@@ -304,5 +306,21 @@ def preprocess_docstring(app, obj_type: str, name: str, obj, options: sphinx.ext
         lines[idx] = pattern.sub(r":py:obj:`transformers.\1`", line)
 
 
+def inherit_class_docstrings(app, what, name, obj, options, lines):
+    """Inherit parent class docstrings for classes that don't define their own.
+
+    ``autodoc_inherit_docstrings`` only applies to methods, not classes.
+    This handler fills that gap by walking the MRO when a class has no docstring.
+    """
+    if what == "class" and not lines:
+        doc = inspect.getdoc(obj)
+        if doc:
+            tab_width = app.config.autodoc_tab_width if hasattr(app.config, "autodoc_tab_width") else 8
+            lines.extend(sphinx.ext.autodoc.prepare_docstring(doc, tab_width))
+
+
 def setup(app: Sphinx):
+    # Register with low priority (before Napoleon at 500) so inherited docstrings
+    # get processed by Napoleon (Args -> :param:) and preprocess_docstring too.
+    app.connect("autodoc-process-docstring", inherit_class_docstrings, priority=100)
     app.connect("autodoc-process-docstring", preprocess_docstring)

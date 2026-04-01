@@ -293,17 +293,14 @@ class BaseModelCardData(CardData):
             e.g. "en" or ["en", "de", "nl"]
         license (`Optional[str]`): The license of the model, e.g. "apache-2.0", "mit",
             or "cc-by-nc-sa-4.0"
-        model_name (`Optional[str]`): The pretty name of the model, e.g. "SentenceTransformer based on microsoft/mpnet-base".
-        model_id (`Optional[str]`): The model ID when pushing the model to the Hub,
-            e.g. "tomaarsen/sbert-mpnet-base-allnli".
+        model_name (`Optional[str]`): The pretty name of the model.
+        model_id (`Optional[str]`): The model ID when pushing the model to the Hub.
         train_datasets (`List[Dict[str, str]]`): A list of the names and/or Hugging Face dataset IDs of the training datasets.
             e.g. [{"name": "SNLI", "id": "stanfordnlp/snli"}, {"name": "MultiNLI", "id": "nyu-mll/multi_nli"}, {"name": "STSB"}]
         eval_datasets (`List[Dict[str, str]]`): A list of the names and/or Hugging Face dataset IDs of the evaluation datasets.
             e.g. [{"name": "SNLI", "id": "stanfordnlp/snli"}, {"id": "mteb/stsbenchmark-sts"}]
-        task_name (`str`): The human-readable task the model is trained on,
-            e.g. "semantic textual similarity, semantic search, paraphrase mining, text classification, clustering, and more".
-        tags (`Optional[List[str]]`): A list of tags for the model,
-            e.g. ["sentence-transformers", "sentence-similarity", "feature-extraction"].
+        task_name (`str`): The human-readable task the model is trained on.
+        tags (`Optional[List[str]]`): A list of tags for the model.
         local_files_only (`bool`): If True, don't attempt to find dataset or base model information on the Hub.
             Defaults to False.
         generate_widget_examples (`bool`): If True, generate widget examples from the evaluation or training dataset,
@@ -313,19 +310,6 @@ class BaseModelCardData(CardData):
 
         Install `codecarbon <https://github.com/mlco2/codecarbon>`_ to automatically track carbon emission usage and
         include it in your model cards.
-
-    Example::
-
-        >>> model = SentenceTransformer(
-        ...     "microsoft/mpnet-base",
-        ...     model_card_data=SentenceTransformerModelCardData(
-        ...         model_id="tomaarsen/sbert-mpnet-base-allnli",
-        ...         train_datasets=[{"name": "SNLI", "id": "stanfordnlp/snli"}, {"name": "MultiNLI", "id": "nyu-mll/multi_nli"}],
-        ...         eval_datasets=[{"name": "SNLI", "id": "stanfordnlp/snli"}, {"name": "MultiNLI", "id": "nyu-mll/multi_nli"}],
-        ...         license="apache-2.0",
-        ...         language="en",
-        ...     ),
-        ... )
     """
 
     # Potentially provided by the user
@@ -1763,7 +1747,7 @@ class BaseModelCardData(CardData):
             "supported_modalities": supported_modalities,
         }
 
-    def get_default_model_name(self) -> None:
+    def get_default_model_name(self) -> str:
         if self.base_model:
             return f"{self.model.__class__.__name__} based on {self.base_model}"
         else:

@@ -4,7 +4,7 @@ Cross Encoder
 
 .. toctree::
 
-   cross_encoder
+   model
    trainer
    training_args
    losses

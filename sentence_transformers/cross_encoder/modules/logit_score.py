@@ -13,7 +13,7 @@ class LogitScore(Module):
     that token. If ``false_token_id`` is also provided, the score is the log-odds:
     ``logit[true_token_id] - logit[false_token_id]``.
 
-    This module is used as the post-processing step in a :class:`~sentence_transformers.CrossEncoder`
+    This module is used as the post-processing step in a :class:`~sentence_transformers.cross_encoder.model.CrossEncoder`
     backed by a causal language model (e.g. Qwen, Llama).
 
     Args:

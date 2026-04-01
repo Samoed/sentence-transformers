@@ -47,6 +47,7 @@ Homepage = "https://www.SBERT.net"
 Repository = "https://github.com/huggingface/sentence-transformers/"
 
 
+# TODO: Ensure the dependencies make sense with the new multimodal features
 [project.optional-dependencies]
 image = ["Pillow"]
 train = ["datasets", "accelerate>=0.20.3"]

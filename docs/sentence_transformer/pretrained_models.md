@@ -144,10 +144,33 @@ Bitext mining describes the process of finding translated sentence pairs in two 
 
 Extending a model to new languages is easy by following [Training Examples > Multilingual Models](../../examples/sentence_transformer/training/multilingual/README.md).
 
-## Image & Text-Models
-The following models can embed images and text into a joint vector space. See [Usage > Image Search](../../examples/sentence_transformer/applications/image-search/README.md) for more details how to use for text2image-search, image2image-search, image clustering, and zero-shot image classification.
+## Multimodal Models
 
-The following models are available with their respective Top 1 accuracy on zero-shot ImageNet validation dataset.
+Sentence Transformers supports multimodal models that can embed text alongside images, audio, or video into a joint vector space. This enables cross-modal tasks like text-to-image search, image-to-image search, image clustering, and zero-shot classification.
+
+```{eval-rst}
+You can check which modalities a model supports using the :attr:`~sentence_transformers.sentence_transformer.model.SentenceTransformer.modalities` property and :meth:`~sentence_transformers.sentence_transformer.model.SentenceTransformer.supports` method:
+```
+
+```python
+from sentence_transformers import SentenceTransformer
+
+model = SentenceTransformer("tomaarsen/Qwen3-VL-Embedding-2B")
+print(model.modalities)
+# => ['text', 'image', 'video', 'message']
+print(model.supports("image"))
+# => True
+print(model.supports("audio"))
+# => False
+```
+
+### Image & Text Models
+
+Image-text models embed both images and text into the same vector space.
+
+The original Sentence Transformers image-text models are based on CLIP. See [Usage > Image Search](../../examples/sentence_transformer/applications/image-search/README.md) for details on text-to-image search, image-to-image search, image clustering, and zero-shot image classification.
+
+The following CLIP models are available with their respective Top 1 accuracy on zero-shot ImageNet validation dataset:
 
 | Model | Top 1 Performance |
 | --- | :---: |
@@ -157,6 +180,32 @@ The following models are available with their respective Top 1 accuracy on zero-
 
 We further provide this multilingual text-image model:
 - **[clip-ViT-B-32-multilingual-v1](https://huggingface.co/sentence-transformers/clip-ViT-B-32-multilingual-v1)** - Multilingual text encoder for the [clip-ViT-B-32](https://huggingface.co/sentence-transformers/clip-ViT-B-32) model using [Multilingual Knowledge Distillation](https://huggingface.co/papers/2004.09813). This model can encode text in 50+ languages to match the image vectors from the [clip-ViT-B-32](https://huggingface.co/sentence-transformers/clip-ViT-B-32) model.
+
+```{eval-rst}
+Newer multimodal models use the unified :class:`~sentence_transformers.base.modules.Transformer` module, which automatically detects supported modalities from the underlying model and processor. These models typically support richer input formats, including interleaved image-text inputs via chat messages. Notable examples include:
+```
+
+- **[tomaarsen/Qwen3-VL-Embedding-2B](https://huggingface.co/tomaarsen/Qwen3-VL-Embedding-2B)** - A Qwen3-VL-based embedding model that supports text, image, and interleaved image-text inputs via message format. Useful for document screenshot embedding and cross-modal retrieval. See [Training Examples > Multimodal](../../examples/sentence_transformer/training/multimodal/README.md) for a finetuning example.
+
+```{eval-rst}
+VLM-based models support additional modalities and input formats compared to CLIP models. You can verify this with :attr:`~sentence_transformers.sentence_transformer.model.SentenceTransformer.modalities`:
+```
+
+```python
+from sentence_transformers import SentenceTransformer
+
+model = SentenceTransformer("tomaarsen/Qwen3-VL-Embedding-2B")
+print(model.modalities)
+# => ['text', 'image', 'video', 'message']
+```
+
+The `"message"` modality means the model accepts chat-style message inputs, allowing you to combine text and images in a single input. This is how VLM-based models handle interleaved multimodal content.
+
+### Audio & Video Models
+
+```{eval-rst}
+The :class:`~sentence_transformers.base.modules.Transformer` module also supports audio and video modalities when the underlying model and processor provide them. Audio models accept file paths, numpy/torch arrays, dicts with ``"array"`` and ``"sampling_rate"`` keys, or ``torchcodec.AudioDecoder`` instances, while video models accept file paths, numpy/torch arrays, dicts with ``"array"`` and ``"video_metadata"`` keys, or ``torchcodec.VideoDecoder`` instances. As pretrained audio and video embedding models become available on the Hugging Face Hub, they can be loaded with :class:`~sentence_transformers.sentence_transformer.model.SentenceTransformer` just like any other model.
+```
 
 ## INSTRUCTOR models
 Some INSTRUCTOR models, such as [hkunlp/instructor-large](https://huggingface.co/hkunlp/instructor-large), are natively supported in Sentence Transformers. These models are special, as they are trained with instructions in mind. Notably, the primary difference between normal Sentence Transformer models and Instructor models is that the latter do not include the instructions themselves in the pooling step.

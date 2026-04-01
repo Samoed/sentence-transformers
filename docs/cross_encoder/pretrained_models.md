@@ -22,7 +22,7 @@ scores = model.predict([
 # => array([0.9998173 , 0.01312432], dtype=float32)
 ```
 
-Cross-Encoders require text pairs as inputs and output a score 0...1 (if the Sigmoid activation function is used). They do not work for individual sentences and they don't compute embeddings for individual texts.
+Cross-Encoders require pairs as inputs and output a score (0 to 1 if the Sigmoid activation function is used). Most models work with text pairs, but some also support non-text inputs such as images (see [Multimodal Rerankers](#multimodal-rerankers)). Cross-Encoders do not work for individual sentences and they don't compute embeddings for individual texts.
 
 ## MS MARCO
 
@@ -115,6 +115,21 @@ label_mapping = ["contradiction", "entailment", "neutral"]
 labels = [label_mapping[score_max] for score_max in scores.argmax(axis=1)]
 # => ['entailment', 'contradiction']
 ```
+
+## Multimodal Rerankers
+
+```{eval-rst}
+Multimodal rerankers can score pairs involving different modalities such as images, video, audio, and text. These models use the same :class:`~sentence_transformers.base.modules.Transformer` + :class:`~sentence_transformers.cross_encoder.modules.LogitScore` architecture as text-only decoder rerankers, but with a multimodal backbone that can process non-text inputs. You can check whether a model supports a given modality using :attr:`~sentence_transformers.cross_encoder.model.CrossEncoder.modalities` and :meth:`~sentence_transformers.cross_encoder.model.CrossEncoder.supports`.
+```
+
+Here are some community models:
+
+- [tomaarsen/Qwen3-VL-Reranker-2B](https://huggingface.co/tomaarsen/Qwen3-VL-Reranker-2B)
+- [tomaarsen/Qwen3-VL-Reranker-8B](https://huggingface.co/tomaarsen/Qwen3-VL-Reranker-8B)
+- [tomaarsen/llama-nemotron-rerank-vl-1b-v2](https://huggingface.co/tomaarsen/llama-nemotron-rerank-vl-1b-v2)
+- [tomaarsen/jina-reranker-m0](https://huggingface.co/tomaarsen/jina-reranker-m0)
+
+See [Cross Encoder > Usage](usage/usage.rst) for usage examples, and the training scripts in `examples/cross_encoder/training/multimodal/` to fine-tune your own multimodal reranker.
 
 ## Community Models
 

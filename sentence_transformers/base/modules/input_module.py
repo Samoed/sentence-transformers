@@ -12,7 +12,7 @@ from sentence_transformers.base.modules.module import Module
 
 class InputModule(Module):
     """
-    Subclass of :class:`sentence_transformers.sentence_transformer.modules.Module`, base class for all input modules in the Sentence
+    Subclass of :class:`sentence_transformers.base.modules.Module`, base class for all input modules in the Sentence
     Transformers library, i.e. modules that are used to process inputs and optionally also perform processing
     in the forward pass.
 
@@ -20,33 +20,38 @@ class InputModule(Module):
     configuration and weights, as well as input processing. It also provides a method for performing the forward pass
     of the module.
 
-    Three abstract methods are defined in this class, which must be implemented by subclasses:
+    Two abstract methods are inherited from :class:`~sentence_transformers.base.modules.Module` and must be implemented
+    by subclasses:
 
-    - :meth:`sentence_transformers.sentence_transformer.modules.Module.forward`: The forward pass of the module.
-    - :meth:`sentence_transformers.sentence_transformer.modules.Module.save`: Save the module to disk.
-    - :meth:`sentence_transformers.sentence_transformer.modules.InputModule.preprocess`: Preprocess the inputs and return a dictionary of preprocessed features.
+    - :meth:`sentence_transformers.base.modules.Module.forward`: The forward pass of the module.
+    - :meth:`sentence_transformers.base.modules.Module.save`: Save the module to disk.
+
+    Additionally, subclasses should override:
+
+    - :meth:`sentence_transformers.base.modules.InputModule.preprocess`: Preprocess the inputs and return a dictionary of preprocessed features. A default implementation is provided that delegates to ``tokenize()``.
 
     Optionally, you may also have to override:
 
-    - :meth:`sentence_transformers.sentence_transformer.modules.Module.load`: Load the module from disk.
+    - :attr:`sentence_transformers.base.modules.InputModule.modalities`: The list of supported input modalities. Defaults to ``["text"]``. Override this to advertise support for non-text modalities (e.g. ``["text", "image"]``).
+    - :meth:`sentence_transformers.base.modules.Module.load`: Load the module from disk.
 
     To assist with loading and saving the module, several utility methods are provided:
 
-    - :meth:`sentence_transformers.sentence_transformer.modules.Module.load_config`: Load the module's configuration from a JSON file.
-    - :meth:`sentence_transformers.sentence_transformer.modules.Module.load_file_path`: Load a file from the module's directory, regardless of whether the module is saved locally or on Hugging Face.
-    - :meth:`sentence_transformers.sentence_transformer.modules.Module.load_dir_path`: Load a directory from the module's directory, regardless of whether the module is saved locally or on Hugging Face.
-    - :meth:`sentence_transformers.sentence_transformer.modules.Module.load_torch_weights`: Load the PyTorch weights of the module, regardless of whether the module is saved locally or on Hugging Face.
-    - :meth:`sentence_transformers.sentence_transformer.modules.Module.save_config`: Save the module's configuration to a JSON file.
-    - :meth:`sentence_transformers.sentence_transformer.modules.Module.save_torch_weights`: Save the PyTorch weights of the module.
-    - :meth:`sentence_transformers.sentence_transformer.modules.InputModule.save_tokenizer`: Save the tokenizer used by the module.
-    - :meth:`sentence_transformers.sentence_transformer.modules.Module.get_config_dict`: Get the module's configuration as a dictionary.
+    - :meth:`sentence_transformers.base.modules.Module.load_config`: Load the module's configuration from a JSON file.
+    - :meth:`sentence_transformers.base.modules.Module.load_file_path`: Load a file from the module's directory, regardless of whether the module is saved locally or on Hugging Face.
+    - :meth:`sentence_transformers.base.modules.Module.load_dir_path`: Load a directory from the module's directory, regardless of whether the module is saved locally or on Hugging Face.
+    - :meth:`sentence_transformers.base.modules.Module.load_torch_weights`: Load the PyTorch weights of the module, regardless of whether the module is saved locally or on Hugging Face.
+    - :meth:`sentence_transformers.base.modules.Module.save_config`: Save the module's configuration to a JSON file.
+    - :meth:`sentence_transformers.base.modules.Module.save_torch_weights`: Save the PyTorch weights of the module.
+    - :meth:`sentence_transformers.base.modules.InputModule.save_tokenizer`: Save the tokenizer used by the module.
+    - :meth:`sentence_transformers.base.modules.Module.get_config_dict`: Get the module's configuration as a dictionary.
 
     And several class variables are defined to assist with loading and saving the module:
 
-    - :attr:`sentence_transformers.sentence_transformer.modules.Module.config_file_name`: The name of the configuration file used to save the module's configuration.
-    - :attr:`sentence_transformers.sentence_transformer.modules.Module.config_keys`: A list of keys used to save the module's configuration.
-    - :attr:`sentence_transformers.sentence_transformer.modules.InputModule.save_in_root`: Whether to save the module's configuration in the root directory of the model or in a subdirectory named after the module.
-    - :attr:`sentence_transformers.sentence_transformer.modules.InputModule.tokenizer`: The tokenizer used by the module.
+    - :attr:`sentence_transformers.base.modules.Module.config_file_name`: The name of the configuration file used to save the module's configuration.
+    - :attr:`sentence_transformers.base.modules.Module.config_keys`: A list of keys used to save the module's configuration.
+    - :attr:`sentence_transformers.base.modules.InputModule.save_in_root`: Whether to save the module's configuration in the root directory of the model or in a subdirectory named after the module.
+    - :attr:`sentence_transformers.base.modules.InputModule.tokenizer`: The tokenizer used by the module.
     """
 
     save_in_root: bool = True
@@ -77,7 +82,7 @@ class InputModule(Module):
         Preprocesses the input texts and returns a dictionary of preprocessed features.
 
         Args:
-            inputs (list[str]): List of input texts to preprocess.
+            inputs (list[SingleInput | PairInput]): List of inputs to preprocess.
             prompt (str | None): Optional prompt to prepend to text inputs.
             **kwargs: Additional keyword arguments for preprocessing, e.g. ``task``.
 
@@ -85,6 +90,7 @@ class InputModule(Module):
             dict[str, torch.Tensor | Any]: Dictionary containing preprocessed features, e.g.
                 ``{"input_ids": ..., "attention_mask": ...}``
         """
+        # TODO: Neatly tackle this mutual infinite recursion between preprocess() and tokenize() due to the deprecation
         # Should be overridden by subclasses, and otherwise just default to 'tokenize'
         return self.tokenize(inputs, **kwargs)
 
