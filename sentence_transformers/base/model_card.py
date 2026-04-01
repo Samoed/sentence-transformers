@@ -1636,7 +1636,7 @@ class BaseModelCardData(CardData):
         if not is_media or not self.save_dir:
             return f"<code>{self._format_example_value(value)}</code>", counter
 
-        # Check cache — cached assets must not increment the counter
+        # Check cache, cached assets must not increment the counter
         content_hash = self._hash_asset(value)
         if content_hash is not None and content_hash in self._asset_cache:
             return self._example_asset_html(value, self._asset_cache[content_hash]), counter

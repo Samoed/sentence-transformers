@@ -1346,6 +1346,6 @@ def test_router_modalities():
     router = Router({"query": [text_module], "document": [multimodal_module_message]})
     assert sorted(router.modalities, key=str) == ["image", "message", "text"]
 
-    # All routes with the same modality — no duplicates
+    # All routes with the same modality, no duplicates
     router = Router({"query": [text_module], "document": [text_module]})
     assert sorted(router.modalities, key=str) == ["text"]

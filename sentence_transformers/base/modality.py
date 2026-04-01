@@ -497,7 +497,7 @@ def infer_modality(
 ) -> Modality:
     """Infer the modality of a single input sample by inspecting its type/structure.
 
-    Pure type-based detection — does not require a processor or tokenizer.
+    Pure type-based detection, does not require a processor or tokenizer.
 
     Args:
         sample: A single input sample to inspect.
@@ -580,7 +580,7 @@ def infer_batch_modality(
     """Infer the modality of a batch of input samples.
 
     If all samples share the same modality, that modality is returned. If the batch contains
-    mixed modalities, ``"message"`` is returned — consistent with how :class:`InputFormatter`
+    mixed modalities, ``"message"`` is returned, consistent with how :class:`InputFormatter`
     handles mixed-modality batches in :meth:`~InputFormatter.parse_inputs`.
 
     Args:

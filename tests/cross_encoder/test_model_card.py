@@ -287,7 +287,7 @@ class TestGenerateUsageSnippetCrossEncoder:
         try:
             model.model_card_data.run_usage_snippet()
         except Exception:
-            # Expected: model.predict fails on image input — similarities stays None
+            # Expected: model.predict fails on image input, similarities stays None
             pass
 
         # Snippet generation should still work regardless

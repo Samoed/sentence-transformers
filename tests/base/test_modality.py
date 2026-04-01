@@ -183,7 +183,7 @@ class TestInferModality:
             infer_modality({"array": np.zeros((8, 3, 224, 224))})
 
     def test_multimodal_dict_returns_sorted_tuple(self):
-        # Keys in insertion order: image before text — must still return sorted tuple
+        # Keys in insertion order: image before text, must still return sorted tuple
         sample = {"image": "cat.jpg", "text": "a photo"}
         assert infer_modality(sample) == ("image", "text")
 

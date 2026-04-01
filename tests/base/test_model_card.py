@@ -539,7 +539,7 @@ class TestSetMultimodalPredictExample:
 
         assert model.model_card_data.usage_examples is not None
         assert len(model.model_card_data.usage_examples) == 3
-        # Should be raw images, NOT dicts — CLIP can't process combined inputs
+        # Should be raw images, NOT dicts, CLIP can't process combined inputs
         assert not isinstance(model.model_card_data.usage_examples[0], dict)
 
     def test_image_only_model(self, stsb_bert_tiny_model: SentenceTransformer) -> None:

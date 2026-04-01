@@ -707,7 +707,7 @@ class Transformer(InputModule):
             )
             self.model.config.tokenizer_class = self.processor.__class__.__name__
 
-        # Evaluate whether we can skip padding — driven by the unpad_inputs property.
+        # Evaluate whether we can skip padding
         self.unpad_inputs = unpad_inputs
 
     @property
@@ -791,7 +791,7 @@ class Transformer(InputModule):
                     return_flash_attn_kwargs=True,
                     return_position_ids=True,  # Crucial for performance
                 )
-                # Ensure the flash attention keys reach the model through **kwargs — they
+                # Ensure the flash attention keys reach the model through **kwargs. They
                 # are not named parameters in the model's forward signature, but the model
                 # passes them through to its attention layers via **kwargs.
                 self.model_forward_params |= {

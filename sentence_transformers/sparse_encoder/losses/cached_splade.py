@@ -42,7 +42,7 @@ class CachedSpladeLoss(SpladeLoss):
         effective batch sizes without additional GPU memory usage.
 
         By performing the GradCache mini-batch embedding at the SpladeLoss level, both the base loss and
-        regularizers still receive pre-computed embeddings via ``compute_loss_from_embeddings()`` — no
+        regularizers still receive pre-computed embeddings via ``compute_loss_from_embeddings()``, no
         changes to base losses or regularizers are needed.
 
         In detail, the GradCache technique works as follows:

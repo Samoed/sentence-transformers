@@ -400,7 +400,7 @@ class BaseModel(nn.Sequential, PeftAdapterMixin, ABC):
     def _input_length(sample) -> int:
         """Estimate the "size" of an input sample for length-based batch sorting.
 
-        The exact value doesn't matter — it's only used to group similarly sized
+        The exact value doesn't matter, it's only used to group similarly sized
         inputs together so that padding waste is minimised within each batch.
         """
         # Strings -> character count (decent proxy for token count). Checked first
