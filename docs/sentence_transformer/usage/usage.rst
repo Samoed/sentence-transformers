@@ -45,6 +45,10 @@ Once you have `installed <../../installation.html>`_ Sentence Transformers, you 
 
 Some Sentence Transformer models support inputs beyond text, such as images, audio, or video. You can check which modalities a model supports using the :attr:`~sentence_transformers.sentence_transformer.model.SentenceTransformer.modalities` property and the :meth:`~sentence_transformers.sentence_transformer.model.SentenceTransformer.supports` method. The :meth:`~sentence_transformers.sentence_transformer.model.SentenceTransformer.encode` method accepts different input formats depending on the modality:
 
+.. tip::
+
+   Multimodal models require additional dependencies. Install them with e.g. ``pip install -U "sentence-transformers[image]"`` for image support. See `Installation <../../installation.html>`_ for all options.
+
 - **Text**: strings.
 - **Image**: PIL images, file paths, URLs, or numpy/torch arrays.
 - **Audio**: file paths, numpy/torch arrays, dicts with ``"array"`` and ``"sampling_rate"`` keys, or ``torchcodec.AudioDecoder`` instances.

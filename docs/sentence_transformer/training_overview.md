@@ -132,6 +132,10 @@ But if instead you want to train from another checkpoint, or from scratch, then 
 
 .. tab:: Multimodal / Vision-Language
 
+    .. tip::
+
+        Multimodal models require additional dependencies. Install them with e.g. ``pip install -U "sentence-transformers[image]"`` for image support. See `Installation <../installation.html>`_ for all options.
+
     You can also train multimodal Sentence Transformer models from Vision-Language Model (VLM) checkpoints. The :class:`~sentence_transformers.base.modules.Transformer` module automatically detects supported modalities (text, image, audio, video) from the model's processor. You can load an already-trained multimodal embedding model:
 
     .. raw:: html
@@ -293,6 +297,11 @@ Additionally, if your dataset has extraneous columns (e.g. sample_id, metadata, 
 ### Multimodal Datasets
 
 ```{eval-rst}
+
+.. tip::
+
+   Multimodal models require additional dependencies. Install them with e.g. ``pip install -U "sentence-transformers[image]"`` for image support. See `Installation <../installation.html>`_ for all options.
+
 SentenceTransformer datasets are not limited to text columns. When using a multimodal model (e.g. a vision-language model), input columns can also contain images (as PIL images, file paths, or URLs), audio, video, or multimodal dictionaries combining multiple modalities. The dataset format rules from `Dataset Format <#dataset-format>`_ still apply: non-label columns are treated as inputs, and a ``"label"`` column provides the target score or class.
 
 For example, a dataset for document screenshot retrieval might have a text ``"query"`` column and an ``"image"`` column containing PIL images::

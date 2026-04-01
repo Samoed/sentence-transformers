@@ -70,6 +70,10 @@ Once you have `installed <../../installation.html>`_ Sentence Transformers, you 
 
 Some CrossEncoder models also support multimodal inputs, allowing you to score pairs that include images, not just text. You can check which modalities a model supports using the :attr:`~sentence_transformers.cross_encoder.model.CrossEncoder.modalities` property and the :meth:`~sentence_transformers.cross_encoder.model.CrossEncoder.supports` method. Each element in a pair can be any of the following:
 
+.. tip::
+
+   Multimodal models require additional dependencies. Install them with e.g. ``pip install -U "sentence-transformers[image]"`` for image support. See `Installation <../../installation.html>`_ for all options.
+
 - **Text**: strings.
 - **Image**: PIL images, file paths, URLs, or numpy/torch arrays.
 - **Audio**: file paths, numpy/torch arrays, dicts with ``"array"`` and ``"sampling_rate"`` keys, or ``torchcodec.AudioDecoder`` instances.

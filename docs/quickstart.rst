@@ -60,6 +60,10 @@ Once you have `installed <installation.html>`_ Sentence Transformers, you can ea
 
 .. tab:: Multimodal
 
+   .. tip::
+
+      Multimodal models require additional dependencies. Install them with e.g. ``pip install -U "sentence-transformers[image]"`` for image support. See `Installation <installation.html>`_ for all options.
+
    .. code-block:: python
 
       from sentence_transformers import SentenceTransformer
