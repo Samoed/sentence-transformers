@@ -68,6 +68,9 @@ def _backward_hook(
 
 
 class CachedGISTEmbedLoss(nn.Module):
+    # Enables per-sample media counting in Transformer.preprocess for VLM minibatching
+    requires_media_counts = True
+
     def __init__(
         self,
         model: SentenceTransformer,

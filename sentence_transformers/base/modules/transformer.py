@@ -420,6 +420,35 @@ class ProcessingKwargs(TypedDict, total=False):
     chat_template: dict[str, Any]
 
 
+def _count_media_per_sample(messages: list[list[dict[str, Any]]]) -> tuple[list[int], list[int]]:
+    """Count images and videos per sample from the message structure.
+
+    Some VLM processors flatten per-sample visual tokens into single tensors (e.g.
+    ``pixel_values`` shape ``(total_visual_tokens, hidden_dim)``), losing the per-sample
+    association. By counting before the processor call, we get reliable per-sample counts
+    that downstream minibatching can use directly.
+    """
+    num_images: list[int] = []
+    num_videos: list[int] = []
+    for sample_messages in messages:
+        img_count = 0
+        vid_count = 0
+        for msg in sample_messages:
+            content = msg.get("content", [])
+            if not isinstance(content, list):
+                continue
+            for item in content:
+                if isinstance(item, dict):
+                    item_type = item.get("type", "")
+                    if item_type == "image":
+                        img_count += 1
+                    elif item_type == "video":
+                        vid_count += 1
+        num_images.append(img_count)
+        num_videos.append(vid_count)
+    return num_images, num_videos
+
+
 class Transformer(InputModule):
     """Hugging Face AutoModel wrapper that handles loading, preprocessing, and inference.
 
@@ -565,6 +594,7 @@ class Transformer(InputModule):
             )
         self.backend = backend
         self.do_lower_case = do_lower_case
+        self.track_media_counts = False
         self._prompt_length_mapping = {}
         self._method_signature_cache: dict[str, set[str]] = {}
 
@@ -897,7 +927,20 @@ class Transformer(InputModule):
             processor_inputs["text"] = self.input_formatter.prepend_prompt_to_texts(processor_inputs["text"], prompt)
             prompt_length = self._get_prompt_length(prompt, **kwargs)
 
+        # Track per-sample image/video counts before the processor flattens them into single tensors.
+        # Losses that minibatch VLM inputs (e.g. CachedMNRL) use these counts to slice visual tensors.
+        # Only used if the Trainer updated track_media_counts to True.
+        num_images_per_sample = None
+        num_videos_per_sample = None
+        if self.training and self.track_media_counts and modality == "message":
+            num_images_per_sample, num_videos_per_sample = _count_media_per_sample(processor_inputs["message"])
+
         processor_output = self._call_processor(modality, processor_inputs, modality_kwargs, common_kwargs)
+
+        if num_images_per_sample is not None and "image_grid_thw" in processor_output:
+            processor_output["num_images_per_sample"] = torch.tensor(num_images_per_sample, dtype=torch.long)
+        if num_videos_per_sample is not None and "video_grid_thw" in processor_output:
+            processor_output["num_videos_per_sample"] = torch.tensor(num_videos_per_sample, dtype=torch.long)
 
         if should_flatten:
             # DataCollatorWithFlattening expects list[dict], but the processor returns dict[str, list].

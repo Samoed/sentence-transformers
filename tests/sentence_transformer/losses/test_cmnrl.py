@@ -192,15 +192,6 @@ class TestCreateMinibatchMixedModality:
         total_visual_tokens = image_grid_thw.prod(dim=1).sum().item()  # 104
         assert total_visual_tokens == 104
 
-        # mm_token_type_ids: 1 at image placeholder positions, 0 elsewhere.
-        # Sample 0: 2 images → groups of 1s at positions 5-8 (4 tokens) and 15-30 (16 tokens)
-        # Sample 1: 1 image → group of 1s at positions 5-10 (6 tokens)
-        # Samples 2-3: no images
-        mm_token_type_ids = torch.zeros(batch_size, seq_len, dtype=torch.long)
-        mm_token_type_ids[0, 5:9] = 1  # image 0: 4 placeholder tokens
-        mm_token_type_ids[0, 15:31] = 1  # image 1: 16 placeholder tokens
-        mm_token_type_ids[1, 5:11] = 1  # image 0: 6 placeholder tokens
-
         return {
             "input_ids": torch.arange(batch_size * seq_len).reshape(batch_size, seq_len),
             "attention_mask": torch.ones(batch_size, seq_len, dtype=torch.long),
@@ -208,7 +199,7 @@ class TestCreateMinibatchMixedModality:
                 total_visual_tokens, hidden_dim
             ),
             "image_grid_thw": image_grid_thw,
-            "mm_token_type_ids": mm_token_type_ids,
+            "num_images_per_sample": torch.tensor([2, 1, 0, 0]),
         }
 
     def test_get_batch_size(self, mixed_modality_features):
@@ -264,9 +255,8 @@ class TestCreateMinibatchMixedModality:
 
     def test_minibatch_grid_rows_coincides_with_batch_size(self):
         """When num_images == batch_size by coincidence (e.g. 3 samples with [2,1,0] images),
-        mm_token_type_ids must be used instead of assuming one image per sample."""
+        num_images_per_sample must be used instead of assuming one image per sample."""
         batch_size = 3
-        seq_len = 30
         hidden_dim = 16
 
         # 3 images across 3 samples, but NOT one per sample:
@@ -281,11 +271,7 @@ class TestCreateMinibatchMixedModality:
             ]
         )
         total_visual_tokens = 48  # 16 * 3
-
-        mm_token_type_ids = torch.zeros(batch_size, seq_len, dtype=torch.long)
-        mm_token_type_ids[0, 2:6] = 1  # image 0: 4 placeholder tokens
-        mm_token_type_ids[0, 10:14] = 1  # image 1: 4 placeholder tokens
-        mm_token_type_ids[1, 2:6] = 1  # image 0: 4 placeholder tokens
+        seq_len = 30
 
         features = {
             "input_ids": torch.arange(batch_size * seq_len).reshape(batch_size, seq_len),
@@ -294,7 +280,7 @@ class TestCreateMinibatchMixedModality:
                 total_visual_tokens, hidden_dim
             ),
             "image_grid_thw": image_grid_thw,
-            "mm_token_type_ids": mm_token_type_ids,
+            "num_images_per_sample": torch.tensor([2, 1, 0]),
         }
 
         # Sample 0 should get grid rows 0-1 (tokens 0-32), not just row 0 (tokens 0-16)

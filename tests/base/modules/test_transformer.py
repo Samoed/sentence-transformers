@@ -16,7 +16,11 @@ from transformers import AutoModel, AutoProcessor
 from transformers import __version__ as transformers_version
 
 from sentence_transformers.base.modules import Transformer
-from sentence_transformers.base.modules.transformer import TRANSFORMER_TASK_DEFAULTS, set_temporary_class_attrs
+from sentence_transformers.base.modules.transformer import (
+    TRANSFORMER_TASK_DEFAULTS,
+    _count_media_per_sample,
+    set_temporary_class_attrs,
+)
 from sentence_transformers.util import batch_to_device
 
 transformer_module = sys.modules[Transformer.__module__]
@@ -1187,3 +1191,65 @@ class TestConditionalFlattening:
 def test_any_to_any_requires_transformers_v5():
     with pytest.raises(ImportError, match="transformers v5"):
         Transformer("hf-internal-testing/tiny-random-LlamaForCausalLM", transformer_task="any-to-any")
+
+
+class TestCountMediaPerSample:
+    def test_multiple_images_per_sample(self):
+        messages = [
+            [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "image", "image": "a"},
+                        {"type": "image", "image": "b"},
+                        {"type": "text", "text": "compare"},
+                    ],
+                }
+            ],
+            [{"role": "user", "content": [{"type": "image", "image": "c"}]}],
+            [{"role": "user", "content": [{"type": "text", "text": "hello"}]}],
+        ]
+        num_images, num_videos = _count_media_per_sample(messages)
+        assert num_images == [2, 1, 0]
+        assert num_videos == [0, 0, 0]
+
+    def test_videos(self):
+        messages = [
+            [{"role": "user", "content": [{"type": "video", "video": "v1"}, {"type": "text", "text": "describe"}]}],
+            [{"role": "user", "content": [{"type": "video", "video": "v2"}, {"type": "video", "video": "v3"}]}],
+        ]
+        num_images, num_videos = _count_media_per_sample(messages)
+        assert num_images == [0, 0]
+        assert num_videos == [1, 2]
+
+    def test_mixed_images_and_videos(self):
+        messages = [
+            [{"role": "user", "content": [{"type": "image", "image": "i"}, {"type": "video", "video": "v"}]}],
+        ]
+        num_images, num_videos = _count_media_per_sample(messages)
+        assert num_images == [1]
+        assert num_videos == [1]
+
+    def test_text_only(self):
+        messages = [
+            [{"role": "user", "content": [{"type": "text", "text": "hello"}]}],
+            [{"role": "user", "content": "plain string"}],
+        ]
+        num_images, num_videos = _count_media_per_sample(messages)
+        assert num_images == [0, 0]
+        assert num_videos == [0, 0]
+
+    def test_multi_turn_messages(self):
+        messages = [
+            [
+                {"role": "user", "content": [{"type": "image", "image": "a"}]},
+                {"role": "assistant", "content": [{"type": "text", "text": "a cat"}]},
+                {"role": "user", "content": [{"type": "image", "image": "b"}, {"type": "text", "text": "and this?"}]},
+            ],
+        ]
+        num_images, num_videos = _count_media_per_sample(messages)
+        assert num_images == [2]
+        assert num_videos == [0]
+
+    def test_empty_batch(self):
+        assert _count_media_per_sample([]) == ([], [])

@@ -72,46 +72,31 @@ def _create_minibatch(sentence_feature: dict[str, Any], begin: int, end: int) ->
     VLMs like Qwen2-VL flatten per-sample visual tokens into a single tensor
     (e.g. ``pixel_values`` shape ``(total_visual_tokens, hidden_dim)``) with a grid tensor
     (e.g. ``image_grid_thw`` shape ``(num_items, 3)``) whose per-row product gives the token
-    count per item.  When ``mm_token_type_ids`` is available, items are mapped to samples via
-    contiguous-group detection; otherwise we fall back to assuming one grid row per sample
-    when ``grid.shape[0] == batch_size``.
-
-    TODO: Let's see if we can move this per-sample images/video counting to before processing
+    count per item.  ``num_images_per_sample`` / ``num_videos_per_sample`` (precomputed by
+    ``Transformer.preprocess``) map grid rows to samples; when unavailable we fall back to
+    assuming one grid row per sample when ``grid.shape[0] == batch_size``.
     """
     if "cu_seq_lens_q" not in sentence_feature:
         batch_size = _get_batch_size(sentence_feature)
         end = min(end, batch_size)
 
         custom_ranges: dict[str, tuple[int, int]] = {}
-        mm_token_type_ids = sentence_feature.get("mm_token_type_ids")
-
-        for grid_key, pixel_key, mm_type_id in (
-            ("image_grid_thw", "pixel_values", 1),
-            ("video_grid_thw", "pixel_values_videos", 2),
+        for grid_key, pixel_key, count_key in (
+            ("image_grid_thw", "pixel_values", "num_images_per_sample"),
+            ("video_grid_thw", "pixel_values_videos", "num_videos_per_sample"),
         ):
             grid = sentence_feature.get(grid_key)
             pixel_values = sentence_feature.get(pixel_key)
             if grid is None or pixel_values is None:
                 continue
-            if pixel_values.shape[0] == batch_size and mm_token_type_ids is None:
-                continue
 
-            if mm_token_type_ids is not None:
-                # Count items per sample by finding groups of consecutive mm_type_id
-                is_mm = mm_token_type_ids == mm_type_id
-                shifted = torch.cat(
-                    [torch.zeros(batch_size, 1, dtype=torch.bool, device=is_mm.device), is_mm[:, :-1]], dim=1
-                )
-                num_per_sample = (is_mm & ~shifted).sum(dim=1)
-                if int(num_per_sample.sum().item()) != grid.shape[0]:
-                    # Sanity check to fall back to default slicing if the counts don't match the grid shape
-                    continue
+            num_per_sample = sentence_feature.get(count_key)
+            if num_per_sample is not None:
                 cumsum_items = num_per_sample.cumsum(dim=0)
                 grid_begin = 0 if begin == 0 else int(cumsum_items[begin - 1].item())
                 grid_end = int(cumsum_items[end - 1].item())
                 custom_ranges[grid_key] = (grid_begin, grid_end)
             elif grid.shape[0] == batch_size:
-                # Assume one grid row per sample and slice accordingly
                 grid_begin, grid_end = begin, end
             else:
                 continue
@@ -190,6 +175,9 @@ def _backward_hook(
 
 
 class CachedMultipleNegativesRankingLoss(nn.Module):
+    # Enables per-sample media counting in Transformer.preprocess for VLM minibatching
+    requires_media_counts = True
+
     def __init__(
         self,
         model: SentenceTransformer,

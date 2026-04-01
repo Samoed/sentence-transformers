@@ -410,8 +410,21 @@ class BaseTrainer(Trainer, ABC):
         model: BaseModel,
     ) -> torch.nn.Module:
         if isinstance(loss, torch.nn.Module):
-            return loss.to(model.device)
-        return loss(model).to(model.device)
+            loss = loss.to(model.device)
+        else:
+            loss = loss(model).to(model.device)
+
+        # Enable per-sample media counting in Transformer.preprocess for losses that minibatch VLM inputs
+        if getattr(loss, "requires_media_counts", False):
+            if isinstance(model[0], Router):
+                input_modules = [route[0] for route in model[0].sub_modules.values()]  # type: ignore[index]
+            else:
+                input_modules = [model[0]]
+            for module in input_modules:
+                if hasattr(module, "track_media_counts"):
+                    module.track_media_counts = True
+
+        return loss
 
     @abstractmethod
     def get_default_loss(self, model: BaseModel) -> torch.nn.Module:

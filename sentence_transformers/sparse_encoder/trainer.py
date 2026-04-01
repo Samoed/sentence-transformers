@@ -171,10 +171,7 @@ class SparseEncoderTrainer(BaseTrainer):
         loss: Callable[[SparseEncoder], torch.nn.Module] | torch.nn.Module,
         model: SparseEncoder,
     ) -> torch.nn.Module:
-        if isinstance(loss, torch.nn.Module):
-            loss = loss.to(model.device)
-        else:
-            loss = loss(model).to(model.device)
+        loss = super().prepare_loss(loss, model)
 
         is_splade_loss = isinstance(loss, SpladeLoss) if loss is not None else False
         splade_scheduler_callback_index = None
