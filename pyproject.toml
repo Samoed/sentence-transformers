@@ -31,7 +31,7 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
-dependencies = [
+dependencies = [  # TODO: Check if >=4.41.0 still works
     "transformers>=4.41.0,<6.0.0",
     "huggingface-hub>=0.20.0",
     "torch>=1.11.0",
@@ -49,13 +49,13 @@ Repository = "https://github.com/huggingface/sentence-transformers/"
 
 [project.optional-dependencies]
 image = ["transformers[vision]"]
-audio = ["transformers[audio]", "torchcodec>=0.7.0"]
-video = ["transformers[video]", "torchcodec>=0.9.0"]
+audio = ["transformers[audio]"]
+video = ["transformers[video]"]
 train = ["datasets", "accelerate>=0.20.3"]
 onnx = ["optimum-onnx[onnxruntime]"]
 onnx-gpu = ["optimum-onnx[onnxruntime-gpu]"]
 openvino = ["optimum-intel[openvino]"]
-dev = ["datasets", "accelerate>=0.20.3", "pre-commit", "pytest", "pytest-cov", "pytest-env", "pytest-subtests", "pytest-xdist", "peft", "transformers[vision,audio,video]", "torchcodec>=0.9.0"]
+dev = ["datasets", "accelerate>=0.20.3", "pre-commit", "pytest", "pytest-cov", "pytest-env", "pytest-subtests", "pytest-xdist", "peft", "transformers[vision,audio,video]"]
 
 [build-system]
 requires = ["setuptools>=42", "wheel"]

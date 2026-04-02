@@ -19,7 +19,7 @@ _DEPENDENCY_EXTRA_HINTS: list[tuple[tuple[str, ...], str]] = [
     # This must be checked before the generic "torchvision" hint below.
     (("read_video",), 'pip install -U "sentence-transformers[video]"  # or [audio] for audio-only models'),
     (("torchvision",), 'pip install -U "sentence-transformers[image]"'),
-    (("torchcodec",), 'pip install -U "sentence-transformers[video]"  # or [audio] for audio-only models'),
+    (("torchcodec",), "pip install -U torchcodec"),
     (("soundfile", "librosa"), 'pip install -U "sentence-transformers[audio]"'),
 ]
 

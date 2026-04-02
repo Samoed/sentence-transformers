@@ -20,14 +20,16 @@ from tests.utils import is_ci
 
 try:
     from torchcodec.decoders import AudioDecoder, VideoDecoder
-except ImportError:
+except (ImportError, OSError):
     AudioDecoder = None
     VideoDecoder = None
 
 try:
-    from torchcodec.encoders import AudioEncoder
-except ImportError:
-    AudioEncoder = None
+    import torchaudio
+
+    _has_torchaudio = True
+except (ImportError, OSError):
+    _has_torchaudio = False
 
 if is_ci():
     pytest.skip(
@@ -281,16 +283,16 @@ def get_sample_audio(n: int = 2) -> dict[str, list[Any]]:
 
     # Generate local file paths
     paths = []
-    if AudioEncoder is not None:
+    if _has_torchaudio:
         for i, arr in enumerate(arrays):
             temp_file = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
             temp_file.close()
-            tensor = torch.from_numpy(arr).unsqueeze(0).float()  # (1, num_samples) for AudioEncoder
-            AudioEncoder(tensor, sample_rate=sampling_rate).to_file(temp_file.name)
+            tensor = torch.from_numpy(arr).unsqueeze(0).float()  # (1, num_samples) for torchaudio
+            torchaudio.save(temp_file.name, tensor, sampling_rate)
             paths.append(temp_file.name)
             _temp_media_files.append(temp_file.name)
     else:
-        # Fallback if torchcodec not available
+        # Fallback if torchaudio not available
         paths = urls[:n]
 
     result = {
@@ -301,7 +303,7 @@ def get_sample_audio(n: int = 2) -> dict[str, list[Any]]:
         # "path": paths,  # Rarely supported currently
     }
 
-    if AudioDecoder is not None and AudioEncoder is not None:
+    if AudioDecoder is not None and _has_torchaudio:
         result["audio_decoder"] = [AudioDecoder(path) for path in paths]
 
     return result

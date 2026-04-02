@@ -4,14 +4,17 @@ We recommend **Python 3.10+**, **[PyTorch 1.11.0+](https://pytorch.org/get-start
 
 - **Default:** Allows loading, saving, and inference (i.e., getting embeddings) of text models.
 - **Image:** Adds dependencies for models that process images (e.g., CLIP, VLM-based models).
-- **Audio:** Adds dependencies for models that process audio inputs. Includes `torchcodec` for decoding audio files.
-- **Video:** Adds dependencies for models that process video inputs. Includes `torchcodec` for decoding video files.
+- **Audio:** Adds dependencies for models that process audio inputs.
+- **Video:** Adds dependencies for models that process video inputs.
 - **Training:** Adds dependencies for training and finetuning models.
 - **ONNX:** Adds dependencies for loading, saving, inference, optimizing, and quantizing of models using the ONNX backend.
 - **OpenVINO:** Adds dependencies for loading, saving, and inference of models using the OpenVINO backend.
 - **Development**: All of the above plus some dependencies for developing Sentence Transformers, see [Editable Install](#editable-install).
 
-Note that you can mix and match the various extras, e.g. `pip install -U "sentence-transformers[train,image,video,onnx-gpu]"`.
+```{eval-rst}
+| To pass :class:`torchcodec.AudioDecoder <torchcodec.decoders.AudioDecoder>` or :class:`torchcodec.VideoDecoder <torchcodec.decoders.VideoDecoder>` instances as inputs, you must install `torchcodec <https://github.com/pytorch/torchcodec>`_ separately, e.g. with: ``pip install torchcodec``.
+| Note that you can mix and match the various extras, e.g. ``pip install -U "sentence-transformers[train,image,video,onnx-gpu]"``.
+```
 
 ## Install with uv
 

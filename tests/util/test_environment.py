@@ -12,7 +12,7 @@ from sentence_transformers.util.environment import suggest_extra_on_exception
         (ImportError, "No module named 'PIL'", r"sentence-transformers\[image\]"),
         (ImportError, "No module named 'pillow'", r"sentence-transformers\[image\]"),
         (ImportError, "No module named 'torchvision'", r"sentence-transformers\[image\]"),
-        (ImportError, "No module named 'torchcodec'", r"sentence-transformers\[video\]"),
+        (ImportError, "No module named 'torchcodec'", r"pip install -U torchcodec"),
         (AttributeError, "module has no attribute 'read_video'", r"sentence-transformers\[video\]"),
         (ImportError, "No module named 'soundfile'", r"sentence-transformers\[audio\]"),
         (ImportError, "No module named 'librosa'", r"sentence-transformers\[audio\]"),
@@ -70,6 +70,6 @@ def test_suggest_extra_monkeypatch_missing_torchcodec(monkeypatch: pytest.Monkey
 
     monkeypatch.setattr(AutoProcessor, "from_pretrained", mock_from_pretrained)
 
-    with pytest.raises(AttributeError, match=r"sentence-transformers\[video\]"):
+    with pytest.raises(AttributeError, match=r"pip install -U torchcodec"):
         with suggest_extra_on_exception():
             AutoProcessor.from_pretrained("some-model")

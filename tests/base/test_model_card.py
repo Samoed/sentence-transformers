@@ -36,9 +36,9 @@ if is_datasets_available():
         VideoFeature = None
 
 try:
-    from torchcodec.encoders import VideoEncoder as _VideoEncoder
+    import av as _av
 except ImportError:
-    _VideoEncoder = None
+    _av = None
 
 if not is_training_available():
     pytest.skip(
@@ -277,10 +277,7 @@ class TestSavePredictExampleAssets:
 
     def test_audio_dict_saved_as_wav(self) -> None:
         """AudioDict saved to assets/ as .wav file."""
-        try:
-            from torchcodec.encoders import AudioEncoder  # noqa: F401
-        except ImportError:
-            pytest.skip("torchcodec not installed")
+        pytest.importorskip("torchaudio")
 
         data = _make_model_card_data()
         audio = {"array": np.random.randn(16000).astype(np.float32), "sampling_rate": 16000}
@@ -294,10 +291,7 @@ class TestSavePredictExampleAssets:
 
     def test_video_dict_saved_as_mp4(self) -> None:
         """VideoDict saved to assets/ as .mp4 file."""
-        try:
-            from torchcodec.encoders import VideoEncoder  # noqa: F401
-        except ImportError:
-            pytest.skip("torchcodec not installed")
+        pytest.importorskip("av")
 
         data = _make_model_card_data()
         # (T, C, H, W) uint8 video tensor
@@ -1083,7 +1077,7 @@ class TestFormatAndSaveExampleVideoDecoder:
             assert counter == 0
 
 
-_can_test_video_dataset = is_datasets_available() and VideoFeature is not None and _VideoEncoder is not None
+_can_test_video_dataset = is_datasets_available() and VideoFeature is not None and _av is not None
 
 
 @contextmanager
@@ -1093,9 +1087,21 @@ def _create_video_dataset(n: int = 5):
         paths = []
         for i in range(n):
             w, h = 32 + i * 16, 32 + i * 16
-            frames = torch.randint(0, 255, (4, 3, h, w), dtype=torch.uint8)
+            num_frames = 4
+            fps = 10 + i * 5
+            frames = torch.randint(0, 255, (num_frames, h, w, 3), dtype=torch.uint8).numpy()
             path = os.path.join(tmpdir, f"video_{i}.mp4")
-            _VideoEncoder(frames, frame_rate=10 + i * 5).to_file(path)
+            with _av.open(path, mode="w") as container:
+                stream = container.add_stream("h264", rate=fps)
+                stream.width = w
+                stream.height = h
+                stream.pix_fmt = "yuv420p"
+                for frame_data in frames:
+                    frame = _av.VideoFrame.from_ndarray(frame_data, format="rgb24")
+                    for packet in stream.encode(frame):
+                        container.mux(packet)
+                for packet in stream.encode():
+                    container.mux(packet)
             paths.append(path)
         ds = Dataset.from_dict({"video": paths})
         ds = ds.cast_column("video", VideoFeature())
@@ -1145,9 +1151,9 @@ class TestComputeDatasetMetricsVideo:
 class TestSaveAssetVideoDecoderNoSourcePath:
     """Test _save_asset when VideoDecoder has no source path (decode + encode fallback)."""
 
-    @pytest.mark.skipif(_VideoEncoder is None, reason="torchcodec encoder not available")
+    @pytest.mark.skipif(_av is None, reason="av (PyAV) not available")
     def test_video_decoder_without_source_path_decoded_and_saved(self) -> None:
-        """VideoDecoder with path=None falls back to decode → VideoDict → VideoEncoder."""
+        """VideoDecoder with path=None falls back to decode → VideoDict → av encoding."""
         with _patch_video_decoder():
             data = _make_model_card_data()
             with tempfile.TemporaryDirectory() as tmpdir:

@@ -56,12 +56,12 @@ except ImportError:
 
 try:
     from torchcodec.decoders import AudioDecoder
-except ImportError:
+except (ImportError, OSError):
     AudioDecoder = None  # type: ignore[assignment,misc]
 
 try:
     from torchcodec.decoders import VideoDecoder
-except ImportError:
+except (ImportError, OSError):
     VideoDecoder = None  # type: ignore[assignment,misc]
 
 logger = logging.getLogger(__name__)
@@ -791,18 +791,16 @@ class BaseModelCardData(CardData):
         # AudioDict: {"array": ..., "sampling_rate": ...}
         if isinstance(value, dict) and "array" in value and "sampling_rate" in value:
             try:
-                from torchcodec.encoders import AudioEncoder
+                import torchaudio
 
                 array = value["array"]
                 if not isinstance(array, torch.Tensor):
                     array = torch.as_tensor(array)
                 if array.ndim == 1:
-                    array = array.unsqueeze(0)  # (1, num_samples) for AudioEncoder
+                    array = array.unsqueeze(0)  # (1, num_samples) for torchaudio
                 filename = f"{prefix}audio_{idx}.wav"
                 rel_path = f"assets/{filename}"
-                AudioEncoder(array.float(), sample_rate=value["sampling_rate"]).to_file(
-                    os.path.join(assets_dir, filename)
-                )
+                torchaudio.save(os.path.join(assets_dir, filename), array.float().cpu(), value["sampling_rate"])
                 if content_hash is not None:
                     self._asset_cache[content_hash] = rel_path
                 return rel_path
@@ -812,17 +810,17 @@ class BaseModelCardData(CardData):
         # VideoDict: {"array": ..., "video_metadata": ...} - save as mp4
         if isinstance(value, dict) and "array" in value and "video_metadata" in value:
             try:
-                from torchcodec.encoders import VideoEncoder
+                import av
 
                 array = value["array"]
                 if not isinstance(array, torch.Tensor):
                     array = torch.as_tensor(array)
-                # VideoEncoder expects (N, C, H, W) uint8
                 if array.ndim == 5:
                     array = array[0]
-                if array.ndim == 4 and array.shape[-1] in (1, 3, 4):
-                    # (T, H, W, C) -> (T, C, H, W)
-                    array = array.permute(0, 3, 1, 2)
+                # Ensure (T, H, W, C) uint8 for av
+                if array.ndim == 4 and array.shape[1] in (1, 3, 4) and array.shape[-1] not in (1, 3, 4):
+                    # (T, C, H, W) -> (T, H, W, C)
+                    array = array.permute(0, 2, 3, 1)
                 if array.dtype != torch.uint8:
                     if array.is_floating_point() and array.max() <= 1.0:
                         array = (array * 255).clamp(0, 255).to(torch.uint8)
@@ -832,7 +830,20 @@ class BaseModelCardData(CardData):
                 fps = value.get("video_metadata", {}).get("fps", 24)
                 filename = f"{prefix}video_{idx}.mp4"
                 rel_path = f"assets/{filename}"
-                VideoEncoder(array.cpu(), frame_rate=fps).to_file(os.path.join(assets_dir, filename))
+                filepath = os.path.join(assets_dir, filename)
+                frames = array.cpu().numpy()
+                height, width = frames.shape[1], frames.shape[2]
+                with av.open(filepath, mode="w") as container:
+                    stream = container.add_stream("h264", rate=round(fps))
+                    stream.width = width
+                    stream.height = height
+                    stream.pix_fmt = "yuv420p"
+                    for frame_data in frames:
+                        frame = av.VideoFrame.from_ndarray(frame_data, format="rgb24")
+                        for packet in stream.encode(frame):
+                            container.mux(packet)
+                    for packet in stream.encode():
+                        container.mux(packet)
                 if content_hash is not None:
                     self._asset_cache[content_hash] = rel_path
                 return rel_path
