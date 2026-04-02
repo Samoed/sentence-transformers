@@ -51,11 +51,11 @@ Repository = "https://github.com/huggingface/sentence-transformers/"
 image = ["transformers[vision]"]
 audio = ["transformers[audio]"]
 video = ["transformers[video]"]
-train = ["datasets", "accelerate>=0.20.3"]
+train = ["datasets>=2.0.0", "accelerate>=0.20.3"]
 onnx = ["optimum-onnx[onnxruntime]"]
 onnx-gpu = ["optimum-onnx[onnxruntime-gpu]"]
 openvino = ["optimum-intel[openvino]"]
-dev = ["datasets", "accelerate>=0.20.3", "pre-commit", "pytest", "pytest-cov", "pytest-env", "pytest-subtests", "pytest-xdist", "peft", "transformers[vision,audio,video]"]
+dev = ["datasets>=2.0.0", "accelerate>=0.20.3", "pre-commit", "pytest", "pytest-cov", "pytest-env", "pytest-subtests", "pytest-xdist", "peft", "transformers[vision,audio,video]"]
 
 [build-system]
 requires = ["setuptools>=42", "wheel"]
