@@ -149,6 +149,7 @@ EXPECT_FORWARD_FAIL = {
     "paligemma": [  # Paligemma doesn't accept URL images if there's also a text
         "image+text (url, text)"
     ],
+    "voxtral_realtime": None,  # RuntimeError: The size of tensor a (39) must match the size of tensor b (51) at non-singleton dimension 1
 }
 # If an architecture outputs sentence_embeddings directly, then they're likely using get_..._features,
 # which typically don't support multimodal inputs, so we can expect multimodal inputs to fail for those architectures

@@ -323,6 +323,7 @@ _FEATURE_EXTRACTION_EDGE_CASES: dict[str, tuple[ModalityConfig, str, bool]] = {
     "wav2vec2-conformer": _AUDIO_MODALITY_CONFIG,
     "wavlm": _AUDIO_MODALITY_CONFIG,
     "whisper": _AUDIO_MODALITY_CONFIG,
+    "voxtral_realtime": _AUDIO_MODALITY_CONFIG,
 }
 
 _FILL_MASK_EDGE_CASES: dict[str, tuple[ModalityConfig, str, bool]] = {
@@ -385,6 +386,15 @@ _ANY_TO_ANY_EDGE_CASES = {
     ),
     "paligemma": (
         {("image", "text"): {"method": "forward", "method_output_name": "logits"}},
+        "causal_logits",
+        False,
+    ),
+    # Models supporting text+audio, but no text-only
+    "voxtral_realtime": (
+        {
+            "audio": {"method": "forward", "method_output_name": "logits"},
+            ("audio", "text"): {"method": "forward", "method_output_name": "logits"},
+        },
         "causal_logits",
         False,
     ),
