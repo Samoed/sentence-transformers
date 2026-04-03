@@ -77,8 +77,8 @@ class CrossEncoderModelCardData(BaseModelCardData):
     """
 
     # Potentially provided by the user
-    task_name: str = field(default=None)
-    tags: list[str] | None = field(
+    task_name: str | None = None
+    tags: list[str] = field(
         default_factory=lambda: [
             "sentence-transformers",
             "cross-encoder",

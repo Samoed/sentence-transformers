@@ -319,15 +319,12 @@ class BaseModelCardData(CardData):
     model_id: str | None = None
     train_datasets: list[dict[str, str]] = field(default_factory=list)
     eval_datasets: list[dict[str, str]] = field(default_factory=list)
-    task_name: str = (
-        "semantic textual similarity, semantic search, paraphrase mining, text classification, clustering, and more"
-    )
+    task_name: str | None = "retrieval"
     tags: list[str] = field(
         default_factory=lambda: [
             "sentence-transformers",
             "sentence-similarity",
             "feature-extraction",
-            "dense",
         ]
     )
     local_files_only: bool = False

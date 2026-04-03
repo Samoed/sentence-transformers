@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import field
 from typing import Any
 
 import torch
@@ -55,6 +56,19 @@ class SentenceTransformerModelCardData(BaseModelCardData):
         ...     ),
         ... )
     """
+
+    # Potentially provided by the user
+    task_name: str = (
+        "semantic textual similarity, semantic search, paraphrase mining, classification, clustering, and more"
+    )
+    tags: list[str] = field(
+        default_factory=lambda: [
+            "sentence-transformers",
+            "sentence-similarity",
+            "feature-extraction",
+            "dense",
+        ]
+    )
 
     def try_to_set_base_model(self):
         super().try_to_set_base_model()
