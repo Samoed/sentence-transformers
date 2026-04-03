@@ -75,6 +75,48 @@ If you're using a GPU, then you can use the following options to speed up your i
       sentences = ["This is an example sentence", "Each sentence is converted"]
       embeddings = model.encode(sentences)
 
+.. tab:: Flash Attention
+
+   `Flash Attention <https://github.com/Dao-AILab/flash-attention>`_ is an efficient attention implementation that can significantly
+   speed up inference on GPUs. When flash attention with variable-length support is available, Sentence Transformers automatically
+   skips padding for text-only inputs by concatenating them into a single sequence. This eliminates the overhead of padding shorter
+   texts to the longest text in the batch, which is especially beneficial when input lengths vary widely.
+
+   To use flash attention, specify ``attn_implementation="flash_attention_2"`` in ``model_kwargs``. Flash attention can be installed
+   via ``pip install kernels``, which provides flash attention support without needing the ``flash-attn`` package, or alternatively
+   via ``pip install flash-attn``:
+
+   .. code-block:: python
+
+      from sentence_transformers import SentenceTransformer
+
+      model = SentenceTransformer(
+          "sentence-transformers/all-MiniLM-L6-v2",
+          model_kwargs={"attn_implementation": "flash_attention_2", "torch_dtype": "bfloat16"},
+      )
+
+      sentences = ["This is an example sentence", "Each sentence is converted"]
+      embeddings = model.encode(sentences)
+
+   .. note::
+
+      Automatic input unpadding requires ``transformers >= 5.0.0`` and is enabled by default when flash attention
+      with variable-length support is installed and compatible with the model architecture. You can control this
+      via :attr:`~sentence_transformers.base.modules.transformer.Transformer.unpad_inputs` on the underlying
+      :class:`~sentence_transformers.base.modules.transformer.Transformer` module:
+
+      .. code-block:: python
+
+         model[0].unpad_inputs = False   # Force padding (e.g. for architectures that don't support unpadded inputs)
+         model[0].unpad_inputs = True    # Explicitly request unpadding
+         model[0].unpad_inputs = None    # Auto-detect (default)
+
+   .. seealso::
+
+      The `Transformers Attention Interface <https://huggingface.co/docs/transformers/en/attention_interface>`_ documentation
+      for a full overview of available ``attn_implementation`` options, including ``"flash_attention_2"``,
+      ``"flash_attention_3"``, ``"sdpa"``, and more.
+
 ONNX
 ----
 

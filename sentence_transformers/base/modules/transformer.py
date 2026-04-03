@@ -485,8 +485,6 @@ class Transformer(InputModule):
     :class:`~sentence_transformers.sentence_transformer.model.SentenceTransformer`, :class:`~sentence_transformers.sparse_encoder.model.SparseEncoder`,
     or :class:`~sentence_transformers.cross_encoder.model.CrossEncoder` pipeline.
 
-    TODO: Mention the variable length FA2 speed improvements. Perhaps here + the SentenceTransformer efficiency docs?
-
     Args:
         model_name_or_path (str): Hugging Face model name or path to a local model directory.
         transformer_task (str, optional): The task determining which ``AutoModel``-like class to load.
