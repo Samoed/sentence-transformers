@@ -237,7 +237,7 @@ def test_use_auth_token_warns() -> None:
     """Passing use_auth_token should emit a FutureWarning."""
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
-        SentenceTransformer(modules=[], use_auth_token="fake-token")
+        SentenceTransformer(modules=[torch.nn.Linear(10, 10)], use_auth_token="fake-token")
         future_warnings = [
             x for x in w if issubclass(x.category, FutureWarning) and "use_auth_token" in str(x.message)
         ]
@@ -247,13 +247,19 @@ def test_use_auth_token_warns() -> None:
 def test_use_auth_token_and_token_raises() -> None:
     """Passing both token and use_auth_token should raise ValueError."""
     with pytest.raises(ValueError, match="Both `token` and `use_auth_token`"):
-        SentenceTransformer(modules=[], token="tok", use_auth_token="tok2")
+        SentenceTransformer(modules=[torch.nn.Linear(10, 10)], token="tok", use_auth_token="tok2")
+
+
+def test_empty_modules_raises() -> None:
+    """Passing an empty modules list should raise ValueError."""
+    with pytest.raises(ValueError, match="An empty modules list was passed"):
+        SentenceTransformer(modules=[])
 
 
 def test_cache_folder_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
     """When cache_folder is None, it should fall back to SENTENCE_TRANSFORMERS_HOME env var."""
     monkeypatch.setenv("SENTENCE_TRANSFORMERS_HOME", "/tmp/fake_cache")
-    model = SentenceTransformer(modules=[])
+    model = SentenceTransformer(modules=[torch.nn.Linear(10, 10)])
     assert model is not None
 
 
@@ -721,7 +727,7 @@ def test_dtype_property(stsb_bert_tiny_model: SentenceTransformer) -> None:
 
 def test_dtype_no_parameters() -> None:
     """dtype should return None for a model with no parameters."""
-    model = SentenceTransformer(modules=[])
+    model = SentenceTransformer(modules=[torch.nn.Module()])
     assert model.dtype is None
 
 

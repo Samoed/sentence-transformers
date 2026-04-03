@@ -210,6 +210,12 @@ class BaseModel(nn.Sequential, PeftAdapterMixin, ABC):
         if modules is not None and not isinstance(modules, OrderedDict):
             modules = OrderedDict([(str(idx), module) for idx, module in enumerate(modules)])
 
+        if modules is not None and len(modules) == 0:
+            raise ValueError(
+                f"An empty modules list was passed to {type(self).__name__}. "
+                "Please provide at least one module, e.g. a Transformer module."
+            )
+
         super().__init__(modules)
 
         # Cast non-input modules to match the first module's dtype for consistency.
