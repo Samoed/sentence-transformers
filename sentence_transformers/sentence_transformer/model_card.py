@@ -62,7 +62,7 @@ class SentenceTransformerModelCardData(BaseModelCardData):
             if self.model[0].base_model:
                 self.set_base_model(self.model[0].base_model)
 
-    def run_usage_snippet(self) -> dict[str, Any]:
+    def run_usage_snippet(self) -> None:
         if self.usage_examples is None:
             if self.ir_model:
                 self.usage_examples = [

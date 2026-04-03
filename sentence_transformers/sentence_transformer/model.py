@@ -571,6 +571,9 @@ class SentenceTransformer(BaseModel, FitMixin):
             convert_to_tensor = False
             convert_to_numpy = False
 
+        if batch_size <= 0:
+            raise ValueError(f"batch_size must be a positive integer, got {batch_size}.")
+
         # Cast an individual input to a list with length 1
         is_singular_input = self.is_singular_input(inputs)
         if is_singular_input:
@@ -881,7 +884,7 @@ class SentenceTransformer(BaseModel, FitMixin):
                 elif isinstance(embeddings[0], np.ndarray):
                     embeddings = np.concatenate(embeddings, axis=0)
             elif convert_to_tensor:
-                embeddings = torch.Tensor()
+                embeddings = torch.tensor([])
             elif convert_to_numpy:
                 embeddings = np.array([])
             return embeddings
@@ -928,7 +931,7 @@ class SentenceTransformer(BaseModel, FitMixin):
 
     @deprecated("The `get_sentence_features` method is deprecated and will be removed in a future version.")
     def get_sentence_features(self, *features) -> dict[str, Tensor]:
-        return self._first_module().get_sentence_features(*features)
+        return self[0].get_sentence_features(*features)
 
     def get_embedding_dimension(self) -> int | None:
         """
@@ -1092,7 +1095,7 @@ class SentenceTransformer(BaseModel, FitMixin):
         config_kwargs: dict[str, Any] | None = None,
         model_type: str | None = None,
     ) -> tuple[list[nn.Module] | OrderedDict[str, nn.Module], dict[str, Any]]:
-        # Fallback for loading models saved as a different model type (e.g. CrossEncoder, SparseEncoder)
+        # Create default SentenceTransformer modules for models saved as a different model type (e.g. CrossEncoder, SparseEncoder)
         return super()._load_default_modules(
             model_name_or_path,
             token,
