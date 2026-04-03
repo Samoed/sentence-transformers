@@ -212,14 +212,14 @@ class BaseModel(nn.Sequential, PeftAdapterMixin, ABC):
 
         super().__init__(modules)
 
-        # If all parameters share the same dtype, ensure consistency (e.g. after module composition).
-        # Skip for mixed-dtype models to avoid breaking intentional dtype differences.
-        try:
-            dtypes = {p.dtype for p in self.parameters()}
-            if len(dtypes) == 1:
-                self.to(dtypes.pop())
-        except StopIteration:
-            pass
+        # Cast non-input modules to match the first module's dtype for consistency.
+        # The first module (e.g. Transformer) is the dtype source of truth and downstream
+        # modules (Dense, Pooling, etc.) should match it.
+        first_param = next(self[0].parameters(), None)
+        if first_param is not None:
+            first_dtype = first_param.dtype
+            for module in list(self.children())[1:]:
+                module.to(first_dtype)
 
         self.to(device)
         self.is_hpu_graph_enabled = False
