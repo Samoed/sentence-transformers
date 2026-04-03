@@ -248,9 +248,18 @@ class CrossEncoder(BaseModel, FitMixin):
                 config_kwargs=config_kwargs,
                 backend=self.backend,
             )
+            true_token_id = transformer_model.tokenizer.convert_tokens_to_ids("yes")
+            false_token_id = transformer_model.tokenizer.convert_tokens_to_ids("no")
+            if true_token_id is None or false_token_id is None:
+                raise ValueError(
+                    "The tokenizer does not have 'yes' and/or 'no' tokens, which are used as the "
+                    "default true/false tokens for the LogitScore post-processing module. Please "
+                    "provide custom modules with your desired LogitScore configuration, or use a "
+                    "model with a tokenizer that supports these tokens."
+                )
             post_processing = LogitScore(
-                true_token_id=transformer_model.tokenizer.convert_tokens_to_ids("yes"),
-                false_token_id=transformer_model.tokenizer.convert_tokens_to_ids("no"),
+                true_token_id=true_token_id,
+                false_token_id=false_token_id,
             )
             return [transformer_model, post_processing], {}
 
@@ -351,6 +360,7 @@ class CrossEncoder(BaseModel, FitMixin):
 
         """
         while True:
+            chunk_id = None
             try:
                 chunk_id, sentence_pairs, kwargs = input_queue.get()
                 scores = model.predict(sentence_pairs, device=target_device, **kwargs)
@@ -602,6 +612,9 @@ class CrossEncoder(BaseModel, FitMixin):
                 scores = model.predict(sentences, pool=pool)
                 model.stop_multi_process_pool(pool)
         """
+        if batch_size <= 0:
+            raise ValueError(f"batch_size must be a positive integer, got {batch_size}.")
+
         # Cast an individual pair to a list with length 1
         is_singular_input = self.is_singular_input(inputs)
         if is_singular_input:
