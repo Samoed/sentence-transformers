@@ -160,7 +160,7 @@ You can check which modalities a model supports using the :attr:`~sentence_trans
 ```python
 from sentence_transformers import SentenceTransformer
 
-model = SentenceTransformer("tomaarsen/Qwen3-VL-Embedding-2B")
+model = SentenceTransformer("Qwen/Qwen3-VL-Embedding-2B", revision="refs/pr/23")
 print(model.modalities)
 # => ['text', 'image', 'video', 'message']
 print(model.supports("image"))
@@ -190,7 +190,7 @@ We further provide this multilingual text-image model:
 Newer multimodal models use the unified :class:`~sentence_transformers.base.modules.Transformer` module, which automatically detects supported modalities from the underlying model and processor. These models typically support richer input formats, including interleaved image-text inputs via chat messages. Notable examples include:
 ```
 
-- **[tomaarsen/Qwen3-VL-Embedding-2B](https://huggingface.co/tomaarsen/Qwen3-VL-Embedding-2B)** - A Qwen3-VL-based embedding model that supports text, image, and interleaved image-text inputs via message format. Useful for document screenshot embedding and cross-modal retrieval. See [Training Examples > Multimodal](../../examples/sentence_transformer/training/multimodal/README.md) for a finetuning example.
+- **[Qwen/Qwen3-VL-Embedding-2B](https://huggingface.co/Qwen/Qwen3-VL-Embedding-2B)** - A Qwen3-VL-based embedding model that supports text, image, and interleaved image-text inputs via message format. Useful for document screenshot embedding and cross-modal retrieval. See [Training Examples > Multimodal](../../examples/sentence_transformer/training/multimodal/README.md) for a finetuning example.
 
 ```{eval-rst}
 VLM-based models support additional modalities and input formats compared to CLIP models. You can verify this with :attr:`~sentence_transformers.sentence_transformer.model.SentenceTransformer.modalities`:
@@ -199,7 +199,7 @@ VLM-based models support additional modalities and input formats compared to CLI
 ```python
 from sentence_transformers import SentenceTransformer
 
-model = SentenceTransformer("tomaarsen/Qwen3-VL-Embedding-2B")
+model = SentenceTransformer("Qwen/Qwen3-VL-Embedding-2B", revision="refs/pr/23")
 print(model.modalities)
 # => ['text', 'image', 'video', 'message']
 ```

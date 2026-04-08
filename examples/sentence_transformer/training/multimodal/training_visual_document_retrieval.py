@@ -26,7 +26,7 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 
 # 1. Load a model to finetune with (optional) model card data
 model = SentenceTransformer(
-    "tomaarsen/Qwen3-VL-Embedding-2B",
+    "Qwen/Qwen3-VL-Embedding-2B",
     model_card_data=SentenceTransformerModelCardData(
         language="en",
         license="apache-2.0",
@@ -34,6 +34,7 @@ model = SentenceTransformer(
     ),
     model_kwargs={"attn_implementation": "flash_attention_2", "torch_dtype": "bfloat16"},
     processor_kwargs={"min_pixels": 28 * 28, "max_pixels": 600 * 600},
+    revision="refs/pr/23",
 )
 
 # 2. Load a dataset to finetune on

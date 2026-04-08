@@ -15,7 +15,7 @@ You can check which modalities a model supports using the :attr:`~sentence_trans
 ```python
 from sentence_transformers import SentenceTransformer
 
-model = SentenceTransformer("tomaarsen/Qwen3-VL-Embedding-2B")
+model = SentenceTransformer("Qwen/Qwen3-VL-Embedding-2B", revision="refs/pr/23")
 print(model.modalities)
 # => ['text', 'image', 'message']
 print(model.supports("image"))
@@ -41,7 +41,7 @@ Training a multimodal model follows the same steps as training a text-only model
 
 ### Training Example: Document Screenshot Embedding
 
-The [training_document_screenshot_embedding.py](training_document_screenshot_embedding.py) script finetunes [tomaarsen/Qwen3-VL-Embedding-2B](https://huggingface.co/tomaarsen/Qwen3-VL-Embedding-2B) on query-document screenshot pairs for visual document retrieval. Here is how it works:
+The [training_document_screenshot_embedding.py](training_document_screenshot_embedding.py) script finetunes [Qwen/Qwen3-VL-Embedding-2B](https://huggingface.co/Qwen/Qwen3-VL-Embedding-2B) on query-document screenshot pairs for visual document retrieval. Here is how it works:
 
 ```{eval-rst}
 **1. Load the model** with efficient training settings::
@@ -49,9 +49,10 @@ The [training_document_screenshot_embedding.py](training_document_screenshot_emb
     from sentence_transformers import SentenceTransformer
 
     model = SentenceTransformer(
-        "tomaarsen/Qwen3-VL-Embedding-2B",
+        "Qwen/Qwen3-VL-Embedding-2B",
         model_kwargs={"attn_implementation": "flash_attention_2", "torch_dtype": "bfloat16"},
         processor_kwargs={"min_pixels": 28 * 28, "max_pixels": 600 * 600},
+        revision="refs/pr/23",
     )
 
 The ``model_kwargs`` enable Flash Attention 2 and bfloat16 precision for faster training. The ``processor_kwargs`` control image resolution bounds; smaller ``max_pixels`` reduces memory usage at the cost of image detail.

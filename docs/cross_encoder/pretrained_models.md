@@ -124,10 +124,10 @@ Multimodal rerankers can score pairs involving different modalities such as imag
 
 Here are some community models:
 
-- [tomaarsen/Qwen3-VL-Reranker-2B](https://huggingface.co/tomaarsen/Qwen3-VL-Reranker-2B)
-- [tomaarsen/Qwen3-VL-Reranker-8B](https://huggingface.co/tomaarsen/Qwen3-VL-Reranker-8B)
-- [tomaarsen/llama-nemotron-rerank-vl-1b-v2](https://huggingface.co/tomaarsen/llama-nemotron-rerank-vl-1b-v2)
-- [tomaarsen/jina-reranker-m0](https://huggingface.co/tomaarsen/jina-reranker-m0)
+- [Qwen/Qwen3-VL-Reranker-2B](https://huggingface.co/Qwen/Qwen3-VL-Reranker-2B) (`revision="refs/pr/11"`)
+- [Qwen/Qwen3-VL-Reranker-8B](https://huggingface.co/Qwen/Qwen3-VL-Reranker-8B) (`revision="refs/pr/9"`)
+- [nvidia/llama-nemotron-rerank-vl-1b-v2](https://huggingface.co/nvidia/llama-nemotron-rerank-vl-1b-v2) (`revision="refs/pr/9"`)
+- [jinaai/jina-reranker-m0](https://huggingface.co/jinaai/jina-reranker-m0) (`revision="refs/pr/24"`)
 
 See [Cross Encoder > Usage](usage/usage.rst) for usage examples, and the training scripts in `examples/cross_encoder/training/multimodal/` to fine-tune your own multimodal reranker.
 

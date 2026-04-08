@@ -71,7 +71,7 @@ Once you have `installed <installation.html>`_ Sentence Transformers, you can ea
       from sentence_transformers import SentenceTransformer
 
       # 1. Load a model that supports both text and images
-      model = SentenceTransformer("tomaarsen/Qwen3-VL-Embedding-2B")
+      model = SentenceTransformer("Qwen/Qwen3-VL-Embedding-2B", revision="refs/pr/23")
 
       # 2. Encode images from URLs
       img_embeddings = model.encode([
@@ -95,7 +95,7 @@ Once you have `installed <installation.html>`_ Sentence Transformers, you can ea
       #         [0.1255, 0.6749],
       #         [0.1283, 0.2704]])
 
-With ``SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")`` we pick which `Sentence Transformer model <https://huggingface.co/models?library=sentence-transformers>`_ we load. In this example, we load `sentence-transformers/all-MiniLM-L6-v2 <https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2>`_, which is a MiniLM model finetuned on a large dataset of over 1 billion training pairs. Using :meth:`SentenceTransformer.similarity() <sentence_transformers.sentence_transformer.model.SentenceTransformer.similarity>`, we compute the similarity between all pairs of sentences. As expected, the similarity between semantically related inputs is higher than between unrelated ones. Multimodal models like `tomaarsen/Qwen3-VL-Embedding-2B <https://huggingface.co/tomaarsen/Qwen3-VL-Embedding-2B>`_ can also encode images, audio, or video into the same embedding space.
+With ``SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")`` we pick which `Sentence Transformer model <https://huggingface.co/models?library=sentence-transformers>`_ we load. In this example, we load `sentence-transformers/all-MiniLM-L6-v2 <https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2>`_, which is a MiniLM model finetuned on a large dataset of over 1 billion training pairs. Using :meth:`SentenceTransformer.similarity() <sentence_transformers.sentence_transformer.model.SentenceTransformer.similarity>`, we compute the similarity between all pairs of sentences. As expected, the similarity between semantically related inputs is higher than between unrelated ones. Multimodal models like `Qwen/Qwen3-VL-Embedding-2B <https://huggingface.co/Qwen/Qwen3-VL-Embedding-2B>`_ can also encode images, audio, or video into the same embedding space.
 
 Finetuning Sentence Transformer models is easy and requires only a few lines of code. For more information, see the `Training Overview <./sentence_transformer/training_overview.html>`__ section.
 
@@ -196,7 +196,7 @@ The usage for Cross Encoder (a.k.a. reranker) models is similar to Sentence Tran
 
       from sentence_transformers import CrossEncoder
 
-      model = CrossEncoder("tomaarsen/Qwen3-VL-Reranker-2B")
+      model = CrossEncoder("Qwen/Qwen3-VL-Reranker-2B", revision="refs/pr/11")
 
       query = "A green car parked in front of a yellow building"
       documents = [
@@ -222,7 +222,7 @@ The usage for Cross Encoder (a.k.a. reranker) models is similar to Sentence Tran
       -2.4375 (document 1)
       """
 
-With ``CrossEncoder("cross-encoder/stsb-distilroberta-base")`` we pick which `CrossEncoder model <./cross_encoder/pretrained_models.html>`_ we load. CrossEncoder models can also work with multimodal inputs: `tomaarsen/Qwen3-VL-Reranker-2B <https://huggingface.co/tomaarsen/Qwen3-VL-Reranker-2B>`_ can rank images and text by relevance to a query.
+With ``CrossEncoder("cross-encoder/stsb-distilroberta-base")`` we pick which `CrossEncoder model <./cross_encoder/pretrained_models.html>`_ we load. CrossEncoder models can also work with multimodal inputs: `Qwen/Qwen3-VL-Reranker-2B <https://huggingface.co/Qwen/Qwen3-VL-Reranker-2B>`_ can rank images and text by relevance to a query.
 
 Finetuning CrossEncoder models is easy and requires only a few lines of code. For more information, see the `Training Overview <./cross_encoder/training_overview.html>`__ section.
 

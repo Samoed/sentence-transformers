@@ -41,7 +41,7 @@ Note that it is often simple to transform a dataset from one format to another, 
 
 ```
 
-Dataset columns are not limited to text. When using a multimodal model (e.g. a vision-language model like [tomaarsen/Qwen3-VL-Embedding-2B](https://huggingface.co/tomaarsen/Qwen3-VL-Embedding-2B)), columns can contain images, audio, video, or combinations of these modalities. The same dataset format categories described above (Positive Pair, Triplets, etc.) apply. The only difference is that one or more columns hold non-text data instead of strings.
+Dataset columns are not limited to text. When using a multimodal model (e.g. a vision-language model like [Qwen/Qwen3-VL-Embedding-2B](https://huggingface.co/Qwen/Qwen3-VL-Embedding-2B)), columns can contain images, audio, video, or combinations of these modalities. The same dataset format categories described above (Positive Pair, Triplets, etc.) apply. The only difference is that one or more columns hold non-text data instead of strings.
 
 ### Accepted column types
 
