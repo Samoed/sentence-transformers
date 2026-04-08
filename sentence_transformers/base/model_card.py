@@ -200,19 +200,18 @@ class BaseModelCardCallback(TrainerCallback):
         logs: dict[str, float],
         **kwargs,
     ) -> None:
-        keys = {"loss"} & set(logs)
-        if keys:
+        if "loss" in logs:
             if (
                 model.model_card_data.training_logs
                 and model.model_card_data.training_logs[-1]["Step"] == state.global_step
             ):
-                model.model_card_data.training_logs[-1]["Training Loss"] = logs[keys.pop()]
+                model.model_card_data.training_logs[-1]["Training Loss"] = logs["loss"]
             else:
                 model.model_card_data.training_logs.append(
                     {
                         "Epoch": state.epoch,
                         "Step": state.global_step,
-                        "Training Loss": logs[keys.pop()],
+                        "Training Loss": logs["loss"],
                     }
                 )
 
@@ -285,7 +284,7 @@ def format_log(value: float | int | str) -> Any:
     return value
 
 
-def get_losses(loss: nn.Module | dict[nn.Module]) -> list[nn.Module]:
+def get_losses(loss: nn.Module | dict[str, nn.Module]) -> list[nn.Module]:
     if isinstance(loss, dict):
         losses = list(loss.values())
     else:
@@ -924,9 +923,9 @@ class BaseModelCardData(CardData):
     def infer_datasets(self, dataset: Dataset | DatasetDict, dataset_name: str | None = None) -> list[dict[str, str]]:
         if isinstance(dataset, DatasetDict):
             return [
-                dataset
+                inferred_dataset
                 for dataset_name, sub_dataset in dataset.items()
-                for dataset in self.infer_datasets(sub_dataset, dataset_name=dataset_name)
+                for inferred_dataset in self.infer_datasets(sub_dataset, dataset_name=dataset_name)
             ]
 
         # Ignore the dataset name if it is a default name from the FitMixin backwards compatibility
@@ -1225,7 +1224,7 @@ class BaseModelCardData(CardData):
     def set_model_id(self, model_id: str) -> None:
         self.model_id = model_id
 
-    def set_base_model(self, model_id: str, revision: str | None = None) -> None:
+    def set_base_model(self, model_id: str, revision: str | None = None) -> bool:
         # We only set the base model if we can verify that it exists on the Hub
         if self.local_files_only:
             # Don't try to get the model info if we are not allowed to access the Hub
@@ -1862,7 +1861,6 @@ class BaseModelCardData(CardData):
                 super_dict.update(self.format_eval_metrics())
             except Exception as exc:
                 logger.warning(f"Error while formatting evaluation metrics: {exc}")
-                raise exc
 
         # Compute required formats for the during-training evaluation data
         if self.training_logs:

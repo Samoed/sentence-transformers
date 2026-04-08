@@ -83,7 +83,7 @@ class EvaluatorCallback(TrainerCallback):
     The `.trainer` must be provided after the trainer has been created.
     """
 
-    def __init__(self, evaluator: CrossEncoder, output_path: str | None = None) -> None:
+    def __init__(self, evaluator: BaseEvaluator, output_path: str | None = None) -> None:
         super().__init__()
         self.evaluator = evaluator
         self.output_path = output_path

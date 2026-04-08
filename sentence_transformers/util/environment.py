@@ -75,7 +75,8 @@ def check_package_availability(package_name: str, owner: str) -> bool:
     """
     try:
         meta = metadata(package_name)
-        return meta["Name"] == package_name and owner in meta["Home-page"]
+        home_page = meta["Home-page"]
+        return meta["Name"] == package_name and home_page is not None and owner in home_page
     except PackageNotFoundError:
         return False
 

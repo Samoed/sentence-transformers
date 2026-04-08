@@ -29,7 +29,7 @@ class BaseDataCollator:
     router_mapping: dict[str, str] | dict[str, dict[str, str]] | None = field(default_factory=dict, repr=False)
     prompts: str | dict[str, str] | dict[str, dict[str, str]] | None = field(default_factory=dict, repr=False)
 
-    _warned_columns: set[tuple[str]] = field(default_factory=set, init=False, repr=False)
+    _warned_columns: set[tuple[str, ...]] = field(default_factory=set, init=False, repr=False)
 
     def _resolve_router_mapping(self, batch: dict[str, Any]) -> dict[str, str]:
         """Resolve the router mapping for this batch, handling nested (per-dataset) mappings."""

@@ -342,7 +342,7 @@ def test_trainer_prompts(
             expected = all_train_1 | all_eval_1
         elif (train_dict, eval_dict) == (True, False):
             expected = all_train | all_eval_1
-        if (train_dict, eval_dict) == (False, True):
+        elif (train_dict, eval_dict) == (False, True):
             expected = all_train_1 | all_eval
         elif (train_dict, eval_dict) == (True, True):
             expected = all_train | all_eval
@@ -352,7 +352,7 @@ def test_trainer_prompts(
             expected = {prompts + sample for sample in all_train_1} | {prompts + sample for sample in all_eval_1}
         elif (train_dict, eval_dict) == (True, False):
             expected = {prompts + sample for sample in all_train} | {prompts + sample for sample in all_eval_1}
-        if (train_dict, eval_dict) == (False, True):
+        elif (train_dict, eval_dict) == (False, True):
             expected = {prompts + sample for sample in all_train_1} | {prompts + sample for sample in all_eval}
         elif (train_dict, eval_dict) == (True, True):
             expected = {prompts + sample for sample in all_train} | {prompts + sample for sample in all_eval}
@@ -367,7 +367,7 @@ def test_trainer_prompts(
                 | {prompts["stsb-2"] + sample for sample in all_train_2}
                 | all_eval_1
             )
-        if (train_dict, eval_dict) == (False, True):
+        elif (train_dict, eval_dict) == (False, True):
             expected = (
                 all_train_1
                 | {prompts["stsb-1"] + sample for sample in all_eval_1}
@@ -398,7 +398,7 @@ def test_trainer_prompts(
                 | {prompts["sentence1"] + sample for sample in all_eval_1_1}
                 | {prompts["sentence2"] + sample for sample in all_eval_1_2}
             )
-        if (train_dict, eval_dict) == (False, True):
+        elif (train_dict, eval_dict) == (False, True):
             expected = (
                 {prompts["sentence1"] + sample for sample in all_train_1_1}
                 | {prompts["sentence2"] + sample for sample in all_train_1_2}

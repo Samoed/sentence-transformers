@@ -150,5 +150,5 @@ class SparseEncoderModelCardData(BaseModelCardData):
         with torch._tensor_str.printoptions(precision=4, sci_mode=False):
             self.similarities = "\n".join(f"# {line}" for line in str(similarity.cpu()).splitlines())
 
-    def get_default_model_name(self) -> None:
+    def get_default_model_name(self) -> str:
         return self.model_type

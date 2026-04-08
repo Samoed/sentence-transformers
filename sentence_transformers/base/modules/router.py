@@ -694,7 +694,7 @@ class Router(InputModule):
         return None
 
     @property
-    def max_seq_length(self) -> int:
+    def max_seq_length(self) -> int | None:
         # Collect all unique max_seq_length values
         max_seq_lengths = set()
         for modules in self.sub_modules.values():

@@ -262,4 +262,5 @@ def setup_deprecated_module_imports() -> None:
     """Install a meta path finder that issues deprecation warnings for deprecated import paths
     and aliases them to their new locations in ``sys.modules``.
     """
-    sys.meta_path.insert(0, _DeprecatedModuleFinder())
+    if not any(isinstance(f, _DeprecatedModuleFinder) for f in sys.meta_path):
+        sys.meta_path.insert(0, _DeprecatedModuleFinder())

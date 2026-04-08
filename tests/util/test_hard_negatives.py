@@ -1115,7 +1115,8 @@ def test_tiny_corpus(
     assert "negative" in result.column_names
 
     # Some rows might be missing if constraints couldn't be satisfied
-    assert len(result) >= 0  # Should have at least 0 rows
+    assert isinstance(result, Dataset)
+    assert len(result) >= 1
 
 
 def test_verbose_mode(dataset: Dataset, static_retrieval_mrl_en_v1_model: SentenceTransformer) -> None:

@@ -271,10 +271,10 @@ class BaseTrainer(Trainer, ABC):
         self.data_collator: BaseDataCollator
 
         # Set the W&B or Trackio project via environment variables if it's not already set
-        if any([isinstance(callback, WandbCallback) for callback in self.callback_handler.callbacks]):
+        if any(isinstance(callback, WandbCallback) for callback in self.callback_handler.callbacks):
             os.environ.setdefault("WANDB_PROJECT", "sentence-transformers")
         if TrackioCallback is not None and any(
-            [isinstance(callback, TrackioCallback) for callback in self.callback_handler.callbacks]
+            isinstance(callback, TrackioCallback) for callback in self.callback_handler.callbacks
         ):
             os.environ.setdefault("TRACKIO_PROJECT", "sentence-transformers")
 
@@ -805,7 +805,7 @@ class BaseTrainer(Trainer, ABC):
         data_collator = self.data_collator
 
         generator = torch.Generator()
-        if self.args.seed:
+        if self.args.seed is not None:
             generator.manual_seed(self.args.seed)
 
         dataloader_params = {

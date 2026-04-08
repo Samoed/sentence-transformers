@@ -84,7 +84,7 @@ class PeftAdapterMixin:
     @peft_wrapper
     def set_adapter(self, *args, **kwargs) -> None:
         """
-        Sets a specific adapter by forcing the model to use a that adapter and disable the other adapters.
+        Sets a specific adapter by forcing the model to use that adapter and disable the other adapters.
 
         Args:
             *args:

@@ -263,6 +263,8 @@ class InputFormatter:
                     messages.append(self.pair_to_messages(value))
                 elif mod == "text" and isinstance(value, (tuple, list)) and len(value) == 2:
                     messages.append(self.pair_to_messages(value))
+                elif mod == "message":
+                    messages.append(value)
                 else:
                     typed = value if isinstance(mod, tuple) else {mod: value}
                     messages.append(self.to_message(typed))

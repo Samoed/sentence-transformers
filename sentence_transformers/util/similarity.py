@@ -133,7 +133,7 @@ def manhattan_sim(a: list | np.ndarray | Tensor, b: list | np.ndarray | Tensor) 
         return -torch.cdist(a, b, p=1.0).to_dense()
 
 
-def pairwise_manhattan_sim(a: list | np.ndarray | Tensor, b: list | np.ndarray | Tensor):
+def pairwise_manhattan_sim(a: list | np.ndarray | Tensor, b: list | np.ndarray | Tensor) -> Tensor:
     """
     Computes the manhattan similarity (i.e., negative distance) between pairs of tensors.
 
@@ -181,7 +181,7 @@ def euclidean_sim(a: list | np.ndarray | Tensor, b: list | np.ndarray | Tensor) 
         return -torch.cdist(a, b, p=2.0)
 
 
-def pairwise_euclidean_sim(a: list | np.ndarray | Tensor, b: list | np.ndarray | Tensor):
+def pairwise_euclidean_sim(a: list | np.ndarray | Tensor, b: list | np.ndarray | Tensor) -> Tensor:
     """
     Computes the euclidean distance (i.e., negative distance) between pairs of tensors.
 
