@@ -107,12 +107,7 @@ include = ["sentence_transformers*"]
 namespaces = false
 
 [tool.setuptools.package-data]
-sentence_transformers = [
-    "base/model_card_template.md",
-    "sentence_transformer/model_card_template.md",
-    "cross_encoder/model_card_template.md",
-    "sparse_encoder/model_card_template.md",
-]
+sentence_transformers = ["**/model_card_template.md"]
 
 [tool.uv]
 default-groups = ["dev"]
