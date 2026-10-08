@@ -154,7 +154,8 @@ class SparseAutoEncoder(Module):
         """
         Args:
             latents: autoencoder latents (shape: [batch, hidden_dim])
-            info: unused, kept for API compatibility
+            info: Normalization metadata returned by ``prepare``, containing ``mu`` and ``std``.
+                Required when ``normalize=True`` to restore the original scale and mean. Ignored otherwise.
 
         Returns:
             reconstructed data (shape: [batch, n_inputs])
