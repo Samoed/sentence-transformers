@@ -1844,7 +1844,7 @@ This pull request has been automatically generated to add {self.__class__.__name
     def _get_worker_result(pool: MultiProcessPool, poll_interval: float = 1.0) -> Any:
         """Get the next result from the pool's output queue, failing fast if a worker has died.
 
-        A worker that is killed (e.g. by the OOM killer or a segfault) cannot report its failure, so the chunk it was
+        A worker that dies without raising (e.g. killed by a signal) cannot report its failure, so the chunk it was
         processing never produces a result and a plain ``output_queue.get()`` would block forever.
         """
         while True:
