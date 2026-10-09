@@ -69,7 +69,7 @@ class MultiProcessPool(TypedDict):
 
     input: Queue
     output: Queue
-    processes: list[BaseProcess]
+    processes: Sequence[BaseProcess]
 
 
 class BaseModel(nn.Sequential, PeftAdapterMixin, ABC):
